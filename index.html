@@ -8,34 +8,64 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500;700&family=Jost:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f4f1ec;--fg:#2b2724;--muted:#6f685f;--rule:#d6cfc3;--olive:#56603c;--cream:#f4eee2;
+:root{--bg:#f4eee2;--card:#fbf8f2;--fg:#1a2332;--muted:#5d6470;--rule:#d9d2c4;--olive:#56603c;--navy:#1f3a5c;--cream:#f4eee2;
  --display:'Bodoni Moda',Didot,'Bodoni 72',Georgia,serif;--body:Jost,'Helvetica Neue',Arial,sans-serif;color-scheme:light}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);min-height:100vh;display:flex;align-items:center;justify-content:center}
-main{width:100%;max-width:560px;padding:48px 16px}
-.label{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:18px}
-h1{font:700 clamp(34px,7vw,52px)/1.05 var(--display);color:var(--olive);margin:0 0 36px}
-nav{display:grid;gap:12px;margin-bottom:36px}
-nav a{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 22px;background:#fff;border:1px solid var(--rule);border-radius:4px;color:var(--fg);text-decoration:none;font-size:15px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;transition:background .15s,color .15s,border-color .15s}
-nav a span{color:var(--olive);font-size:18px;letter-spacing:0}
-nav a:hover,nav a:focus-visible{background:var(--olive);border-color:var(--olive);color:var(--cream);outline:none}
-nav a:hover span,nav a:focus-visible span{color:var(--cream)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body)}
+main{max-width:980px;margin:0 auto;padding:56px 16px 72px}
+h1{font:700 clamp(36px,7vw,56px)/1.05 var(--display);color:var(--olive);margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 44px;font-size:15px}
+.group{margin-bottom:40px}
+.label{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--fg);display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.label:after{content:"";flex:1;border-top:1px solid var(--rule)}
+.gnote{color:var(--muted);font-size:14px;margin:0 0 14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+a.card{display:flex;flex-direction:column;gap:6px;padding:18px 20px;background:var(--card);border:1px solid var(--rule);border-radius:4px;color:var(--fg);text-decoration:none;transition:background .15s,color .15s,border-color .15s}
+a.card b{font-weight:500;font-size:14px;letter-spacing:.14em;text-transform:uppercase;display:flex;justify-content:space-between;gap:10px}
+a.card b span{color:var(--olive);letter-spacing:0}
+a.card small{font-size:13.5px;line-height:1.45;color:var(--muted)}
+a.card:hover,a.card:focus-visible{background:var(--olive);border-color:var(--olive);color:var(--cream);outline:none}
+a.card:hover small,a.card:focus-visible small,a.card:hover b span,a.card:focus-visible b span{color:var(--cream)}
 </style>
 </head>
 <body>
 <main>
  <h1>Mémé on 10</h1>
- <div class="label">Tools</div>
- <nav>
-  <a href="editor.html#menu">Menu Copy Editor <span>→</span></a>
-  <a href="editor.html#logo">Logo Editor <span>→</span></a>
- </nav>
- <div class="label">Brand</div>
- <nav>
-  <a href="guidelines.html">Brand Guidelines <span>→</span></a>
-  <a href="print.html">Print <span>→</span></a>
-  <a href="social.html">Social Media <span>→</span></a>
- </nav>
+ <p class="sub">Tools, brand guidelines and finished files.</p>
+
+ <div class="group">
+  <div class="label">Menu</div>
+  <div class="cards">
+   <a class="card" href="editor.html#menu"><b>Menu Copy Editor <span>→</span></b><small>Type the dishes, descriptions and prices. Makes a US Letter menu page to download.</small></a>
+  </div>
+ </div>
+
+ <div class="group">
+  <div class="label">Logo &amp; signage editors</div>
+  <p class="gnote">Adjust sizes, spacing and colors, then download PNG, SVG or PDF. Save named versions as you go.</p>
+  <div class="cards">
+   <a class="card" href="editor.html#1b"><b>Oval logo <span>→</span></b><small>The primary logo, with the hand-drawn oval.</small></a>
+   <a class="card" href="editor.html#1d"><b>Open lockup <span>→</span></b><small>The logo without the oval, for menus and the website.</small></a>
+   <a class="card" href="editor.html#1c"><b>Awning <span>→</span></b><small>The long horizontal row for the awning valance.</small></a>
+   <a class="card" href="editor.html#hd"><b>Header / banner <span>→</span></b><small>A header strip at any width and height, for the website or a menu.</small></a>
+  </div>
+ </div>
+
+ <div class="group">
+  <div class="label">Website</div>
+  <div class="cards">
+   <a class="card" href="guidelines.html#website"><b>Website styles <span>→</span></b><small>Copy-and-paste CSS that puts the brand fonts and colors on your existing site.</small></a>
+  </div>
+ </div>
+
+ <div class="group">
+  <div class="label">Brand</div>
+  <div class="cards">
+   <a class="card" href="guidelines.html"><b>Brand Guidelines <span>→</span></b><small>Logos, colors, type, menu specs and usage rules.</small></a>
+   <a class="card" href="print.html"><b>Print <span>→</span></b><small>Logo files, signage, menu page, coasters, stickers, take-out.</small></a>
+   <a class="card" href="social.html"><b>Social Media <span>→</span></b><small>Instagram posts, the profile grid, stories and photos.</small></a>
+  </div>
+ </div>
 </main>
 </body>
 </html>
