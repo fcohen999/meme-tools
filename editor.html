@@ -607,7 +607,7 @@ function applyMode(){
 function buildSimple(){
   panel.className='panel simple-panel';
   const head=document.createElement('div');
-  head.innerHTML='<h1>Mémé on 10 logo</h1><p style="margin:6px 0 0;font-size:14px"><a href="index.html" style="color:#1f6fd1">← Home</a> · <a href="brand-guide.html" style="color:#1f6fd1">Brand guidelines →</a></p><p class="lead">1. Pick a style. 2. Move the sliders. 3. Pick colors. 4. Press “Save as PDF” under the logo.</p>';
+  head.innerHTML='<h1>Mémé on 10 logo</h1><p style="margin:6px 0 0;font-size:14px"><a href="index.html" style="color:#1f6fd1">← Home</a> · <a href="guidelines.html" style="color:#1f6fd1">Brand guidelines</a> · <a href="print.html" style="color:#1f6fd1">Print</a> · <a href="social.html" style="color:#1f6fd1">Social media →</a></p><p class="lead">1. Pick a style. 2. Move the sliders. 3. Pick colors. 4. Press “Save as PDF” under the logo.</p>';
   panel.appendChild(head);
   const h=document.createElement('h2'); h.textContent='Pick a style'; panel.appendChild(h);
   const tabs=document.createElement('div'); tabs.className='stabs';
@@ -664,7 +664,7 @@ function buildPanel(){
   panel.className='panel';
   refs=[]; panel.innerHTML='';
   const head=document.createElement('div');
-  head.innerHTML='<h1>Mémé on 10 · Logo editor</h1><p style="margin:6px 0 0;font-size:14px"><a href="index.html" style="color:#1f6fd1">← Home</a> · <a href="brand-guide.html" style="color:#1f6fd1">Brand guidelines →</a></p><div class="hint">The chain icon next to a setting links it across all layouts. Pick a layout, then click any part of the logo to select it. Drag it, or use the arrow keys (Shift = bigger steps). Esc to deselect. Dragging snaps to the center and to other parts, and a pink line appears when things line up. Hold Alt to move freely.</div><div class="tabs" id="tabs"></div><div style="margin-top:12px"><button id="btnReset">Reset everything</button> <button class="link" id="btnSimple">Simple view</button></div>';
+  head.innerHTML='<h1>Mémé on 10 · Logo editor</h1><p style="margin:6px 0 0;font-size:14px"><a href="index.html" style="color:#1f6fd1">← Home</a> · <a href="guidelines.html" style="color:#1f6fd1">Brand guidelines</a> · <a href="print.html" style="color:#1f6fd1">Print</a> · <a href="social.html" style="color:#1f6fd1">Social media →</a></p><div class="hint">The chain icon next to a setting links it across all layouts. Pick a layout, then click any part of the logo to select it. Drag it, or use the arrow keys (Shift = bigger steps). Esc to deselect. Dragging snaps to the center and to other parts, and a pink line appears when things line up. Hold Alt to move freely.</div><div class="tabs" id="tabs"></div><div style="margin-top:12px"><button id="btnReset">Reset everything</button> <button class="link" id="btnSimple">Simple view</button></div>';
   head.insertAdjacentHTML('beforeend',`<details class="hint" style="margin-top:14px"><summary style="cursor:pointer">Editor ${VERSION} · ${VERSION_DATE} · what changed</summary><ul style="padding-left:18px;margin:8px 0">${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`);
   panel.appendChild(head);
   const tabs=head.querySelector('#tabs');

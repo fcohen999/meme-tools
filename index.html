@@ -14,8 +14,8 @@
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);min-height:100vh;display:flex;align-items:center;justify-content:center}
 main{width:100%;max-width:560px;padding:48px 16px}
 .label{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:18px}
-h1{font:700 clamp(34px,7vw,52px)/1.05 var(--display);color:var(--olive);margin:0 0 32px}
-nav{display:grid;gap:12px}
+h1{font:700 clamp(34px,7vw,52px)/1.05 var(--display);color:var(--olive);margin:0 0 36px}
+nav{display:grid;gap:12px;margin-bottom:36px}
 nav a{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 22px;background:#fff;border:1px solid var(--rule);border-radius:4px;color:var(--fg);text-decoration:none;font-size:15px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;transition:background .15s,color .15s,border-color .15s}
 nav a span{color:var(--olive);font-size:18px;letter-spacing:0}
 nav a:hover,nav a:focus-visible{background:var(--olive);border-color:var(--olive);color:var(--cream);outline:none}
@@ -24,13 +24,17 @@ nav a:hover span,nav a:focus-visible span{color:var(--cream)}
 </head>
 <body>
 <main>
- <div class="label">Tools</div>
  <h1>Mémé on 10</h1>
+ <div class="label">Tools</div>
  <nav>
   <a href="editor.html#menu">Menu Copy Editor <span>→</span></a>
   <a href="editor.html#logo">Logo Editor <span>→</span></a>
-  <a href="brand-guide.html">Brand Guidelines <span>→</span></a>
-  <a href="brand-guide.html#social">Social Media <span>→</span></a>
+ </nav>
+ <div class="label">Brand</div>
+ <nav>
+  <a href="guidelines.html">Brand Guidelines <span>→</span></a>
+  <a href="print.html">Print <span>→</span></a>
+  <a href="social.html">Social Media <span>→</span></a>
  </nav>
 </main>
 </body>
