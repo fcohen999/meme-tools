@@ -98,7 +98,7 @@ const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n
 const NS='http://www.w3.org/2000/svg';
 const VERSION='v24', VERSION_DATE='2026-11-02';
 const CHANGELOG=[
- ['v24','Brand colors: olive, navy, ink (near-black navy) and cream. New “Brand” color presets at the top of the list; every older preset is still there. New logos start in ink and olive on cream; menu text starts in ink. The homepage can open any layout directly.'],
+ ['v24','Brand colors: olive, navy and cream, with charcoal for text. New “Brand” color presets at the top of the list; every older preset is still there. New logos start in charcoal and olive on cream; menu text starts in charcoal. The homepage can open any layout directly.'],
  ['v23','New Menu tab: a US Letter menu page in the brand style (one-line header, basil on cream, Jost caps dish names, Bodoni descriptions, prices in basil). The words are editable by typing like a document or in boxes.'],
  ['v22','Oval and squiggle now have their own separate colors'],
  ['v21','Background color now fills only the inside of the oval; outside the oval stays clear'],
@@ -128,13 +128,13 @@ const CHANGELOG=[
 const SHARED_DEFAULTS = {
   onCase:'lowercase', onFont:'Bodoni Moda', onWeight:600, opsz:28, onSpace:0, onWordGap:1.1,
   squiggle:'A', order:'Kitchen & Cocktails', tagFont:'Jost', amp:'sans',
-  ink:'#1a2332', accent:'#56603c', bg:'#f4eee2', transparent:false
+  ink:'#2b2724', accent:'#56603c', bg:'#f4eee2', transparent:false
 };
 const PRESETS = [
-  ['Brand: ink + olive on cream','#1a2332','#56603c','#f4eee2'],
+  ['Brand: charcoal + olive on cream','#2b2724','#56603c','#f4eee2'],
   ['Brand: olive, one color','#56603c','#56603c','#f4eee2'],
   ['Brand: navy, one color','#1f3a5c','#1f3a5c','#f4eee2'],
-  ['Brand: ink, one color','#1a2332','#1a2332','#f4eee2'],
+  ['Brand: charcoal, one color','#2b2724','#2b2724','#f4eee2'],
   ['Brand: cream on olive','#f4eee2','#f4eee2','#56603c'],
   ['Brand: cream on navy','#f4eee2','#f4eee2','#1f3a5c'],
   ['Charcoal + slate blue','#2b2724','#4d6a8a','#fbf8f2'],
@@ -449,7 +449,7 @@ const LAYOUTS = {
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
     simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','Menu text size',70,130,1,'smaller','bigger'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
-    geo:{ menuScale:100, columns:2, menuInk:'#1a2332', menuBrand:'#56603c', menuBg:'#f4eee2' },
+    geo:{ menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2' },
     panel:[
       ['h','Menu words'],['menuedit'],
       ['h','Look'],
