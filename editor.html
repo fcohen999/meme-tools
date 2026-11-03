@@ -76,6 +76,66 @@ body.simple #btnPdf{font-size:16px;padding:12px 22px}
 </style>
 </head>
 <body>
+<!-- global-nav:start -->
+<style id="gnav-css">
+.gnav{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 32px;min-height:72px;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));margin:0;background:#fbf8f2;color:#2b2724;border-top:2px solid #2b2724;border-bottom:1px solid #2b2724;font:400 17px/1.2 Jost,'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:0;text-transform:none;position:relative;z-index:50;width:100%}
+.gnav *{box-sizing:border-box}
+.gnav a{color:inherit}
+.gnav-brand{font-weight:500;font-size:19px;text-decoration:none;padding:14px 0;white-space:nowrap}
+.gnav-links{display:flex;flex-wrap:wrap;gap:0 34px;margin:0;padding:0;list-style:none}
+.gnav-links a{display:block;padding:24px 0 22px;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;position:relative;white-space:nowrap}
+.gnav-links a:hover{text-decoration-thickness:2px}
+.gnav-links a:focus-visible,.gnav-brand:focus-visible{outline:2px solid #56603c;outline-offset:3px}
+.gnav-links a[aria-current="page"]{font-weight:600}
+.gnav-links a[aria-current="page"]::after{content:"";position:absolute;left:0;right:0;bottom:8px;height:3px;background:currentColor}
+@media (max-width:760px){.gnav{gap:0 20px;padding-top:4px}.gnav-links{gap:0 20px;width:100%}.gnav-links a{padding:10px 0 16px;font-size:16px}.gnav-links a[aria-current="page"]::after{bottom:6px}}
+@media print{.gnav{display:none}}
+</style>
+<header class="gnav" data-page="editor">
+ <a class="gnav-brand" href="index.html">Mémé on 10</a>
+ <nav aria-label="Main">
+  <ul class="gnav-links">
+   <li><a href="editor.html#menu" data-key="menu">Menu</a></li>
+   <li><a href="editor.html#1b" data-key="logos">Logos &amp; signs</a></li>
+   <li><a href="print.html#drawings" data-key="drawings">Drawings</a></li>
+   <li><a href="social.html" data-key="social">Social</a></li>
+   <li><a href="guidelines.html" data-key="brand">Brand rules</a></li>
+  </ul>
+ </nav>
+</header>
+<script>
+(function () {
+  var nav = document.currentScript && document.currentScript.previousElementSibling;
+  if (!nav || !nav.classList.contains('gnav')) nav = document.querySelector('.gnav');
+  if (!nav) return;
+  function mark() {
+    var key = nav.getAttribute('data-page');
+    // The editor holds both the menu and the logo tools; the hash says which.
+    if (key === 'editor') key = location.hash === '#menu' ? 'menu' : 'logos';
+    nav.querySelectorAll('.gnav-links a').forEach(function (a) {
+      if (a.getAttribute('data-key') === key) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  mark();
+  window.addEventListener('hashchange', mark);
+  // The editor reads its hash only when it loads, so a link to another part
+  // of the same page has to reload it.
+  nav.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href*="#"]');
+    if (!a || nav.getAttribute('data-page') !== 'editor') return;
+    var href = a.getAttribute('href');
+    if (href.split('#')[0] !== 'editor.html') return;
+    e.preventDefault();
+    location.hash = href.split('#')[1];
+    location.reload();
+  });
+})();
+</script>
+<!-- global-nav:end -->
+
+
+
 <div class="app">
   <div class="stage">
     <div class="canvas" id="canvas"></div>
