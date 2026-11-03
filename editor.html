@@ -157,7 +157,7 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v25', VERSION_DATE='2026-11-03';
+const VERSION='v25', VERSION_DATE='2026-11-03', UPDATE=6;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
  ['v25','New sidebar: one view with a Simple on/off switch; every part of the logo has its own section (closed to start) that opens when you click that part; − / + buttons you can hold down instead of sliders; layouts grouped into Logo and Made with the logo. No more dragging or snapping: click a part, then use the arrow keys, + / −, Tab and Esc (the pink line still shows when things line up). The sidebar can be made wider or narrower by dragging its left edge. Menu words can now be edited in Google Sheets, pasted straight from a Google Doc or Word (headings, bold dish names and prices are read from the formatting), or saved and opened as a text file.'],
  ['v24','Brand colors: olive, navy and cream, with charcoal for text. New “Brand” color presets at the top of the list; every older preset is still there. New logos start in charcoal and olive on cream; menu text starts in charcoal. The homepage can open any layout directly.'],
@@ -1114,7 +1114,7 @@ function buildPanel(){
   });
   finish();
   const foot=document.createElement('div'); foot.className='foot';
-  foot.innerHTML='<button id="btnReset">Reset everything</button>';
+  foot.innerHTML='<button id="btnReset">Reset everything</button><div class="hint" style="margin-top:12px">Editor '+VERSION+' · update '+UPDATE+'</div>';
   foot.insertAdjacentHTML('beforeend',`<details class="hint only-full" style="margin-top:14px"><summary style="cursor:pointer">Editor ${VERSION} · ${VERSION_DATE} · what changed</summary><ul style="padding-left:18px;margin:8px 0">${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`);
   panel.appendChild(foot);
   twoStep(document.getElementById('btnReset'),'Click again to reset every layout and the menu (saved versions are kept)',()=>{ S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT));Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();});
