@@ -717,7 +717,7 @@ function docBlocks(html){
   const blocks=[]; let gap=false;
   nodes.forEach(bl=>{
     if(bl.tagName==='BR'){ gap=true; return; }
-    const head=/^H[1-6]$/.test(bl.tagName)||bl.classList.contains('title');
+    const head=/^H[1-6]$/.test(bl.tagName)||bl.classList.contains('title'), hn=/^H[1-6]$/.test(bl.tagName)?+bl.tagName[1]:0;
     let line=[], any=false;
     const flush=()=>{
       const raw=line.map(s=>s.t).join(''), real=line.filter(s=>s.t.trim());
@@ -725,7 +725,7 @@ function docBlocks(html){
         const tot=real.reduce((a,s)=>a+s.t.trim().length,0)||1;
         const bold=real.filter(s=>s.b).reduce((a,s)=>a+s.t.trim().length,0)/tot;
         let pre=''; for(const s of line){ if(s.b||!s.t.trim()) pre+=s.t; else break; }
-        lineBlocks(raw,{head,bold,boldPre:pre.replace(/ /g,' ').replace(/\s+/g,' ').trim(),size:Math.max(0,...real.map(s=>s.z)),gap},blocks);
+        lineBlocks(raw,{head,hn,bold,boldPre:pre.replace(/ /g,' ').replace(/\s+/g,' ').trim(),size:Math.max(0,...real.map(s=>s.z)),gap},blocks);
         gap=false; any=true;
       } else if(any||line.length) gap=true;   // an empty line inside a paragraph
       line=[];
@@ -750,7 +750,7 @@ function blocksToMenu(blocks){
   const body=+(Object.keys(sizes).sort((a,b)=>sizes[b]-sizes[a])[0]||0);
   const caps=t=>/\p{Lu}/u.test(t)&&!/\p{Ll}/u.test(t)&&t.length<=60;
   // skip the restaurant name / tagline / a big title at the top: they are not sections
-  const isTitle=(b,i)=>/m[ée]m[ée]\s+on\s+10/i.test(b.text)||(i<3&&/^(kitchen\s*&\s*cocktails|cocktails\s*&\s*kitchen)$/i.test(b.text))||(i===0&&b.size>=24);
+  const isTitle=(b,i)=>/m[ée]m[ée]\s+on\s+10/i.test(b.text)||(i<3&&/^(kitchen\s*&\s*cocktails|cocktails\s*&\s*kitchen)$/i.test(b.text))||(i===0&&b.size>=24&&!splitPrice(b.text)[1]&&!blocks.slice(1).some(x=>x.size>=b.size*0.9));   // a big title, unless other lines (sections) are as big
   blocks=blocks.filter((b,i)=>!isTitle(b,i));
   const lines=blocks.map(b=>{
     let kind='plain';
@@ -758,8 +758,20 @@ function blocksToMenu(blocks){
     else if(PRICE_ONLY.test(b.text)) kind='price';
     else if(b.bold>=0.6||caps(splitPrice(b.text)[0])) kind='dish';
     else if(b.bold>0&&b.boldPre.length>=2) kind='dishdesc';
-    return {kind,text:b.text.replace(/^#+\s*/,''),boldPre:b.boldPre,gap:!!b.gap,cell:!!b.cell};
+    // how important a heading is: its text size, or for Heading 1-6 without a size, its level
+    const rank=kind==='head'?(b.size||(7-(b.hn||1))*4):0;
+    return {kind,rank,text:b.text.replace(/^#+\s*/,''),boldPre:b.boldPre,gap:!!b.gap,cell:!!b.cell};
   });
+  // dish names written as headings (or bigger text)?
+  {
+    const heads=lines.filter(l=>l.kind==='head'), ranks=[...new Set(heads.map(l=>l.rank))].sort((a,b)=>b-a);
+    // a heading with just one line of ingredients under it is really a dish name
+    const oneLine=l=>{ const i=lines.indexOf(l), a=lines[i+1], z=lines[i+2]; return a&&a.kind!=='head'&&!a.cell&&(looksDesc(a.text)||!z||z.kind==='head'); };
+    const mostly=arr=>arr.length>=2&&arr.filter(oneLine).length/arr.length>=0.6;
+    const lower=heads.filter(l=>l.rank<ranks[0]);
+    if(ranks.length>=2&&mostly(lower)) lower.forEach(l=>{ l.kind='dish'; });   // two sizes: big = sections, smaller = dish names
+    else if(ranks.length===1&&heads.length>=3&&mostly(heads)) heads.forEach(l=>{ l.kind='dish'; });   // one heading style used for everything
+  }
   const hasGaps=lines.some(l=>l.gap);
   // no real headings (a big title alone doesn't count)? then work out which lines are section names
   const realHead=lines.some((l,i)=>l.kind==='head'&&lines.slice(i+1).some((x,j,a)=>x.kind!=='head'&&a.slice(0,j).every(y=>y.kind!=='head')));
@@ -771,7 +783,7 @@ function blocksToMenu(blocks){
     if(l.kind==='dish'){   // bold / CAPITAL
       const starts=!pv||pv.kind==='head'||pv.kind==='plain'||pv.kind==='price';
       if(!starts) return;
-      if(priced){ if(nx.kind==='dish'&&!splitPrice(nx.text)[1]) l.kind='head'; return; }   // "COCKTAILS 19" over dishes without prices
+      if(priced){ if((nx.kind==='dish'&&!splitPrice(nx.text)[1])||nx.cell) l.kind='head'; return; }   // "COCKTAILS 19" over dishes without prices
       if(nx.kind==='dishdesc'||(nx.kind==='dish'&&(splitPrice(nx.text)[1]||(nn&&nn.kind==='plain')))) l.kind='head';
       return;
     }
