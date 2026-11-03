@@ -127,6 +127,7 @@ body.resizing{cursor:col-resize;user-select:none}
 .pastebox{width:100%;min-height:150px;font:13px ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff}
 .foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
 #menuModes.menuseg{display:grid;grid-template-columns:1fr 1fr}.menuseg button{padding:10px 6px;font-size:13px;white-space:nowrap;border-bottom:1px solid #e3dccf}.menuseg button:nth-child(2n){border-right:none}.menuseg button:nth-child(n+3){border-bottom:none}
+button.armed,button.link.armed{background:#b35a3e!important;color:#fff!important;border-color:#b35a3e!important;text-decoration:none;padding:6px 10px}
 body.simple .row2>label,body.simple .checkrow{font-size:14px}
 body.simple .stepper .sb{width:40px;height:34px}
 </style>
@@ -892,6 +893,15 @@ function renderTextMode(box){
   box.append(how,ta,st,files);
 }
 
+/* click once: the button asks "Click again to …"; click again within 5 seconds to do it */
+function twoStep(b,ask,fn){
+  const label=b.textContent; let t=null;
+  b.addEventListener('click',()=>{
+    if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent=ask; b.classList.add('armed'); t=setTimeout(()=>{ delete b.dataset.armed; b.textContent=label; b.classList.remove('armed'); },5000); return; }
+    clearTimeout(t); delete b.dataset.armed; b.textContent=label; b.classList.remove('armed'); fn();
+  });
+  return b;
+}
 /* ============ MENU TEXT EDITOR ============ */
 function renderMenuEditor(){
   const box=document.getElementById('menuEditor'); if(!box) return; box.innerHTML='';
@@ -916,13 +926,13 @@ function renderMenuEditor(){
       ds.style.cssText='width:100%;font:inherit;font-size:13px;padding:5px 6px;border:1px solid var(--line);border-radius:3px;margin-top:6px;resize:vertical'; ds.oninput=()=>{it.desc=ds.value;render();};
       const ctl=document.createElement('div'); ctl.className='ver'; ctl.append(document.createElement('span'),
         btn('↑',()=>mv(sec.items,ii,-1)), btn('↓',()=>mv(sec.items,ii,1)),
-        btn('Delete',()=>{ if(confirm('Delete “'+(it.name||'this item')+'”?')){ sec.items.splice(ii,1); redo(); } }));
+        twoStep(btn('Delete',()=>{}),'Click again to delete',()=>{ sec.items.splice(ii,1); redo(); }));
       row.append(top,ds,ctl); card.appendChild(row);
     });
     const foot=document.createElement('div'); foot.className='ver'; foot.style.marginTop='10px'; foot.append(
       btn('Add a drink or beer',()=>{ sec.items.push({name:'',desc:''}); redo(); }), document.createElement('span'),
       btn('Section ↑',()=>mv(M,si,-1)), btn('Section ↓',()=>mv(M,si,1)),
-      btn('Delete section',()=>{ if(confirm('Delete the whole “'+(sec.title||'this')+'” section?')){ M.splice(si,1); redo(); } }));
+      twoStep(btn('Delete section',()=>{}),'Click again to delete the whole section',()=>{ M.splice(si,1); redo(); }));
     card.appendChild(foot); box.appendChild(card);
   });
   box.appendChild(btn('Add a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); redo(); }));
@@ -930,7 +940,7 @@ function renderMenuEditor(){
 function menuEditorBlock(){
   const d=document.createElement('div');
   d.innerHTML='<div class="hint" style="margin-bottom:8px">The menu page updates as you type.</div><div id="menuModes" class="seg menuseg"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><button type="button" class="link" id="menuStartOver" style="margin-top:10px">Start the menu over (puts back the original menu)</button>';
-  d.querySelector('#menuStartOver').onclick=()=>{ if(!confirm('Put back the original menu? The words you have now will be replaced.')) return; M=JSON.parse(JSON.stringify(MENU_DEFAULT)); renderMenuEditor(); render(); };
+  twoStep(d.querySelector('#menuStartOver'),'Click again to replace your menu with the original',()=>{ M=JSON.parse(JSON.stringify(MENU_DEFAULT)); renderMenuEditor(); render(); });
   const modes=d.querySelector('#menuModes');
   const defs=[['text','Type like a document'],['docs','From Google Docs'],['sheet','From Google Sheets'],['boxes','Edit in boxes']], bs=[];
   const paint=()=>bs.forEach(([m,b])=>b.classList.toggle('on',menuMode===m));
@@ -1104,7 +1114,7 @@ function buildPanel(){
   foot.innerHTML='<button id="btnReset">Reset everything</button>';
   foot.insertAdjacentHTML('beforeend',`<details class="hint only-full" style="margin-top:14px"><summary style="cursor:pointer">Editor ${VERSION} · ${VERSION_DATE} · what changed</summary><ul style="padding-left:18px;margin:8px 0">${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`);
   panel.appendChild(foot);
-  document.getElementById('btnReset').onclick=()=>{ if(!confirm('Reset every layout and the menu back to the original? Saved versions are kept.')) return; S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT));Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();};
+  twoStep(document.getElementById('btnReset'),'Click again to reset every layout and the menu (saved versions are kept)',()=>{ S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT));Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();});
   document.getElementById('verSave').onclick=saveVersion;
   document.getElementById('verExport').onclick=()=>{ const cur_={layout:cur,S:Object.assign({},S),G:JSON.parse(JSON.stringify(G)),M:JSON.parse(JSON.stringify(M))}; download(new Blob([JSON.stringify(Object.assign({'(current settings)':cur_},mem),null,1)],{type:'application/json'}),`meme-on-10-logo-editor-saved-versions_${new Date().toISOString().slice(0,10)}.json`); };
   document.getElementById('verImport').onclick=()=>document.getElementById('verFile').click();
