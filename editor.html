@@ -65,6 +65,11 @@ body.simple .only-full{display:none!important}
 .chips .dot{width:28px;height:28px;border-radius:50%;border:1px solid #b9b0a5;flex:none}
 .link{background:none;border:none;color:#1f6fd1;padding:4px 0;font-size:13px;cursor:pointer;text-decoration:underline}
 .link:hover{background:none;color:#1a58a6}
+
+.order{margin:12px 0}.order .sl{font-size:13px;font-weight:600;margin-bottom:6px}
+.ord{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin:5px 0;padding:5px 8px;background:#fff;border:1px solid var(--line);border-radius:4px}
+.ord label{display:flex;gap:8px;align-items:center;font-size:13px}
+.ord button{padding:3px 10px}.ord.off label{color:var(--muted);text-decoration:line-through}
 body.simple #btnPdf{font-size:16px;padding:12px 22px}
 @media print{
   body{background:none}
@@ -217,8 +222,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v25', VERSION_DATE='2026-11-03', UPDATE=6;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-03', UPDATE=7;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26','Change the order of the pieces on every layout (for example the tagline above “mémé on 10”, or the squiggle first in a header), and hide pieces you don’t want. The header, awning and menu page can use any version of the logo: one line, the oval logo, the logo without the oval, or a saved version.'],
  ['v25','New sidebar: one view with a Simple on/off switch; every part of the logo has its own section (closed to start) that opens when you click that part; − / + buttons you can hold down instead of sliders; layouts grouped into Logo and Made with the logo. No more dragging or snapping: click a part, then use the arrow keys, + / −, Tab and Esc (the pink line still shows when things line up). The sidebar can be made wider or narrower by dragging its left edge. Menu words can now be edited in Google Sheets, pasted straight from a Google Doc or Word (headings, bold dish names and prices are read from the formatting), or saved and opened as a text file.'],
  ['v24','Brand colors: olive, navy and cream, with charcoal for text. New “Brand” color presets at the top of the list; every older preset is still there. New logos start in charcoal and olive on cream; menu text starts in charcoal. The homepage can open any layout directly.'],
  ['v23','New Menu tab: a US Letter menu page in the brand style (one-line header, basil on cream, Jost caps dish names, Bodoni descriptions, prices in basil). The words are editable by typing like a document or in boxes.'],
@@ -335,9 +341,51 @@ function tagInner(S,P){
 function shell(S,W,H,body,extraDefs='',bgShape=null){
   return `<svg xmlns="${NS}" viewBox="0 0 ${f(W)} ${f(H)}" width="${f(W)}" height="${f(H)}">
 <defs><style>${FONT_CSS}</style>${extraDefs}</defs>
-${S.transparent?'':(bgShape!==null?bgShape:`<rect width="${f(W)}" height="${f(H)}" fill="${S.bg}"/>`)}
+${S.transparent?'':(bgShape!==null?bgShape:(S.noBg?'':`<rect width="${f(W)}" height="${f(H)}" fill="${S.bg}"/>`))}
 ${body}
 </svg>`;
+}
+
+/* ============ PIECE ORDER + WHICH LOGO ============ */
+const PIECES=['name','sq','tag'];
+const PIECE_NAMES={name:'“mémé on 10”',sq:'Squiggle',tag:'Tagline (Kitchen & Cocktails)'};
+// every piece in the chosen order (shown or hidden)
+function fullSeq(g){ const seq=(Array.isArray(g.seq)?g.seq:[]).filter(k=>PIECES.includes(k)); PIECES.forEach(k=>{ if(!seq.includes(k)) seq.push(k); }); return seq; }
+// only the pieces that are shown, in order
+function shownSeq(g){ const off=g.off||[]; return fullSeq(g).filter(k=>!off.includes(k)); }
+// true when the order is the layout's own starting order (then it draws exactly as before)
+function isDefaultSeq(g,L){ const a=shownSeq(g), b=shownSeq(LAYOUTS[L].geo); return a.length===b.length&&a.every((k,i)=>k===b[i]); }
+// stack pieces top to bottom. box[k]=[center,height] where the piece sits normally; returns how far each piece moves.
+function restack(order,box,gap){
+  if(!order.length) return {};
+  const t0=Math.min(...order.map(k=>box[k][0]-box[k][1]/2)), t1=Math.max(...order.map(k=>box[k][0]+box[k][1]/2));
+  const total=order.reduce((s,k)=>s+box[k][1],0)+gap*(order.length-1);
+  let y=(t0+t1)/2-total/2; const d={};
+  order.forEach(k=>{ d[k]=y+box[k][1]/2-box[k][0]; y+=box[k][1]+gap; });
+  return d;
+}
+// place pieces left to right with a gap; returns left x of each piece
+function rowX(order,widths,start,gap){ const xs={}; let x=start; order.forEach(k=>{ xs[k]=x; x+=widths[k]+gap; }); return xs; }
+const rowTotal=(order,widths,gap)=>order.reduce((s,k)=>s+widths[k],0)+gap*Math.max(0,order.length-1);
+// Which logo goes into the header, awning or menu: one line, the oval logo, the no-oval logo, or a saved version
+function logoChoices(){
+  const o=[['line','One line: “mémé on 10”'],['1b','Oval logo (as set on the Oval tab)'],['1d','Logo without the oval (as set on that tab)']];
+  Object.keys(mem).forEach(n=>{ const v=mem[n]; if(v&&(v.layout==='1b'||v.layout==='1d')) o.push(['saved:'+n,'Saved version: '+n]); });
+  return o;
+}
+function logoBuild(which,S){
+  let L,Sv,Gv;
+  if(which==='1b'||which==='1d'){ L=which; Sv=S; Gv=G[which]; }
+  else if(typeof which==='string'&&which.startsWith('saved:')){ const v=mem[which.slice(6)]; if(!v||(v.layout!=='1b'&&v.layout!=='1d')) return null;
+    L=v.layout; Sv=Object.assign({},SHARED_DEFAULTS,v.S); Gv=Object.assign({},LAYOUTS[L].geo,(v.G||{})[L]); }
+  else return null;
+  // the logo takes the colors of the piece it is placed on
+  const S2=Object.assign({},Sv,{ink:S.ink,accent:S.accent,sqColor:S.sqColor,bg:S.bg,transparent:S.transparent,noBg:true});
+  return LAYOUTS[L].build(S2,Gv);
+}
+function nestLogo(b,x,y,h){
+  const w=h*b.W/b.H;
+  return `<g data-el="wm">${b.svg.replace(/ data-el="[^"]*"/g,'').replace(/^\s*<svg[^>]*>/,`<svg x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" viewBox="0 0 ${f(b.W)} ${f(b.H)}" overflow="visible">`)}</g>`;
 }
 
 /* ============ PANEL BUILDING BLOCKS (reused by layouts) ============ */
@@ -421,10 +469,12 @@ const LAYOUTS = {
   '1b': {
     tab:'1b Horizontal oval', stab:'Oval', file:'horizontal-oval',
     simple:[['h','The oval'],['srange','rx','Oval width',150,420,1,'narrower','wider'],['srange','ry','Oval height',80,260,1,'shorter','taller'],['srange','thickD','Oval line weight',-3,10,0.1,'thinner','thicker'],['scheck','sqFollow','The squiggle line follows the oval line'],['h','Sizes'],['srange','wmScale','“mémé” size',50,160,1,'smaller','bigger'],['srange','onScale','“on 10” size',50,160,1,'smaller','bigger'],['srange','onSpace','“on 10” letter spacing',-3,20,0.5,'tighter','wider'],['srange','onWordGap','Space between “on” and “10”',-15,30,0.5,'closer','wider'],['srange','sqScale','Squiggle size',40,200,1,'smaller','bigger'],['srange','tagSize','Tagline size',10,36,0.5,'smaller','bigger'],['srange','tagCurve','Tagline curve',0,200,1,'flatter','more curved'],['h','Words'],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','onCase','“on 10” letters',['lowercase','caps']],],
-    geo:{ oval:'hand-drawn', rx:322.35, ry:142.75, thickD:0, sqFollow:true, gap:14,
+    pieces:'v',
+    geo:{ seq:['name','sq','tag'], off:[], oval:'hand-drawn', rx:322.35, ry:142.75, thickD:0, sqFollow:true, gap:14,
           wmScale:107.9,wmX:0.7,wmY:-3.49, onScale:107.14,onX:4.78,onY:2, sqScale:104.84,sqX:0,sqY:10.05,sqThick:0,
           tagSize:24,tagSpace:5,tagCurve:104.5,tagWidth:256.2,tagX:0,tagY:0,tagSkew:3 },
     panel:[
+      ['h','Order'],['order','Top to bottom'],['hint','Tick a piece to show it, untick to hide it. A tagline at the top curves along the top of the oval; in the middle it is straight.'],
       ['h','Oval','oval'],
       ['pick','oval','Style',['hand-drawn','clean']],
       ['range','rx','Width',150,420,1],
@@ -446,8 +496,15 @@ const LAYOUTS = {
       const P=prep(S,{base:56,scale:G.onScale});
       const wmW=250*G.wmScale/100, start=cx-(wmW+G.gap+P.onW)/2;
       const sqW=124*G.sqScale/100, sqH=39*G.sqScale/100;
-      const y0=cy+57.5+G.tagY;
-      const tx=cx+G.tagX, w=G.tagWidth, sk=G.tagSkew||0, yy=x=>y0+G.tagCurve/2*(1-((x-tx-sk)/w)**2),
+      const seq=shownSeq(G); let dN=0,dS=0,cv=G.tagCurve,y0=cy+57.5+G.tagY;
+      if(!isDefaultSeq(G,'1b')){   // a different order: stack the pieces top to bottom inside the oval
+        const cap=G.tagSize*0.72, rise=G.tagCurve*0.3, iT=seq.indexOf('tag'), n=seq.length;
+        const tm=(n>1&&iT===n-1)?1:(n>1&&iT===0)?-1:0, th=cap+(tm?rise:0), sqH0=39*G.sqScale/100, B0=57.5+G.tagCurve/2;
+        const box={name:[-49.5,114*G.wmScale/100], sq:[19.5+sqH0/2,sqH0], tag:[B0-(cap+rise)/2,th]};
+        const d=restack(seq,box,14); dN=d.name||0; dS=d.sq||0;
+        if(iT>=0){ const B=box.tag[0]-th/2+d.tag+cap+(tm===1?rise:0); cv=G.tagCurve*tm; y0=cy+B-cv/2+G.tagY; }
+      }
+      const tx=cx+G.tagX, w=G.tagWidth, sk=G.tagSkew||0, yy=x=>y0+cv/2*(1-((x-tx-sk)/w)**2),
         arc=`M ${f(tx-w)} ${f(yy(tx-w))} Q ${f(tx)} ${f(2*yy(tx)-(yy(tx-w)+yy(tx+w))/2)} ${f(tx+w)} ${f(yy(tx+w))}`;
       let bgShape='';   // background color fills only the inside of the oval
       const oval=clean
@@ -459,21 +516,24 @@ const LAYOUTS = {
               out.push(f(X(i)+nx*w)+' '+f(Y(i)+ny*w)); inn.push(f(X(i)-nx*w)+' '+f(Y(i)-ny*w)); }
             bgShape=`<path fill="${S.bg}" d="M${out.join('L')}Z"/>`;
             return `<path data-el="oval" fill-rule="evenodd" fill="${S.accent}" d="M${out.join('L')}ZM${inn.reverse().join('L')}Z"/>`; })();
+      const has=k=>seq.includes(k);
       const body=oval
-        +wmBox(S,start+G.wmX,cy-106.5+G.wmY,250,114,G.wmScale)
-        +onEl(S,P,start+wmW+G.gap+G.onX,cy+6.5+G.onY)
-        +sqEl(S,cx-sqW/2+G.sqX,cy+19.5+G.sqY,sqW,sqH,G.sqThick)
-        +`<text data-el="tag" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}"><textPath href="#tagArc" startOffset="50%" text-anchor="middle">${tagInner(S,P)}</textPath></text>`;
+        +(has('name')?wmBox(S,start+G.wmX,cy-106.5+G.wmY+dN,250,114,G.wmScale)
+        +onEl(S,P,start+wmW+G.gap+G.onX,cy+6.5+G.onY+dN):'')
+        +(has('sq')?sqEl(S,cx-sqW/2+G.sqX,cy+19.5+G.sqY+dS,sqW,sqH,G.sqThick):'')
+        +(has('tag')?`<text data-el="tag" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}"><textPath href="#tagArc" startOffset="50%" text-anchor="middle">${tagInner(S,P)}</textPath></text>`:'');
       return {W,H,svg:shell(S,W,H,body,`<path id="tagArc" d="${arc}"/>`,bgShape)};
     }
   },
   '1d': {
     tab:'1d Open lockup', stab:'No oval', file:'open-lockup',
     simple:[['h','Sizes'],['srange','wmScale','“mémé” size',50,160,1,'smaller','bigger'],['srange','onScale','“on 10” size',50,160,1,'smaller','bigger'],['srange','onSpace','“on 10” letter spacing',-3,20,0.5,'tighter','wider'],['srange','onWordGap','Space between “on” and “10”',-15,30,0.5,'closer','wider'],['srange','sqScale','Squiggle size',40,200,1,'smaller','bigger'],['srange','tagSize','Tagline size',10,48,0.5,'smaller','bigger'],['h','Words'],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','onCase','“on 10” letters',['lowercase','caps']],],
-    geo:{ W:600, H:290, gap:16,
+    pieces:'v',
+    geo:{ seq:['name','sq','tag'], off:[], W:600, H:290, gap:16,
           wmScale:100,wmX:0,wmY:0, onScale:100,onX:0,onY:0, sqScale:100,sqX:0,sqY:0,sqThick:0,
           tagSize:22,tagSpace:6,tagX:0,tagY:0 },
     panel:[
+      ['h','Order'],['order','Top to bottom'],['hint','Tick a piece to show it, untick to hide it.'],
       ['h','Canvas'],
       ['range','W','Width',300,1200,1],['range','H','Height',150,600,1],
       ...secWordmark(150), ['range','gap','Space before “on 10”',-20,80,1],
@@ -488,20 +548,25 @@ const LAYOUTS = {
       const P=prep(S,{base:64,scale:G.onScale});
       const wmW=300*G.wmScale/100, start=cx-(wmW+G.gap+P.onW)/2;
       const sqW=150*G.sqScale/100, sqH=47*G.sqScale/100;
-      const body=wmBox(S,start+G.wmX,cy-135+G.wmY,300,137,G.wmScale)
-        +onEl(S,P,start+wmW+G.gap+G.onX,cy+1+G.onY)
-        +sqEl(S,cx-sqW/2+G.sqX,cy+27+G.sqY,sqW,sqH,G.sqThick)
-        +`<text data-el="tag" x="${f(cx+G.tagX)}" y="${f(cy+123+G.tagY)}" text-anchor="middle" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}">${tagInner(S,P)}</text>`;
+      const seq=shownSeq(G), has=k=>seq.includes(k), cap=G.tagSize*0.72;
+      const d=isDefaultSeq(G,'1d')?{}:restack(seq,{name:[-66.5,137*G.wmScale/100],sq:[27+sqH/2,sqH],tag:[123-cap/2,cap]},28);
+      const dN=d.name||0, dS=d.sq||0, dT=d.tag||0;
+      const body=(has('name')?wmBox(S,start+G.wmX,cy-135+G.wmY+dN,300,137,G.wmScale)
+        +onEl(S,P,start+wmW+G.gap+G.onX,cy+1+G.onY+dN):'')
+        +(has('sq')?sqEl(S,cx-sqW/2+G.sqX,cy+27+G.sqY+dS,sqW,sqH,G.sqThick):'')
+        +(has('tag')?`<text data-el="tag" x="${f(cx+G.tagX)}" y="${f(cy+123+G.tagY+dT)}" text-anchor="middle" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}">${tagInner(S,P)}</text>`:'');
       return {W,H,svg:shell(S,W,H,body)};
     }
   },
   '1c': {
     tab:'1c Awning', stab:'Awning', file:'awning',
     simple:[['h','The awning'],['srange','W','Awning length',900,2600,1,'shorter','longer'],['scheck','scallop','Scalloped bottom edge'],['h','Sizes'],['srange','wmScale','“mémé” size',50,160,1,'smaller','bigger'],['srange','onScale','“on 10” size',50,160,1,'smaller','bigger'],['srange','onSpace','“on 10” letter spacing',-3,20,0.5,'tighter','wider'],['srange','onWordGap','Space between “on” and “10”',-15,30,0.5,'closer','wider'],['srange','sqScale','Squiggle size',40,200,1,'smaller','bigger'],['srange','tagSize','Tagline size',10,60,0.5,'smaller','bigger'],['h','Words'],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','onCase','“on 10” letters',['lowercase','caps']],],
-    geo:{ W:1400, scallop:true, gap:18, gap2:64,
+    pieces:'h',
+    geo:{ seq:['name','sq','tag'], off:[], logo:'line', W:1400, scallop:true, gap:18, gap2:64,
           wmScale:100,wmX:0,wmY:0, onScale:100,onX:0,onY:0, sqScale:100,sqX:0,sqY:0,sqThick:0,
           tagSize:30,tagSpace:9,tagX:0,tagY:0 },
     panel:[
+      ['h','Logo and order'],['logopick','Which logo'],['order','Left to right'],['hint','Tick a piece to show it, untick to hide it. With the oval logo you may want to hide the squiggle and tagline, since the oval already has them. “mémé” size and position also move the logo.'],
       ['h','Awning'],
       ['range','W','Width',900,2600,1],
       ['check','scallop','Scalloped bottom edge'],['hint','The awning color is the Background color below.'],
@@ -519,15 +584,18 @@ const LAYOUTS = {
       const P=prep(S,{base:60,scale:G.onScale});
       const wmW=264*G.wmScale/100, sqW=150*G.sqScale/100, sqH=50*G.sqScale/100;
       const tagW=measure(P.tagStr,S.tagFont==='Gotham'?'Montserrat':S.tagFont,400,G.tagSize,G.tagSpace);
-      const total=wmW+G.gap+P.onW+G.gap2+sqW+G.gap2+tagW;
-      const s0=PADX+(G.W-total)/2;
-      const xOn=s0+wmW+G.gap, xSq=xOn+P.onW+G.gap2, xTag=xSq+sqW+G.gap2;
+      const LB=logoBuild(G.logo,S), lh=120*G.wmScale/100;
+      const seq=shownSeq(G), wd={name:LB?lh*LB.W/LB.H:wmW+G.gap+P.onW, sq:sqW, tag:tagW};
+      const total=rowTotal(seq,wd,G.gap2);
+      const s0=PADX+(G.W-total)/2, xs=rowX(seq,wd,s0,G.gap2);
       let scal='';
       if(G.scallop){ const y=PADT+BAND+PADB; for(let x=0;x<W;x+=60) scal+=`<path d="M${x} ${y}a30 30 0 0 0 60 0z" fill="${S.bg}"/>`; }
-      const body=wmBox(S,s0+G.wmX,PADT+14+G.wmY,264,120,G.wmScale)
-        +onEl(S,P,xOn+G.onX,PADT+133+G.onY)
-        +sqEl(S,xSq+G.sqX,PADT+64+G.sqY,sqW,sqH,G.sqThick)
-        +`<text data-el="tag" x="${f(xTag+G.tagX)}" y="${f(PADT+133+G.tagY)}" text-anchor="start" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}">${tagInner(S,P)}</text>`;
+      const draw={
+        name:()=>LB?nestLogo(LB,xs.name+G.wmX,PADT+74-lh/2+G.wmY,lh)
+          :wmBox(S,xs.name+G.wmX,PADT+14+G.wmY,264,120,G.wmScale)+onEl(S,P,xs.name+wmW+G.gap+G.onX,PADT+133+G.onY),
+        sq:()=>sqEl(S,xs.sq+G.sqX,PADT+64+G.sqY,sqW,sqH,G.sqThick),
+        tag:()=>`<text data-el="tag" x="${f(xs.tag+G.tagX)}" y="${f(PADT+133+G.tagY)}" text-anchor="start" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}">${tagInner(S,P)}</text>`};
+      const body=PIECES.filter(k=>seq.includes(k)).map(k=>draw[k]()).join('');
       // the awning band is always drawn (the scallops hang from it)
       const band=`<rect width="${W}" height="${H-SC+0.6}" fill="${S.bg}"/>`;
       return {W,H,svg:`<svg xmlns="${NS}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><defs><style>${FONT_CSS}</style></defs>${band}${scal}${body}</svg>`};
@@ -536,10 +604,12 @@ const LAYOUTS = {
   'hd': {
     tab:'Header', stab:'Header', file:'header',
     simple:[['h','The header'],['srange','W','Header width',600,3000,1,'narrower','wider'],['srange','H','Header height',80,400,1,'shorter','taller'],['spick','align','Logo position',['left','center','right']],['h','Sizes'],['srange','wmScale','“mémé” size',50,160,1,'smaller','bigger'],['srange','onScale','“on 10” size',50,160,1,'smaller','bigger'],['srange','onSpace','“on 10” letter spacing',-3,20,0.5,'tighter','wider'],['srange','onWordGap','Space between “on” and “10”',-15,30,0.5,'closer','wider'],['srange','sqScale','Squiggle size',40,200,1,'smaller','bigger'],['srange','tagSize','Tagline size',10,60,0.5,'smaller','bigger'],['h','Words'],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','onCase','“on 10” letters',['lowercase','caps']],],
-    geo:{ W:1400, H:150, padX:48, align:'center', rule:false, ruleW:3, gap:18, gap2:64,
+    pieces:'h',
+    geo:{ seq:['name','sq','tag'], off:[], logo:'line', W:1400, H:150, padX:48, align:'center', rule:false, ruleW:3, gap:18, gap2:64,
           wmScale:100,wmX:0,wmY:0, onScale:100,onX:0,onY:0, sqScale:100,sqX:0,sqY:0,sqThick:0,
           tagSize:30,tagSpace:9,tagX:0,tagY:0 },
     panel:[
+      ['h','Logo and order'],['logopick','Which logo'],['order','Left to right'],['hint','Tick a piece to show it, untick to hide it. With the oval logo you may want to hide the squiggle and tagline, since the oval already has them. “mémé” size and position also move the logo.'],
       ['h','Header'],
       ['range','W','Width',600,3000,1],['range','H','Height',80,400,1],
       ['pick','align','Align logo',['left','center','right']],
@@ -558,21 +628,25 @@ const LAYOUTS = {
       const P=prep(S,{base:60,scale:G.onScale});
       const wmW=264*G.wmScale/100, sqW=150*G.sqScale/100, sqH=50*G.sqScale/100;
       const tagW=measure(P.tagStr,S.tagFont==='Gotham'?'Montserrat':S.tagFont,400,G.tagSize,G.tagSpace);
-      const total=wmW+G.gap+P.onW+G.gap2+sqW+G.gap2+tagW;
-      const s0=G.align==='left'?G.padX:G.align==='right'?W-G.padX-total:(W-total)/2;
-      const xOn=s0+wmW+G.gap, xSq=xOn+P.onW+G.gap2, xTag=xSq+sqW+G.gap2;
-      const body=wmBox(S,s0+G.wmX,cy-61+G.wmY,264,120,G.wmScale)
-        +onEl(S,P,xOn+G.onX,cy+58+G.onY)
-        +sqEl(S,xSq+G.sqX,cy-11+G.sqY,sqW,sqH,G.sqThick)
-        +`<text data-el="tag" x="${f(xTag+G.tagX)}" y="${f(cy+58+G.tagY)}" text-anchor="start" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}">${tagInner(S,P)}</text>`
+      const LB=logoBuild(G.logo,S), lh=120*G.wmScale/100;
+      const seq=shownSeq(G), wd={name:LB?lh*LB.W/LB.H:wmW+G.gap+P.onW, sq:sqW, tag:tagW};
+      const total=rowTotal(seq,wd,G.gap2);
+      const s0=G.align==='left'?G.padX:G.align==='right'?W-G.padX-total:(W-total)/2, xs=rowX(seq,wd,s0,G.gap2);
+      const draw={
+        name:()=>LB?nestLogo(LB,xs.name+G.wmX,cy-1-lh/2+G.wmY,lh)
+          :wmBox(S,xs.name+G.wmX,cy-61+G.wmY,264,120,G.wmScale)+onEl(S,P,xs.name+wmW+G.gap+G.onX,cy+58+G.onY),
+        sq:()=>sqEl(S,xs.sq+G.sqX,cy-11+G.sqY,sqW,sqH,G.sqThick),
+        tag:()=>`<text data-el="tag" x="${f(xs.tag+G.tagX)}" y="${f(cy+58+G.tagY)}" text-anchor="start" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}">${tagInner(S,P)}</text>`};
+      const body=PIECES.filter(k=>seq.includes(k)).map(k=>draw[k]()).join('')
         +(G.rule?`<rect x="0" y="${f(H-G.ruleW)}" width="${W}" height="${G.ruleW}" fill="${S.accent}"/>`:'');
       return {W,H,svg:shell(S,W,H,body)};
     }
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','Menu text size',70,130,1,'smaller','bigger'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
-    geo:{ menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2' },
+    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','Menu text size',70,130,1,'smaller','bigger'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
+    pieces:'h',
+    geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2' },
     panel:[
       ['h','Menu words'],['menuedit'],
       ['h','Look'],
@@ -580,16 +654,34 @@ const LAYOUTS = {
       ['pick','columns','Columns',[2,1]],
       ['pick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],
       ['hint','Follows the brand guidelines: US Letter page, one-line header without the squiggle, no divider lines.'],
+      ['h','Header'],['logopick','Which logo'],['order','Left to right'],
+      ['pick','headAlign','Pieces',['spread across','together on the left','together in the center']],
+      ['range','menuLogo','Logo size %',60,160,1],
+      ['hint','Tick a piece to show it, untick to hide it.'],
       ['h','Colors'],
       ['color','menuBrand','Logo, headings, prices'],['color','menuInk','Dish names + tagline'],['color','menuBg','Page'],
     ],
     build(S,G){
       const brand=G.menuBrand, ink=G.menuInk;
-      const S2=Object.assign({},S,{ink:brand});
-      const tagFam=`"${S.tagFont}","Montserrat",sans-serif`;
-      const head=(wmBox(S2,64,56,190,87,100)
-        +`<text x="267" y="141" font-family='"Bodoni Moda", serif' font-weight="500" style="font-variation-settings:'opsz' 6" font-size="43" fill="${brand}">on 10</text>`
-        +`<text x="786" y="141" text-anchor="end" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(S.order.toUpperCase())}</text>`).replace(/ data-el="[^"]*"/g,'');
+      const S2=Object.assign({},S,{ink:brand,accent:brand,sqColor:brand,bg:G.menuBg,transparent:false});
+      const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
+      // header row: pieces between the left (64) and right (786) margins, centered on the logo's middle line
+      const HL=64, HR=786, YC=99.5, k=(G.menuLogo||100)/100, LB=logoBuild(G.logo,S2), lh=110*k;
+      const tagStr=S.order.toUpperCase(), sqW=124*k, sqH=39*k;
+      const lineW=203+measure('on 10','Bodoni Moda',500,43,0);
+      const seq=shownSeq(G), wd={name:LB?lh*LB.W/LB.H:lineW*k, sq:sqW, tag:measure(tagStr,dFam,400,24,5.6)};
+      const sum=seq.reduce((t,p)=>t+wd[p],0), n=seq.length, spread=String(G.headAlign||'').startsWith('spread');
+      const gap=spread?(n>1?(HR-HL-sum)/(n-1):0):40, tot=sum+gap*Math.max(0,n-1);
+      const xs=rowX(seq,wd,String(G.headAlign||'').endsWith('center')?(HL+HR-tot)/2:HL,gap);
+      const draw={
+        name:()=>{ if(LB) return nestLogo(LB,xs.name,YC-lh/2,lh);
+          const g=wmBox(S2,64,56,190,87,100)+`<text x="267" y="141" font-family='"Bodoni Moda", serif' font-weight="500" style="font-variation-settings:'opsz' 6" font-size="43" fill="${brand}">on 10</text>`;
+          return (k===1&&Math.abs(xs.name-HL)<0.01)?g:`<g transform="translate(${f(xs.name)} ${YC}) scale(${k}) translate(${-HL} ${-YC})">${g}</g>`; },
+        sq:()=>sqEl(S2,xs.sq,YC-sqH/2,sqW,sqH,0),
+        tag:()=>(spread&&n>1&&seq[n-1]==='tag')
+          ?`<text x="${HR}" y="141" text-anchor="end" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`
+          :`<text x="${f(xs.tag)}" y="141" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`};
+      const head=PIECES.filter(p=>seq.includes(p)).map(p=>draw[p]()).join('').replace(/ data-el="[^"]*"/g,'');
       const mt=menuSVG(S,G,M);
       const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs><rect width="850" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}</svg>`;
       return {W:816,H:1056,svg,over:mt.end>1100-56};
@@ -1013,6 +1105,37 @@ function menuEditorBlock(){
   return d;
 }
 
+/* ============ ORDER + LOGO PICKERS (simple and full views) ============ */
+function orderBlock(label){
+  const d=document.createElement('div'); d.className='order';
+  const horiz=LAYOUTS[cur].pieces==='h';
+  const paint=()=>{
+    const g=G[cur], seq=fullSeq(g), off=g.off||[];
+    d.innerHTML=''; const t=document.createElement('div'); t.className='sl'; t.textContent=label; d.appendChild(t);
+    seq.forEach((k,i)=>{
+      const r=document.createElement('div'); r.className='ord'+(off.includes(k)?' off':'');
+      const nm=k==='name'&&g.logo&&g.logo!=='line'?'Logo':PIECE_NAMES[k];
+      r.innerHTML=`<label><input type="checkbox"${off.includes(k)?'':' checked'}> <span></span></label><button title="${horiz?'Move left':'Move up'}">${horiz?'←':'↑'}</button><button title="${horiz?'Move right':'Move down'}">${horiz?'→':'↓'}</button>`;
+      r.querySelector('span').textContent=`${i+1}. ${nm}`;
+      r.querySelector('input').onchange=e=>{ const o=(g.off||[]).filter(x=>x!==k); if(!e.target.checked) o.push(k); g.off=o; paint(); render(); };
+      const mv=dd=>{ const j=i+dd; if(j<0||j>=seq.length) return; const a=seq.slice(); [a[i],a[j]]=[a[j],a[i]]; g.seq=a; paint(); render(); };
+      const [b1,b2]=r.querySelectorAll('button'); b1.onclick=()=>mv(-1); b2.onclick=()=>mv(1); if(i===0) b1.disabled=true; if(i===seq.length-1) b2.disabled=true;
+      d.appendChild(r);
+    });
+  };
+  refs.push(paint); return d;
+}
+function logoPickBlock(label){
+  const r=document.createElement('div'); r.className='row2 stack';
+  r.innerHTML=`<label></label><select></select><span></span>`;
+  r.firstChild.textContent=label;
+  const s_=r.querySelector('select');
+  s_.onchange=()=>{ G[cur].logo=s_.value; sync(); render(); };
+  refs.push(()=>{ const ch=logoChoices(); s_.innerHTML=''; ch.forEach(([v,t])=>{ const o=document.createElement('option'); o.value=v; o.textContent=t; s_.appendChild(o); });
+    s_.value=ch.some(c=>c[0]===G[cur].logo)?G[cur].logo:'line'; });
+  return r;
+}
+
 /* ============ PANEL ============ */
 const panel=document.getElementById('panel');
 let refs=[];
@@ -1136,9 +1259,11 @@ function buildPanel(){
     const k=item[1], basic=(k in B)||POSKEYS.includes(k);
     const label=simple&&B[k]?B[k]:item[2];
     if(t==='hint'){ if(lastShown&&(!simple||cur==='mn')){ const d=document.createElement('div'); d.className='hint'; d.textContent=item[1]; d.style.margin='6px 0'; body.appendChild(d); } return; }
-    const visible=!simple||basic||['menuedit','versions','swatches','color'].includes(t)||k==='transparent';
+    const visible=!simple||basic||['menuedit','versions','swatches','color','order','logopick'].includes(t)||k==='transparent';
     if(!visible){ lastShown=false; return; }
     if(t==='menuedit'){ add(menuEditorBlock()); renderMenuEditor(); return; }
+    if(t==='order'){ add(orderBlock(item[1])); return; }
+    if(t==='logopick'){ add(logoPickBlock(item[1])); return; }
     if(t==='range'){ const [,,,min,max,step]=item; add(stepperRow(k,label,min,max,step)); return; }
     if(t==='pick'){ add(pickRow(k,label,item[3])); return; }
     if(t==='color'){
@@ -1192,7 +1317,7 @@ function loadVersions(){ try{ const v=JSON.parse(localStorage.getItem('meme10_ve
 function persist(){ try{ localStorage.setItem('meme10_versions_v2',JSON.stringify(mem)); }catch(e){ const n=document.getElementById('verNote'); if(n) n.textContent='Saving is blocked in this browser, so versions last only until you close the page.'; } }
 function saveVersion(){
   const n=document.getElementById('verName').value.trim(); if(!n) return;
-  mem[n]={layout:cur,S:Object.assign({},S),G:JSON.parse(JSON.stringify(G)),M:JSON.parse(JSON.stringify(M)),links:[...LINKS]}; persist(); document.getElementById('verName').value=''; renderVersions();
+  mem[n]={layout:cur,S:Object.assign({},S),G:JSON.parse(JSON.stringify(G)),M:JSON.parse(JSON.stringify(M)),links:[...LINKS]}; persist(); document.getElementById('verName').value=''; renderVersions(); sync();
 }
 function renderVersions(){
   const l=document.getElementById('verList'); if(!l) return; l.innerHTML='';
@@ -1205,7 +1330,7 @@ function renderVersions(){
     r.children[1].onclick=()=>{ const v=mem[n]; S=Object.assign({},SHARED_DEFAULTS,v.S);
       Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k]));
       if(v.M) M=JSON.parse(JSON.stringify(v.M)); cur=LAYOUTS[v.layout]?v.layout:'1b'; LINKS=new Set(v.links||[]); sel=null; buildPanel(); render(); };
-    r.children[2].onclick=()=>{delete mem[n];persist();renderVersions();};
+    r.children[2].onclick=()=>{delete mem[n];persist();renderVersions();sync();render();};
     l.appendChild(r);
   });
 }
