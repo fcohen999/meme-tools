@@ -8,138 +8,29 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400..700&family=Libre+Bodoni:wght@400;500;600&family=DM+Serif+Display&family=Prata&family=Playfair+Display:wght@400;500&family=Jost:wght@400;500&family=Figtree:wght@400;500&family=Montserrat:wght@400;500&display=swap" rel="stylesheet">
 <style id="pageStyle"></style>
 <style>
-:root{--ink:#2b2724;--muted:#6b635b;--line:#d9d1c6;--panel:#f6f2ea;--accent:#b35a3e}
-:root{color-scheme:light}   /* the editor is always light, even when the computer is in dark mode */
-input,select,textarea{color:var(--ink);background-color:#fff}
-input::placeholder,textarea::placeholder{color:#9a9188}
+/* ---- the page around the panel: canvas, export bar, sidebar edge (the panel itself is styled in panel-css below) ---- */
+:root{--ink:#2b2724;--muted:#6b635b;--line:#d9d1c6;--panel:#f6f2ea;--accent:#b35a3e;--sel:#1f6fd1;color-scheme:light}   /* the editor is always light, even when the computer is in dark mode */
 *{box-sizing:border-box}
 body{margin:0;background:#ece7df;color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px}
+input,select,textarea{color:var(--ink);background-color:#fff}
 .app{display:grid;grid-template-columns:minmax(0,1fr) 7px var(--side,420px);min-height:100vh}
 .stage{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:24px;gap:14px}
-.canvas{flex:1;display:flex;align-items:center;justify-content:center;background:#e3ddd2;border-radius:6px;padding:24px;overflow:hidden}
+.canvas{flex:1;display:flex;align-items:center;justify-content:center;background:#e3ddd2;border-radius:6px;padding:24px;overflow:hidden;outline:none}
 .canvas svg{cursor:default;max-width:100%;max-height:100%;width:auto;height:auto;display:block}
-.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-button{font:inherit;font-size:13px;border:1px solid #b9b0a5;background:#fff;border-radius:4px;padding:8px 14px;cursor:pointer;color:var(--ink)}
-button:hover{background:var(--ink);color:#f3ede1}
-button.primary{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
-button.primary:hover{background:var(--accent);border-color:var(--accent)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:2px 0}
+.bar button{font:inherit;font-size:13px;border:1px solid #b9b0a5;background:#fff;border-radius:4px;padding:8px 14px;cursor:pointer;color:var(--ink)}
+.bar button:hover{background:#efe9df}
+.bar button.primary{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
+.bar button.primary:hover{background:var(--accent);border-color:var(--accent)}
+.bar :is(button,input):focus-visible{outline:2px solid var(--sel);outline-offset:2px}
+.bar .sep{width:1px;height:24px;background:var(--line);margin:0 2px}
+.bar label{color:var(--muted)}
 .hint{font-size:12px;color:var(--muted);line-height:1.5}
-.panel{background:var(--panel);padding:20px 22px 60px;overflow:auto;max-height:100vh}
-h1{font-size:16px;margin:0 0 2px;font-weight:600}
-h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px;padding-top:16px;border-top:1px solid var(--line)}
-.row{display:grid;grid-template-columns:110px 1fr 62px 26px;gap:10px;align-items:center;margin:7px 0}
-.row label{font-size:13px}
-.row input[type=range]{width:100%;accent-color:var(--ink)}
-.row input[type=number]{width:62px;font:inherit;font-size:12px;padding:3px 4px;border:1px solid var(--line);border-radius:3px;background:#fff}
-.lock{width:24px;height:24px;padding:0;border-radius:4px;display:flex;align-items:center;justify-content:center;border-color:transparent;background:none;color:#a39a8f}
-.lock:hover{background:#e6dfd3;color:var(--ink)}
-.lock.on{background:#1f6fd1;border-color:#1f6fd1;color:#fff}
-.lock svg{width:14px;height:14px}
-.pick{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;margin:7px 0}
-select,input[type=text]{font:inherit;font-size:13px;padding:5px 6px;border:1px solid var(--line);border-radius:3px;background:#fff;width:100%}
-input[type=color]{width:100%;height:30px;border:1px solid var(--line);border-radius:3px;padding:0;background:#fff}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.tabs button.on{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
-.sw{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
-.sw button{width:30px;height:30px;padding:0;border-radius:50%;border:1px solid #b9b0a5;overflow:hidden;position:relative}
-.sw button i{position:absolute;inset:0;border-radius:50%}
-.ver{display:flex;gap:6px;align-items:center;margin:6px 0}
-.ver span{flex:1}
-.ver button{padding:4px 9px;font-size:12px}
-.disabled{opacity:.45;pointer-events:none}
-@media(max-width:900px){.app{grid-template-columns:1fr}.grip{display:none}.stage{position:static;height:auto}.canvas{min-height:300px}.panel{max-height:none}}
-body.simple .only-full{display:none!important}
-.simple-panel h1{font-size:22px;margin:0 0 4px}
-.simple-panel .lead{font-size:14px;color:var(--muted);line-height:1.5;margin:0 0 6px}
-.simple-panel h2{font-size:13px;letter-spacing:.06em;margin:28px 0 12px;padding-top:18px}
-.stabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stabs button{padding:14px 10px;font-size:15px}
-.stabs button.on{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
-.srow{margin:16px 0}
-.srow .sl{font-size:15px;font-weight:600;margin-bottom:6px}
-.srow input[type=range]{width:100%;height:28px;accent-color:var(--ink)}
-.srow .se{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
-.spick{margin:16px 0}.spick .sl{font-size:15px;font-weight:600;margin-bottom:6px}
-.spick select{font-size:15px;padding:10px 8px}
-.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.chips button{display:flex;align-items:center;gap:10px;text-align:left;padding:8px 10px;font-size:13px}
-.chips .dot{width:28px;height:28px;border-radius:50%;border:1px solid #b9b0a5;flex:none}
-.link{background:none;border:none;color:#1f6fd1;padding:4px 0;font-size:13px;cursor:pointer;text-decoration:underline}
-.link:hover{background:none;color:#1a58a6}
-
-.order{margin:12px 0}.order .sl{font-size:13px;font-weight:600;margin-bottom:6px}
-.ord{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin:5px 0;padding:5px 8px;background:#fff;border:1px solid var(--line);border-radius:4px}
-.ord label{display:flex;gap:8px;align-items:center;font-size:13px}
-.ord button{padding:3px 10px}.ord.off label{color:var(--muted);text-decoration:line-through}
-body.simple #btnPdf{font-size:16px;padding:12px 22px}
-@media print{
-  body{background:none}
-  .app{display:block;min-height:0}.panel,.bar,.hint,.grip{display:none!important}
-  .stage{position:static;height:auto;padding:0}
-  .canvas{background:none;padding:0;border-radius:0;display:block}
-  .canvas svg{max-width:none;max-height:none}
-  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-}
-.panel h2.sel{color:#1f6fd1}.panel h2.sel::before{content:'● '}
-/* ---- v25 sidebar ---- */
+#selInfo{font-variant-numeric:tabular-nums}
+.panel{padding:20px 22px 60px;overflow:auto;max-height:100vh}
 .grip{position:sticky;top:0;height:100vh;cursor:col-resize;border-left:1px solid var(--line);background:var(--panel);touch-action:none;outline:none}
 .grip:hover,.grip.on,.grip:focus-visible{background:#d9d1c6;border-left-color:#b9b0a5}
 body.resizing{cursor:col-resize;user-select:none}
-.canvas{outline:none}
-.titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.nav{margin:6px 0 0;font-size:14px}.nav a{color:#1f6fd1}
-.switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
-.switch input{position:absolute;opacity:0;width:1px;height:1px}
-.switch .track{width:36px;height:20px;border-radius:10px;background:#c9c0b4;position:relative;transition:background .15s}
-.switch .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
-.switch input:checked+.track{background:var(--ink)}
-.switch input:checked+.track .knob{left:18px}
-.switch input:focus-visible+.track{outline:2px solid #1f6fd1;outline-offset:2px}
-.kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
-.lgroups{display:flex;flex-wrap:wrap;gap:10px 16px}
-.lgl{font-size:11px;color:var(--muted);margin-bottom:5px}
-.seg{display:inline-flex;flex-wrap:wrap;border:1px solid #b9b0a5;border-radius:6px;overflow:hidden;background:#fff;max-width:100%}
-.seg button{border:none;border-radius:0;border-right:1px solid #e3dccf;padding:8px 12px;background:#fff}
-.seg button:last-child{border-right:none}
-.seg button small{font-size:10px;opacity:.6;margin-left:5px}
-.seg button.on{background:var(--ink);color:#f3ede1}
-.seg button:not(.on):hover{background:#efe9df;color:var(--ink)}
-.seg.small button{padding:5px 10px;font-size:12px}
-.helpbox{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--muted);margin:16px 0 6px}
-.helpbox b{color:var(--ink)}
-.inlock{display:inline-block;width:13px;height:13px;vertical-align:-2px}.inlock svg{width:13px;height:13px}
-.acc{background:#fff;border:1px solid var(--line);border-radius:8px;margin:10px 0;overflow:hidden}
-.acc-h{width:100%;display:flex;align-items:center;gap:10px;border:none;border-radius:0;background:none;padding:13px 14px;font-size:14px;font-weight:600;text-align:left}
-.acc-h:hover{background:#faf7f1;color:var(--ink)}
-.chev{width:15px;height:15px;flex:none;transition:transform .15s;color:var(--muted)}
-.acc.open .chev{transform:rotate(90deg)}
-.acc-t{flex:1}
-.acc-badge{display:none;font-size:11px;font-weight:600;color:#1f6fd1}
-.acc.sel{border-color:#1f6fd1;box-shadow:0 0 0 1px #1f6fd1}
-.acc.sel .acc-badge{display:inline}
-.acc-b{display:none;padding:6px 14px 14px;border-top:1px solid var(--line)}
-.acc.open .acc-b{display:block}
-.row2{display:grid;grid-template-columns:minmax(0,1fr) auto 26px;gap:10px;align-items:center;margin:8px 0}
-.row2>label{font-size:13px;line-height:1.3}
-.row2.stack{grid-template-columns:1fr}.row2.stack>span{display:none}
-.row2 select{width:auto;max-width:210px}
-.row2 input[type=color]{width:128px;height:30px}
-.stepper{display:flex;border:1px solid #b9b0a5;border-radius:5px;overflow:hidden;background:#fff}
-.stepper .sb{-webkit-tap-highlight-color:transparent;border:none;border-radius:0;padding:0;width:34px;height:30px;font-size:17px;line-height:1;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
-.stepper .sb:hover{background:#efe9df;color:var(--ink)}
-.stepper .sb:active{background:#e3dccf}
-.stepper input{width:64px;border:none;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font:inherit;font-size:13px;padding:0 2px;-moz-appearance:textfield;appearance:textfield;background:#fff}
-.stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.checkrow{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13px}
-.steps{padding-left:20px;margin:12px 0 10px;line-height:1.7;font-size:14px}.steps li{margin:6px 0}.steps button{padding:4px 10px}
-.steps a,.acc .hint a{color:#1f6fd1}
-.pastebox{width:100%;min-height:150px;font:13px ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff}
-.foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
-#menuModes.menuseg{display:grid;grid-template-columns:1fr 1fr}.menuseg button{padding:10px 6px;font-size:13px;white-space:nowrap;border-bottom:1px solid #e3dccf}.menuseg button:nth-child(2n){border-right:none}.menuseg button:nth-child(n+3){border-bottom:none}
-button.armed,button.link.armed{background:#b35a3e!important;color:#fff!important;border-color:#b35a3e!important;text-decoration:none;padding:6px 10px}
-body.simple .row2>label,body.simple .checkrow{font-size:14px}
-body.simple .stepper .sb{width:40px;height:34px}
-/* ---- update 10: polish pass ---- */
-:root{--sel:#1f6fd1;--ok:#3f6b35;--bad:#b35a3e;--ctl:164px;--hover:#efe9df;--card:#fff;--radius:8px}
 /* the page fits the window: the top nav, then the canvas and the sidebar side by side, each scrolling on its own */
 @media(min-width:901px){
   body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
@@ -148,113 +39,196 @@ body.simple .stepper .sb{width:40px;height:34px}
   .stage,.grip{position:static;height:auto;min-height:0}
   .panel{max-height:none;min-height:0}
 }
-button:hover{background:var(--hover);color:var(--ink)}
-button:disabled{opacity:.35;cursor:default}
-button:disabled:hover{background:#fff}
-button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--sel);outline-offset:2px}
-select:hover,input[type=text]:hover,input[type=number]:hover{border-color:#b9b0a5}
-.bar{padding:2px 0}
-.bar .sep{width:1px;height:24px;background:var(--line);margin:0 2px}
-.bar label{color:var(--muted)}
-#selInfo{font-variant-numeric:tabular-nums}
-/* panel head */
-.titlerow h1{font-size:18px;font-weight:600;letter-spacing:-.01em}
-.titlerow h1 small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:2px;letter-spacing:0}
-.kicker{margin:22px 0 8px;font-weight:600}
-.lgl{font-weight:600;letter-spacing:.02em}
-/* help box: keys look like keys */
-.helpbox{padding:12px 14px 12px}
-.helpbox p{margin:0 0 6px;color:var(--ink)}
-.helpbox ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline}
-.helpbox li{display:contents}
-.helpbox li>span:first-child{white-space:nowrap}
-kbd{display:inline-block;min-width:20px;padding:1px 5px;font:600 11px/16px ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--ink);background:#faf7f1;border:1px solid #cfc6b9;border-bottom-width:2px;border-radius:4px}
-/* accordion sections */
-.acc{border-radius:var(--radius);transition:box-shadow .15s,border-color .15s}
-.acc-h{padding:12px 14px;min-height:46px}
-.acc-h:hover{background:#faf7f1}
-.acc-sum{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:400;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
-.acc-sum .dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.18);flex:none}
-.acc-badge{font-size:10px;letter-spacing:.06em;text-transform:uppercase;background:var(--sel);color:#fff;border-radius:10px;padding:2px 8px}
-.acc.sel .acc-sum{display:none}
-.acc.sel{border-color:var(--sel);box-shadow:0 0 0 1px var(--sel)}
-.acc-b{padding:4px 14px 14px}
-.acc-b>.hint{margin:4px 0 8px!important;padding-left:10px;border-left:2px solid var(--line)}
-/* a small heading inside a section */
-.sub{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px;display:flex;align-items:center;gap:8px}
-.sub::after{content:'';flex:1;height:1px;background:var(--line)}
-.acc-b>.sub:first-child{margin-top:10px}
-/* setting rows: label on the left, every control the same width on the right */
-.row2{grid-template-columns:minmax(0,1fr) var(--ctl) 26px;gap:10px;margin:6px 0;min-height:32px}
-.row2.stack{grid-template-columns:1fr;gap:6px}
-.lab{display:flex;align-items:center;gap:4px;min-width:0}
-.lab label{font-size:13px;line-height:1.3}
-.reset{visibility:hidden;flex:none;width:20px;height:20px;padding:0;border:none;border-radius:50%;background:none;color:var(--muted);font-size:13px;line-height:20px}
-.reset.on{visibility:visible}
-.reset:hover{background:var(--hover);color:var(--ink)}
-.row2 select{width:var(--ctl);max-width:none}
-.row2.stack select{width:100%}
-.stepper{width:var(--ctl);position:relative}
-.stepper input{flex:1;width:0;min-width:0;font-variant-numeric:tabular-nums}
-.stepper .unit{position:absolute;right:40px;top:0;line-height:30px;font-size:11px;color:var(--muted);pointer-events:none}
-.stepper.has-unit input{padding-right:16px;padding-left:2px}
-body.simple .stepper .unit{right:46px;line-height:34px}
-.row2 .seg.small{width:var(--ctl);display:flex}
-.row2 .seg.small button{flex:1;padding:6px 6px}
-.row2.stack .seg.small{width:100%}
-.colorctl{width:var(--ctl);display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:5px;background:#fff;padding:3px 8px 3px 3px;cursor:pointer}
-.colorctl:hover{border-color:#b9b0a5}
-.colorctl input[type=color]{width:34px!important;height:24px!important;border:none;padding:0;background:none;cursor:pointer;flex:none}
-.colorctl input[type=color]::-webkit-color-swatch-wrapper{padding:0}
-.colorctl input[type=color]::-webkit-color-swatch{border:1px solid rgba(0,0,0,.18);border-radius:3px}
-.colorctl code{font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);text-transform:uppercase}
-.row2.off,.checkrow.off{opacity:.45}
-.row2 .why{grid-column:1/-1;font-size:11.5px;color:var(--muted);margin:-2px 0 2px}
-.checkrow{line-height:1.35;cursor:pointer}
-.checkrow input{accent-color:var(--ink);width:16px;height:16px;flex:none;margin:0}
-/* color presets */
-.swl{font-size:11px;color:var(--muted);font-weight:600;margin:10px 0 2px}
-.sw{gap:7px;margin:6px 0 10px}
-.sw button{width:28px;height:28px;border-color:rgba(0,0,0,.2)}
-.sw button:hover{transform:scale(1.08)}
-.sw button.on,.chips button.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
-.chips{margin:6px 0 10px}
-.chips button.on{border-color:var(--ink)}
-/* order list */
-.order .sl{font-size:12px;color:var(--muted);font-weight:600}
-.ord{padding:4px 4px 4px 10px;gap:4px;border-radius:6px}
-.ord label{cursor:pointer;flex:1}
-.ord input{accent-color:var(--ink);margin:0}
-.ord .n{display:inline-block;width:16px;color:var(--muted);font-variant-numeric:tabular-nums}
-.ord button{width:30px;height:28px;padding:0;border-color:transparent;background:none;color:var(--muted)}
-.ord button:not(:disabled):hover{background:var(--hover);color:var(--ink)}
-.ord.off{background:#faf7f1}
-/* saved versions */
-.vlist{margin:8px 0;border:1px solid var(--line);border-radius:6px;background:#fff;overflow:hidden}
-.vlist:empty{display:none}
-.vrow{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 10px;border-top:1px solid var(--line)}
-.vrow:first-child{border-top:none}
-.vrow .vn{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vrow .vn small{color:var(--muted);margin-left:6px}
-.vrow button{padding:4px 10px;font-size:12px}
-.ver input[type=text]{flex:1}
-/* menu: edit in boxes */
-.mcard{border:1px solid var(--line);background:#fff;border-radius:var(--radius);padding:12px;margin:12px 0}
-.mcard .mk{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.mgrid{display:grid;grid-template-columns:1fr 76px;gap:8px}
-.mgrid .fl{font-size:11px;color:var(--muted);margin-bottom:-4px}
-.mdish{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
-.mdish textarea{width:100%;font:inherit;font-size:13px;padding:6px 7px;border:1px solid var(--line);border-radius:3px;margin-top:6px;resize:vertical}
-.mcard .ver button{padding:4px 9px;font-size:12px}
-.status.ok{color:var(--ok)}.status.bad{color:var(--bad)}
-/* footer */
-.foot{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
-.foot details summary{cursor:pointer}
-.foot details ul{padding-left:18px;margin:8px 0}
-@media(max-width:900px){.acc-sum{display:none}}
-@media(max-width:480px){:root{--ctl:138px}.panel{padding:16px 14px 48px}.acc-b{padding:4px 10px 12px}.row2{gap:8px}.stepper .sb,body.simple .stepper .sb{width:34px}body.simple .stepper .unit{right:40px}}
-@media print{body{display:block;height:auto;overflow:visible}.gnav{display:none}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.grip{display:none}.stage{position:static;height:auto}.canvas{min-height:300px}.panel{max-height:none}}
+@media(max-width:480px){.panel{padding:16px 14px 48px}}
+/* Simple: fewer controls, bigger targets */
+body.simple .only-full{display:none!important}
+body.simple #btnPdf{font-size:16px;padding:12px 22px}
+body.simple .panel .row2>label,body.simple .panel .lab label,body.simple .panel .checkrow{font-size:14px}
+body.simple .panel .stepper .sb{width:40px;height:34px}
+body.simple .panel .stepper .unit{right:46px;line-height:34px}
+@media(max-width:480px){body.simple .panel .stepper .sb{width:34px}body.simple .panel .stepper .unit{right:40px}}
+/* editor-only bits inside the panel */
+.panel .steps{padding-left:20px;margin:12px 0 10px;line-height:1.7;font-size:14px}.panel .steps li{margin:6px 0}.panel .steps button{padding:4px 10px}
+.panel .pastebox{width:100%;min-height:150px;font:13px ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff}
+.panel #menuModes.menuseg{display:grid;grid-template-columns:1fr 1fr}
+.panel .menuseg button{padding:10px 6px;font-size:13px;white-space:nowrap;border-bottom:1px solid #e3dccf}
+.panel .menuseg button:nth-child(2n){border-right:none}.panel .menuseg button:nth-child(n+3){border-bottom:none}
+.panel .mcard{border:1px solid var(--line);background:#fff;border-radius:var(--radius);padding:12px;margin:12px 0}
+.panel .mcard .mk{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.panel .mgrid{display:grid;grid-template-columns:1fr 76px;gap:8px}
+.panel .mgrid .fl{font-size:11px;color:var(--muted);margin-bottom:-4px}
+.panel .mdish{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
+.panel .mdish textarea{font-size:13px;margin-top:6px}
+.panel .mcard .ver button{padding:4px 9px;font-size:12px}
+@media print{
+  body{background:none;display:block;height:auto;overflow:visible}
+  .app{display:block;min-height:0}.panel,.bar,.hint,.grip,.gnav{display:none!important}
+  .stage{position:static;height:auto;padding:0}
+  .canvas{background:none;padding:0;border-radius:0;display:block}
+  .canvas svg{max-width:none;max-height:none}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
+<!-- panel-css:start -->
+<style id="panel-css">
+/* The editing panel: one look for every tool (logo and menu editor, social post maker).
+   This block is the same in editor.html and social.html. Edit it in editor.html, then run
+   python3 tools/sync-panel.py to copy it across (add --check to only compare). */
+.panel{--ink:#2b2724;--muted:#6b635b;--line:#d9d1c6;--edge:#b9b0a5;--panel:#f6f2ea;--hover:#efe9df;--soft:#faf7f1;--accent:#b35a3e;--sel:#1f6fd1;--ok:#3f6b35;--bad:#b35a3e;--ctl:164px;--radius:8px;
+  background:var(--panel);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:normal;min-width:0;color-scheme:light}
+.panel *{box-sizing:border-box}
+/* buttons and fields */
+.panel button{font:inherit;font-size:13px;border:1px solid var(--edge);background:#fff;border-radius:4px;padding:8px 14px;cursor:pointer;color:var(--ink)}
+.panel button:hover{background:var(--hover);color:var(--ink)}
+.panel button.primary{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
+.panel button.primary:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.panel button.danger{color:var(--accent);border-color:#d8b4a8}
+.panel button.danger:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.panel button:disabled{opacity:.35;cursor:default}
+.panel button:disabled:hover{background:#fff}
+.panel button.link{background:none;border:none;color:var(--sel);padding:4px 0;font-size:13px;text-decoration:underline}
+.panel button.link:hover{background:none;color:#1a58a6}
+.panel button.armed,.panel button.link.armed{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important;text-decoration:none;padding:6px 10px}
+.panel :is(button,select,input,textarea,a,summary):focus-visible{outline:2px solid var(--sel);outline-offset:2px}
+.panel input,.panel select,.panel textarea{color:var(--ink);background-color:#fff}
+.panel :is(input,textarea)::placeholder{color:#9a9188}
+.panel select,.panel input[type=text],.panel textarea{font:inherit;font-size:13px;padding:5px 6px;border:1px solid var(--line);border-radius:3px;width:100%}
+.panel :is(select,input[type=text],input[type=number],textarea):hover{border-color:var(--edge)}
+.panel textarea{line-height:1.5;padding:8px;resize:vertical}
+.panel a{color:var(--sel)}
+.panel .hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+.panel .status{font-size:12px;font-weight:600;min-height:1.2em;margin:0}
+.panel .ok,.panel .status.ok{color:var(--ok)}.panel .bad,.panel .status.bad{color:var(--bad)}
+/* title row: name of the tool, a line under it, and (in the editor) the Simple switch */
+.panel .titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel .titlerow :is(h1,h2){font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0}
+.panel .titlerow :is(h1,h2) small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:2px;letter-spacing:0}
+.panel .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+.panel .switch input{position:absolute;opacity:0;width:1px;height:1px}
+.panel .switch .track{width:36px;height:20px;border-radius:10px;background:#c9c0b4;position:relative;transition:background .15s}
+.panel .switch .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.panel .switch input:checked+.track{background:var(--ink)}
+.panel .switch input:checked+.track .knob{left:18px}
+.panel .switch input:focus-visible+.track{outline:2px solid var(--sel);outline-offset:2px}
+/* "what are you making" picker under the title */
+.panel .kicker{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+.panel .lgroups{display:flex;flex-wrap:wrap;gap:10px 16px}
+.panel .lgl{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--muted);margin-bottom:5px}
+.panel .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--edge);border-radius:6px;overflow:hidden;background:#fff;max-width:100%}
+.panel .seg button{border:none;border-radius:0;border-right:1px solid #e3dccf;padding:8px 12px;background:#fff}
+.panel .seg button:last-child{border-right:none}
+.panel .seg button small{font-size:10px;opacity:.6;margin-left:5px}
+.panel .seg button:is(.on,[aria-pressed="true"],[aria-selected="true"]){background:var(--ink);color:#f3ede1}
+.panel .seg button:not(.on):not([aria-pressed="true"]):not([aria-selected="true"]):hover{background:var(--hover);color:var(--ink)}
+.panel .seg.small button{padding:6px 6px;font-size:12px}
+/* help box */
+.panel .helpbox{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;font-size:13px;line-height:1.55;color:var(--muted);margin:16px 0 6px}
+.panel .helpbox b{color:var(--ink)}
+.panel .helpbox p{margin:0 0 6px;color:var(--ink)}
+.panel .helpbox ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline}
+.panel .helpbox li{display:contents}
+.panel .helpbox li>span:first-child{white-space:nowrap}
+.panel kbd{display:inline-block;min-width:20px;padding:1px 5px;font:600 11px/16px ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--ink);background:var(--soft);border:1px solid #cfc6b9;border-bottom-width:2px;border-radius:4px}
+.panel .inlock{display:inline-block;width:13px;height:13px;vertical-align:-2px}.panel .inlock svg{width:13px;height:13px}
+/* sections that open and close */
+.panel .acc{background:#fff;border:1px solid var(--line);border-radius:var(--radius);margin:10px 0;overflow:hidden;transition:box-shadow .15s,border-color .15s}
+.panel .acc-h{width:100%;display:flex;align-items:center;gap:10px;border:none;border-radius:0;background:none;padding:12px 14px;min-height:46px;font-size:14px;font-weight:600;text-align:left}
+.panel .acc-h:hover{background:var(--soft);color:var(--ink)}
+.panel .chev{width:15px;height:15px;flex:none;transition:transform .15s;color:var(--muted)}
+.panel .acc.open .chev{transform:rotate(90deg)}
+.panel .acc-t{flex:1}
+.panel .acc-sum{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:400;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+.panel .acc-sum .dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.18);flex:none}
+.panel .acc-badge{display:none;font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;background:var(--sel);color:#fff;border-radius:10px;padding:2px 8px}
+.panel .acc.sel{border-color:var(--sel);box-shadow:0 0 0 1px var(--sel)}
+.panel .acc.sel .acc-badge{display:inline}
+.panel .acc.sel .acc-sum{display:none}
+.panel .acc-b{display:none;padding:4px 14px 14px;border-top:1px solid var(--line)}
+.panel .acc.open .acc-b{display:block}
+.panel .acc-b>.hint{margin:4px 0 8px;padding-left:10px;border-left:2px solid var(--line)}
+/* a small heading inside a section */
+.panel .sub{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px;display:flex;align-items:center;gap:8px}
+.panel .sub::after{content:'';flex:1;height:1px;background:var(--line)}
+.panel .acc-b>.sub:first-child{margin-top:10px}
+/* setting rows: label on the left, every control the same width on the right (a third column holds the link button) */
+.panel .row2{display:grid;grid-template-columns:minmax(0,1fr) var(--ctl) 26px;gap:10px;align-items:center;margin:6px 0;min-height:32px}
+.panel .row2.two{grid-template-columns:minmax(0,1fr) var(--ctl)}
+.panel .row2.stack{grid-template-columns:1fr;gap:6px}
+.panel .row2>label,.panel .lab label{font-size:13px;line-height:1.3}
+.panel .lab{display:flex;align-items:center;gap:4px;min-width:0}
+.panel .reset{visibility:hidden;flex:none;width:20px;height:20px;padding:0;border:none;border-radius:50%;background:none;color:var(--muted);font-size:13px;line-height:20px}
+.panel .reset.on{visibility:visible}
+.panel .reset:hover{background:var(--hover);color:var(--ink)}
+.panel .row2 select{width:var(--ctl)}
+.panel .row2.stack select{width:100%}
+.panel .row2 .seg.small{width:var(--ctl);display:flex}
+.panel .row2 .seg.small button{flex:1;white-space:nowrap}
+.panel .row2.stack .seg.small{width:100%}
+.panel .row2.off,.panel .checkrow.off{opacity:.45}
+.panel .row2 .why{grid-column:1/-1;font-size:11.5px;color:var(--muted);margin:-2px 0 2px}
+.panel .stepper{display:flex;width:var(--ctl);position:relative;border:1px solid var(--edge);border-radius:5px;overflow:hidden;background:#fff}
+.panel .stepper .sb{-webkit-tap-highlight-color:transparent;border:none;border-radius:0;padding:0;width:34px;height:30px;font-size:17px;line-height:1;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+.panel .stepper .sb:hover{background:var(--hover)}
+.panel .stepper .sb:active{background:#e3dccf}
+.panel .stepper input{flex:1;width:0;min-width:0;border:none;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font:inherit;font-size:13px;padding:0 2px;-moz-appearance:textfield;appearance:textfield;font-variant-numeric:tabular-nums}
+.panel .stepper input::-webkit-inner-spin-button,.panel .stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.panel .stepper .unit{position:absolute;right:40px;top:0;line-height:30px;font-size:11px;color:var(--muted);pointer-events:none}
+.panel .stepper.has-unit input{padding-right:16px;padding-left:2px}
+.panel .lock{width:24px;height:24px;padding:0;border-radius:4px;display:flex;align-items:center;justify-content:center;border-color:transparent;background:none;color:#a39a8f}
+.panel .lock:hover{background:#e6dfd3;color:var(--ink)}
+.panel .lock.on{background:var(--sel);border-color:var(--sel);color:#fff}
+.panel .lock svg{width:14px;height:14px}
+.panel .colorctl{width:var(--ctl);display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:5px;background:#fff;padding:3px 8px 3px 3px;cursor:pointer}
+.panel .colorctl:hover{border-color:var(--edge)}
+.panel .colorctl input[type=color]{width:34px;height:24px;border:none;padding:0;background:none;cursor:pointer;flex:none}
+.panel .colorctl input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.panel .colorctl input[type=color]::-webkit-color-swatch{border:1px solid rgba(0,0,0,.18);border-radius:3px}
+.panel .colorctl code{font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);text-transform:uppercase}
+.panel .checkrow{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13px;line-height:1.35;cursor:pointer}
+.panel .checkrow input{accent-color:var(--ink);width:16px;height:16px;flex:none;margin:0}
+/* color presets: round swatches, or labeled chips */
+.panel .swl{font-size:11px;color:var(--muted);font-weight:600;margin:10px 0 2px}
+.panel .sw{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 10px}
+.panel .sw button{width:28px;height:28px;padding:0;border-radius:50%;border:1px solid rgba(0,0,0,.2);overflow:hidden;position:relative;transition:transform .1s}
+.panel .sw button i{position:absolute;inset:0;border-radius:50%}
+.panel .sw button:hover{transform:scale(1.08)}
+.panel .chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 10px}
+.panel .chips button{display:flex;align-items:center;gap:10px;text-align:left;padding:8px 10px;font-size:13px}
+.panel .chips .dot{width:28px;height:28px;border-radius:50%;border:1px solid var(--edge);flex:none}
+.panel :is(.sw,.chips) button:is(.on,[aria-pressed="true"]){box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink);border-color:var(--ink)}
+/* pieces in order (tick to show, arrows to move) */
+.panel .order{margin:12px 0}
+.panel .order .sl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.panel .ord{display:grid;grid-template-columns:1fr auto auto;gap:4px;align-items:center;margin:5px 0;padding:4px 4px 4px 10px;background:#fff;border:1px solid var(--line);border-radius:6px}
+.panel .ord label{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;flex:1}
+.panel .ord input{accent-color:var(--ink);margin:0}
+.panel .ord .n{display:inline-block;width:16px;color:var(--muted);font-variant-numeric:tabular-nums}
+.panel .ord button{width:30px;height:28px;padding:0;border-color:transparent;background:none;color:var(--muted)}
+.panel .ord button:not(:disabled):hover{background:var(--hover);color:var(--ink)}
+.panel .ord.off{background:var(--soft)}
+.panel .ord.off label{color:var(--muted);text-decoration:line-through}
+/* a row of small buttons, and a list with buttons on each line */
+.panel .ver{display:flex;gap:6px;align-items:center;margin:6px 0}
+.panel .ver>span{flex:1}
+.panel .ver input[type=text]{flex:1}
+.panel .ver button{padding:4px 9px;font-size:12px}
+.panel .btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.panel .vlist{margin:8px 0;border:1px solid var(--line);border-radius:6px;background:#fff;overflow:hidden}
+.panel .vlist:empty{display:none}
+.panel .vrow{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 10px;border-top:1px solid var(--line)}
+.panel .vrow:first-child{border-top:none}
+.panel .vrow .vn{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panel .vrow .vn small{color:var(--muted);margin-left:6px}
+.panel .vrow button{padding:4px 10px;font-size:12px}
+/* the bottom of the panel */
+.panel .foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.panel .foot details summary{cursor:pointer}
+.panel .foot details ul{padding-left:18px;margin:8px 0}
+@media(max-width:900px){.panel .acc-sum{display:none}}
+@media(max-width:480px){.panel{--ctl:138px}.panel .acc-b{padding:4px 10px 12px}.panel .row2{gap:8px}}
+</style>
+<!-- panel-css:end -->
 </head>
 <body>
 <!-- global-nav:start -->
@@ -341,7 +315,7 @@ const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n
 const NS='http://www.w3.org/2000/svg';
 const VERSION='v26', VERSION_DATE='2026-11-03', UPDATE=10;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
- ['v26 · 10','Tidier sidebar: settings grouped under small headings, every control lines up, plainer names (for example “Hairline detail”, “CAPS”, “Style 1 / 2”), a ↺ button to put any one setting back, the colors in use shown on the Colors bar, and settings that do nothing right now are dimmed with the reason. The Background color is called “Inside the oval” on the oval logo and “Awning” on the awning. The links that repeated the top nav are gone. The export buttons always fit on screen.'],
+ ['v26 · 10','Tidier sidebar: settings grouped under small headings, every control lines up, plainer names (for example “Hairline detail”, “CAPS”, “Style 1 / 2”), a ↺ button to put any one setting back, the colors in use shown on the Colors bar, and settings that do nothing right now are dimmed with the reason. The Background color is called “Inside the oval” on the oval logo and “Awning” on the awning. The links that repeated the top nav are gone. The export buttons always fit on screen. The Social post maker now uses this same panel.'],
  ['v26','Change the order of the pieces on every layout (for example the tagline above “mémé on 10”, or the squiggle first in a header), and hide pieces you don’t want. The header, awning and menu page can use any version of the logo: one line, the oval logo, the logo without the oval, or a saved version.'],
  ['v25','New sidebar: one view with a Simple on/off switch; every part of the logo has its own section (closed to start) that opens when you click that part; − / + buttons you can hold down instead of sliders; layouts grouped into Logo and Made with the logo. No more dragging or snapping: click a part, then use the arrow keys, + / −, Tab and Esc (the pink line still shows when things line up). The sidebar can be made wider or narrower by dragging its left edge. Menu words can now be edited in Google Sheets, pasted straight from a Google Doc or Word (headings, bold dish names and prices are read from the formatting), or saved and opened as a text file.'],
  ['v24','Brand colors: olive, navy and cream, with charcoal for text. New “Brand” color presets at the top of the list; every older preset is still there. New logos start in charcoal and olive on cream; menu text starts in charcoal. The homepage can open any layout directly.'],
@@ -1394,7 +1368,7 @@ function stepperRow(k,label,min,max,step){
 }
 function pickRow(k,label,opts){
   const num=typeof opts[0]==='number', seg=opts.length<=3, id='f'+(++uid);
-  const r=document.createElement('div'); r.className='row2'+(seg&&opts.map(o=>optName(k,o)).join('').length>24?' stack':'');
+  const r=document.createElement('div'); r.className='row2'+(seg&&opts.map(o=>optName(k,o)).join('').length>18?' stack':'');
   const setTo=v=>{ put(k,v); render(); sync(); };
   r.appendChild(labCell(k,label,seg?null:id,()=>setTo(defOf(k))));
   if(seg){
