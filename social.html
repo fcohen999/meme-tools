@@ -42,51 +42,12 @@ h1{font:700 clamp(34px,5vw,46px)/1.05 var(--display);margin:0 0 22px}
 .newcell b{font:400 34px/1 var(--body)}
 .gridnote{font-size:13px;color:var(--muted);margin:10px 0 0}
 .empty{padding:24px;border:1px dashed var(--rule);color:var(--muted);font-size:15px}
-/* studio */
-.studio{border:2px solid var(--line);background:var(--card);padding:22px;display:grid;gap:18px}
-.studio h2{font:600 19px/1.2 var(--body);margin:0}
-.shead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.field{display:grid;gap:8px;border:0;margin:0;padding:0;min-width:0}
-.field>legend,.field>label,.lbl{font:500 11px var(--body);letter-spacing:.2em;text-transform:uppercase;padding:0;margin:0 0 2px}
-.seg{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);width:max-content;max-width:100%}
-.seg button{border:0;border-right:1px solid var(--line);background:#fff;padding:8px 14px;cursor:pointer;min-height:40px;font-size:15px}
-.seg button:last-child{border-right:0}
-.seg button[aria-pressed="true"]{background:var(--line);color:var(--card)}
-.assets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.asset{border:1px solid var(--rule);background:#fff;padding:4px;cursor:pointer;aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.asset img{max-width:100%;max-height:100%;display:block}
-.asset.ph img{width:100%;height:100%;object-fit:cover;max-width:none;max-height:none}
-.asset[aria-pressed="true"]{border:2px solid var(--line);box-shadow:inset 0 0 0 2px #fff}
-.asset span{position:absolute;inset:auto 0 0 0;background:rgba(251,248,242,.92);font-size:10.5px;line-height:1.2;padding:2px 3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.asset.up{border-style:dashed;flex-direction:column;font-size:12.5px;gap:2px;text-align:center}
-.asset.up b{font-weight:400;font-size:24px;line-height:1}
-.swatches{display:flex;gap:10px;flex-wrap:wrap}
-.sw{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);cursor:pointer;padding:0}
-.sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--line)}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-input[type=text],textarea,select{width:100%;border:1px solid var(--line);background:#fff;padding:9px 10px;font-size:15px;border-radius:0}
-textarea{min-height:120px;resize:vertical;line-height:1.45}
-input:focus-visible,textarea:focus-visible,select:focus-visible,.seg button:focus-visible,.asset:focus-visible,.sw:focus-visible,.btn:focus-visible,.chip:focus-visible{outline:3px solid var(--olive);outline-offset:2px}
-.checks{display:flex;gap:18px;flex-wrap:wrap;font-size:15px}
-.checks label{display:flex;gap:6px;align-items:center;cursor:pointer}
-.preview{background:var(--tile);border:1px solid var(--line);display:flex;justify-content:center;padding:12px}
-.preview svg{display:block;width:100%;max-width:340px;height:auto}
-.preview.story svg{max-width:200px}
-.counts{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--muted)}
-.counts .over{color:#9b2b1f;font-weight:600}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid var(--line);background:#fff;padding:5px 10px;border-radius:999px;font-size:13.5px;cursor:pointer;min-height:32px}
-.chip[aria-pressed="true"]{background:var(--olive);border-color:var(--olive);color:var(--cream)}
-.chip.custom::after{content:" ×";opacity:.7}
-.addtag{display:flex;gap:6px}
-.addtag input{flex:1}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
 .btn{border:1px solid var(--line);background:#fff;padding:10px 16px;font-size:15px;cursor:pointer;min-height:44px}
 .btn.primary{background:var(--line);color:var(--card)}
 .btn.quiet{border-color:var(--rule)}
 .btn.danger{color:#9b2b1f;border-color:#c9a59e}
 .btn.small2{padding:6px 12px;min-height:36px;font-size:14px}
-.status{font-size:13px;color:var(--olive);min-height:1.2em;margin:0}
 .hint{font-size:13px;color:var(--muted);margin:0;line-height:1.45}
 /* lightbox */
 dialog.lb{border:2px solid var(--line);background:var(--card);padding:22px;width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;color:var(--fg)}
@@ -101,7 +62,82 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
 .lb .btns{margin-top:14px}
 .lb .pos{font-size:13px;color:var(--muted);margin-left:auto;align-self:center}
 @media (max-width:900px){.board{grid-template-columns:1fr}.gridcol{position:static;max-height:none;overflow:visible}}
-@media (max-width:480px){.tabs{display:flex}.tabs button{flex:1;padding:10px 8px;font-size:15px}.tabs .n{display:none}.row2{grid-template-columns:1fr}.studio{padding:16px}.ig{gap:3px}}
+@media (max-width:480px){.tabs{display:flex}.tabs button{flex:1;padding:10px 8px;font-size:15px}.tabs .n{display:none}.ig{gap:3px}}
+
+/* ---- Editing panel: same look and behavior as the logo editor's sidebar (editor.html v25). Keep the two in step. ---- */
+.panel{--ink:#2b2724;--muted:#6b635b;--line:#d9d1c6;--panel:#f6f2ea;--accent:#b35a3e;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px 22px 26px;color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;min-width:0}
+.panel h2{font-size:16px;margin:0;font-weight:600}
+.panel .titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel input,.panel select,.panel textarea{color:var(--ink);background-color:#fff}
+.panel button{font:inherit;font-size:13px;border:1px solid #b9b0a5;background:#fff;border-radius:4px;padding:8px 14px;cursor:pointer;color:var(--ink)}
+.panel button:hover{background:var(--ink);color:#f3ede1}
+.panel button.primary{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
+.panel button.primary:hover{background:var(--accent);border-color:var(--accent)}
+.panel button:disabled{opacity:.45;cursor:default}
+.panel button:focus-visible,.panel input:focus-visible,.panel select:focus-visible,.panel textarea:focus-visible{outline:2px solid #1f6fd1;outline-offset:2px}
+.panel .hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+.panel .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
+.panel .lgroups{display:flex;flex-wrap:wrap;gap:10px 16px}
+.panel .lgl{font-size:11px;color:var(--muted);margin-bottom:5px}
+.panel .seg{display:inline-flex;flex-wrap:wrap;border:1px solid #b9b0a5;border-radius:6px;overflow:hidden;background:#fff;max-width:100%}
+.panel .seg button{border:none;border-radius:0;border-right:1px solid #e3dccf;padding:8px 12px;background:#fff}
+.panel .seg button:last-child{border-right:none}
+.panel .seg button small{font-size:10px;opacity:.6;margin-left:5px}
+.panel .seg button[aria-pressed="true"],.panel .seg button[aria-selected="true"]{background:var(--ink);color:#f3ede1}
+.panel .seg button:not([aria-pressed="true"]):not([aria-selected="true"]):hover{background:#efe9df;color:var(--ink)}
+.panel .helpbox{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--muted);margin:16px 0 6px}
+.panel .helpbox b{color:var(--ink)}
+.panel .acc{background:#fff;border:1px solid var(--line);border-radius:8px;margin:10px 0;overflow:hidden}
+.panel .acc-h{width:100%;display:flex;align-items:center;gap:10px;border:none;border-radius:0;background:none;padding:13px 14px;font-size:14px;font-weight:600;text-align:left}
+.panel .acc-h:hover{background:#faf7f1;color:var(--ink)}
+.panel .chev{width:15px;height:15px;flex:none;transition:transform .15s;color:var(--muted)}
+.panel .acc.open .chev{transform:rotate(90deg)}
+.panel .acc-t{flex:1}
+.panel .acc-badge{font-size:11px;font-weight:400;color:var(--muted)}
+.panel .acc-b{display:none;padding:6px 14px 14px;border-top:1px solid var(--line)}
+.panel .acc.open .acc-b{display:block}
+.panel .row2{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:10px;align-items:center;margin:8px 0}
+.panel .row2>label{font-size:13px;line-height:1.3}
+.panel .row2.stack{grid-template-columns:1fr;gap:5px}
+.panel select,.panel input[type=text],.panel textarea{font:inherit;font-size:13px;padding:5px 6px;border:1px solid var(--line);border-radius:3px;background:#fff;width:100%}
+.panel textarea{min-height:110px;resize:vertical;line-height:1.5;padding:8px}
+.panel .checkrow{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13px}
+.panel .sw{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.panel .sw button{width:30px;height:30px;padding:0;border-radius:50%;border:1px solid #b9b0a5;overflow:hidden;position:relative}
+.panel .sw button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
+.panel .swl{font-size:12px;color:var(--muted)}
+.panel .assets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0}
+.panel .asset{border:1px solid var(--line);border-radius:4px;background:#fff;padding:3px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.panel .asset:hover{background:#faf7f1;color:var(--ink)}
+.panel .asset img{max-width:100%;max-height:100%;display:block}
+.panel .asset.ph img{width:100%;height:100%;object-fit:cover;max-width:none;max-height:none;border-radius:2px}
+.panel .asset[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.panel .asset span{position:absolute;inset:auto 0 0 0;background:rgba(255,255,255,.92);font-size:10px;line-height:1.2;padding:2px 3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel .asset.up{border-style:dashed;flex-direction:column;font-size:12px;gap:2px;text-align:center}
+.panel .asset.up b{font-weight:400;font-size:22px;line-height:1}
+.panel .preview{background:#e3ddd2;border-radius:6px;display:flex;justify-content:center;padding:14px;margin:8px 0 4px}
+.panel .preview svg{display:block;width:100%;max-width:300px;height:auto;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.panel .preview.story svg{max-width:170px}
+.panel .counts{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin:6px 0}
+.panel .counts .over{color:var(--accent);font-weight:600}
+.panel .link{background:none;border:none;color:#1f6fd1;padding:4px 0;font-size:13px;cursor:pointer;text-decoration:underline}
+.panel button.armed,.panel button.link.armed{background:#b35a3e!important;color:#fff!important;border-color:#b35a3e!important;text-decoration:none;padding:6px 10px}
+.panel .link:hover{background:none;color:#1a58a6}
+.panel .tagchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.panel .chip{border-radius:999px;padding:5px 10px;font-size:12.5px}
+.panel .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#f3ede1}
+.panel .chip[aria-pressed="false"]{color:var(--muted)}
+.panel .chip.custom::after{content:" ×";opacity:.7}
+.panel .addtag{display:flex;gap:6px}
+.panel .addtag input{flex:1}
+.panel .addtag button{padding:5px 12px}
+.panel .foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:10px}
+.panel .btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.panel .btns .big1{font-size:15px;padding:11px 20px}
+.panel button.danger{color:var(--accent);border-color:#d8b4a8}
+.panel button.danger:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.panel .status{font-size:12px;color:var(--olive);min-height:1.2em;margin:0;font-weight:600}
+@media (max-width:480px){.panel{padding:16px 14px 22px}.panel .row2{grid-template-columns:1fr;gap:5px}}
 </style>
 </head>
 <body>
@@ -251,83 +287,78 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
    <p class="gridnote" id="gridnote">Newest first, like your profile. Drag tiles to change the order.</p>
   </div>
 
-  <section class="studio" aria-labelledby="studioTitle">
-   <div class="shead">
-    <h2 id="studioTitle">New post</h2>
-    <button class="btn small2 quiet" id="btnNew" type="button" hidden>Start a new one</button>
-   </div>
+  <aside class="panel" aria-labelledby="studioTitle">
+  <div class="titlerow"><h2>Make a post</h2></div>
 
-   <fieldset class="field">
-    <legend>Size</legend>
+  <div class="kicker" id="studioTitle">New post</div>
+  <div class="lgroups">
+   <div><div class="lgl">Size</div>
     <div class="seg" id="segFormat">
-     <button type="button" data-v="square" aria-pressed="true">Post · square</button>
-     <button type="button" data-v="story" aria-pressed="false">Story · tall</button>
-    </div>
-   </fieldset>
-
-   <fieldset class="field">
-    <legend>Made from</legend>
+     <button type="button" data-v="square" aria-pressed="true">Post<small>square</small></button>
+     <button type="button" data-v="story" aria-pressed="false">Story<small>tall</small></button>
+    </div></div>
+   <div><div class="lgl">Made from</div>
     <div class="seg" id="segTpl">
      <button type="button" data-v="drawing" aria-pressed="true">Drawing</button>
      <button type="button" data-v="photo" aria-pressed="false">Photo</button>
      <button type="button" data-v="logo" aria-pressed="false">Logo</button>
-    </div>
-   </fieldset>
+    </div></div>
+  </div>
 
-   <fieldset class="field" id="fAssets">
-    <legend id="assetsLegend">Pick a drink</legend>
-    <div class="assets" id="assets"></div>
-    <input type="file" id="upload" accept="image/*" hidden>
-   </fieldset>
+  <div class="preview" id="preview"></div>
+  <div class="btns" id="editbar" hidden><span class="hint" style="flex:1">Changes show here. Press Save to put them on the grid.</span><button type="button" class="link" id="btnNew">Start a new one instead</button></div>
 
-   <fieldset class="field" id="fBg">
-    <legend>Background</legend>
-    <div class="swatches" id="swatches"></div>
-   </fieldset>
-
-   <div class="row2">
-    <div class="field"><label for="inTitle">Big text</label><input type="text" id="inTitle" maxlength="40"></div>
-    <div class="field"><label for="inSub">Small text</label><input type="text" id="inSub" maxlength="90"></div>
+  <div class="acc open" id="accPic">
+   <button type="button" class="acc-h" aria-expanded="true"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t" id="assetsLegend">Picture</span></button>
+   <div class="acc-b">
+    <div id="fAssets"><div class="assets" id="assets"></div><input type="file" id="upload" accept="image/*" hidden></div>
+    <div class="row2" id="fCrop" hidden><label for="selCrop">Photo crop</label><select id="selCrop"><option value="top">Keep the top</option><option value="middle" selected>Middle</option><option value="bottom">Keep the bottom</option></select></div>
+    <p class="hint" id="logoNote" hidden>Logo posts use the logo by itself. Add words under “Words on it”.</p>
    </div>
+  </div>
 
-   <div class="field" id="fCrop" hidden>
-    <label for="selCrop">Photo crop</label>
-    <select id="selCrop"><option value="top">Keep the top</option><option value="middle" selected>Middle</option><option value="bottom">Keep the bottom</option></select>
+  <div class="acc" id="fBg">
+   <button type="button" class="acc-h" aria-expanded="false"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Colors</span><span class="acc-badge" id="bgName"></span></button>
+   <div class="acc-b">
+    <div class="sw" id="swatches"></div>
+    <label class="checkrow" id="lblInk"><input type="checkbox" id="chkInk" checked> Stamped ink look on the words and logo</label>
    </div>
+  </div>
 
-   <div class="checks">
-    <label><input type="checkbox" id="chkLogo" checked> Logo on it</label>
-    <label id="lblInk"><input type="checkbox" id="chkInk" checked> Stamped ink look</label>
+  <div class="acc">
+   <button type="button" class="acc-h" aria-expanded="false"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Words on it</span></button>
+   <div class="acc-b">
+    <div class="row2 stack"><label for="inTitle">Big text</label><input type="text" id="inTitle" maxlength="40"></div>
+    <div class="row2 stack"><label for="inSub">Small text</label><input type="text" id="inSub" maxlength="90"></div>
+    <label class="checkrow"><input type="checkbox" id="chkLogo" checked> Small logo at the bottom</label>
    </div>
+  </div>
 
-   <div class="field">
-    <span class="lbl">Preview</span>
-    <div class="preview" id="preview"></div>
-   </div>
-
-   <div class="field">
-    <label for="inCaption">Caption</label>
-    <textarea id="inCaption" placeholder="Write what you'd post under it. Hashtags are suggested from what you write."></textarea>
-    <div class="counts"><span id="capCount"></span><button class="btn small2 quiet" type="button" id="btnDraft">Write one for me</button></div>
-   </div>
-
-   <div class="field">
-    <span class="lbl">Hashtags from the caption</span>
-    <p class="hint">Tap to turn on or off. Instagram allows 30; 8 to 15 that fit the post work best.</p>
-    <div class="chips" id="chips"></div>
-    <div class="addtag"><input type="text" id="inTag" placeholder="Add your own, e.g. #brunch" aria-label="Add your own hashtag"><button class="btn small2" type="button" id="btnTag">Add</button></div>
+  <div class="acc open">
+   <button type="button" class="acc-h" aria-expanded="true"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Caption &amp; hashtags</span></button>
+   <div class="acc-b">
+    <div class="row2 stack"><label for="inCaption">Caption</label>
+     <textarea id="inCaption" placeholder="Write what you'd post under it. Hashtags are suggested from what you write."></textarea></div>
+    <div class="counts"><span id="capCount"></span><button class="link" type="button" id="btnDraft">Write one for me</button></div>
+    <div class="row2 stack"><span style="font-size:13px">Hashtags from the caption</span>
+     <span class="hint">Click to turn on or off. Instagram allows 30; 8 to 15 that fit the post work best.</span></div>
+    <div class="tagchips" id="chips"></div>
+    <div class="addtag"><input type="text" id="inTag" placeholder="Add your own, e.g. #brunch" aria-label="Add your own hashtag"><button type="button" id="btnTag">Add</button></div>
     <div class="counts"><span id="tagCount"></span></div>
    </div>
+  </div>
 
+  <div class="foot">
    <div class="btns" id="actions">
-    <button class="btn primary" type="button" id="btnSave">Add to grid</button>
-    <button class="btn" type="button" id="btnCopy">Copy caption + hashtags</button>
-    <button class="btn" type="button" id="btnDl">Download PNG</button>
-    <button class="btn danger" type="button" id="btnDel" hidden>Remove</button>
+    <button class="primary big1" type="button" id="btnSave">Add to grid</button>
+    <button type="button" id="btnDl">Download PNG</button>
+    <button type="button" id="btnCopy">Copy caption + hashtags</button>
    </div>
    <p class="status" id="status" role="status" aria-live="polite"></p>
-   <p class="hint">Saved in this browser. <button class="btn small2 quiet" type="button" id="btnReset">Reset to the starter grid</button></p>
-  </section>
+   <div class="btns"><button type="button" class="danger" id="btnDel" hidden>Remove from grid</button><button type="button" id="btnReset">Reset to the starter grid</button></div>
+   <p class="hint">Saved in this browser only.</p>
+  </div>
+ </aside>
  </div>
 </main>
 
@@ -652,6 +683,31 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
     renderGrid();
   }
 
+  // ---------- panel behavior, same as the logo editor's sidebar ----------
+  // Sections open and close on their own; they stay the way you left them.
+  var OPENKEY = 'meme-on-10.social.open';
+  var opened = null;
+  try { opened = JSON.parse(sessionStorage.getItem(OPENKEY) || 'null'); } catch (e) {}
+  document.querySelectorAll('.panel .acc').forEach(function (a, i) {
+    var hb = a.querySelector('.acc-h');
+    if (opened) { a.classList.toggle('open', opened.indexOf(i) >= 0); hb.setAttribute('aria-expanded', a.classList.contains('open')); }
+    hb.addEventListener('click', function () {
+      var o = a.classList.toggle('open'); hb.setAttribute('aria-expanded', o);
+      var now = [];
+      document.querySelectorAll('.panel .acc').forEach(function (x, j) { if (x.classList.contains('open')) now.push(j); });
+      try { sessionStorage.setItem(OPENKEY, JSON.stringify(now)); } catch (e) {}
+    });
+  });
+  // Click once: the button asks "Click again to ..."; click again within 5 seconds to do it.
+  function twoStep(b, ask, fn) {
+    var label = b.textContent, t;
+    b.addEventListener('click', function () {
+      if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = ask; b.classList.add('armed'); t = setTimeout(reset, 5000); return; }
+      clearTimeout(t); reset(); fn();
+    });
+    function reset() { delete b.dataset.armed; b.textContent = label; b.classList.remove('armed'); }
+  }
+
   // ---------- studio ----------
   var draft = null, editingId = null;
   function startNew(o) {
@@ -665,13 +721,13 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
     var it = byId(id); if (!it) return;
     editingId = id; selId = id; draft = JSON.parse(JSON.stringify(it));
     syncStudio(); renderGrid();
-    $('studioTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('studioTitle').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   function pressed(seg, v) { seg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === v); }); }
   function syncStudio() {
     var it = draft;
     $('studioTitle').textContent = editingId ? 'Editing: ' + labelOf(it) : 'New ' + (it.format === 'story' ? 'story' : it.tpl === 'photo' ? 'photo post' : 'post');
-    $('btnNew').hidden = !editingId; $('btnDel').hidden = !editingId;
+    $('editbar').hidden = !editingId; $('btnDel').hidden = !editingId;
     $('btnSave').textContent = editingId ? 'Save changes' : 'Add to grid';
     pressed($('segFormat'), it.format); pressed($('segTpl'), it.tpl);
     $('inTitle').value = it.title || ''; $('inSub').value = it.sub || '';
@@ -682,7 +738,8 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
   }
   function refresh() {
     var it = draft;
-    $('fAssets').hidden = it.tpl === 'logo';
+    $('fAssets').hidden = it.tpl === 'logo'; $('logoNote').hidden = it.tpl !== 'logo';
+    $('bgName').textContent = it.tpl === 'photo' ? '' : (it.bg === 'cream' && it.ink === 'navy' ? 'Cream with navy' : COLOR_NAMES[it.bg]);
     $('fBg').hidden = it.tpl === 'photo';
     $('fCrop').hidden = it.tpl !== 'photo';
     $('lblInk').hidden = it.tpl === 'photo';
@@ -694,7 +751,7 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
   }
   function renderAssets() {
     var it = draft, html = '';
-    $('assetsLegend').textContent = it.tpl === 'photo' ? 'Pick a photo' : 'Pick a drink';
+    $('assetsLegend').textContent = it.tpl === 'photo' ? 'Photo' : it.tpl === 'logo' ? 'Picture' : 'Drawing';
     DRINKS.forEach(function (d) {
       var on = !it.upload && it.drink === d.key;
       html += '<button type="button" class="asset' + (it.tpl === 'photo' ? ' ph' : '') + '" aria-pressed="' + on + '" data-drink="' + d.key + '" title="' + esc(d.name) + '"><img alt="" src="' + blobUrl(it.tpl === 'photo' ? d.photo : d.draw) + '"><span>' + esc(d.name) + '</span></button>';
@@ -803,17 +860,15 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
     draft = JSON.parse(JSON.stringify(copy));
     persist(); syncStudio(); renderGrid();
   });
-  $('btnDel').addEventListener('click', function () {
+  twoStep($('btnDel'), 'Click again to remove it', function () {
     if (!editingId) return;
-    if (!confirm('Remove this from the grid?')) return;
     items.splice(idx(editingId), 1); persist(); say('Removed.');
     startNew({});
   });
   $('btnNew').addEventListener('click', function () { startNew({}); });
   $('btnCopy').addEventListener('click', function () { copyText(captionText(draft)); });
   $('btnDl').addEventListener('click', function () { download(draft, this); });
-  $('btnReset').addEventListener('click', function () {
-    if (!confirm('Put the starter grid back? Posts you made here will be removed.')) return;
+  twoStep($('btnReset'), 'Click again to replace your grid with the starter one', function () {
     items = starter(); persist(); startNew({}); say('Starter grid is back.');
   });
   $('upload').addEventListener('change', function () {
