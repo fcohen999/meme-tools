@@ -49,6 +49,21 @@ h1{font:700 clamp(34px,5vw,46px)/1.05 var(--display);margin:0 0 22px}
 .btn.danger{color:#9b2b1f;border-color:#c9a59e}
 .btn.small2{padding:6px 12px;min-height:36px;font-size:14px}
 .hint{font-size:13px;color:var(--muted);margin:0;line-height:1.45}
+/* photography */
+.photosec{margin-top:64px;border-top:1px solid var(--rule);padding-top:36px}
+.photosec .label{font:500 11px var(--body);letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.photosec h2{font:700 clamp(26px,3.4vw,34px)/1.1 var(--display);margin:0 0 22px}
+.photos{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;align-items:start}
+.ptile{margin:0;display:grid;gap:8px;align-content:start}
+.ptile img{width:100%;height:auto;display:block}
+.ptile figcaption{font-size:13.5px;line-height:1.5;color:var(--muted)}
+.ptile figcaption b{display:block;color:var(--fg);font:500 11px var(--body);letter-spacing:.24em;text-transform:uppercase;margin-bottom:3px}
+.ptile .btn{justify-self:start}
+.photosec .cols{margin-top:28px}
+.photosec .cols h3{font:500 11px var(--body);letter-spacing:.24em;text-transform:uppercase;margin:0 0 10px}
+.photosec .cols ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.75;color:var(--muted)}
+@media (max-width:860px){.photos{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:480px){.photos{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* lightbox */
 dialog.lb{border:2px solid var(--line);background:var(--card);padding:22px;width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;color:var(--fg)}
 dialog.lb::backdrop{background:rgba(26,22,18,.6)}
@@ -360,6 +375,19 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
   </div>
  </aside>
  </div>
+
+ <section class="photosec" aria-labelledby="photoHead">
+  <p class="label">Photography</p>
+  <h2 id="photoHead">Photo-real shots, uncropped</h2>
+  <div class="photos" id="photos"></div>
+  <div class="cols"><h3>Every photo-real shot</h3><ul>
+   <li>One drink, centered, on the marble table.</li>
+   <li>Navy wall and the woven chair behind it, softly out of focus.</li>
+   <li>Warm candlelight, a votive glowing at the edge.</li>
+   <li>The garnish facing the camera.</li>
+   <li>Tall frame, glass filling most of it.</li>
+  </ul></div>
+ </section>
 </main>
 
 <dialog class="lb" id="lb" aria-labelledby="lbTitle">
@@ -977,6 +1005,29 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
   }
   var sayT;
   function say(m) { $('status').textContent = m; clearTimeout(sayT); sayT = setTimeout(function () { $('status').textContent = ''; }, 4000); }
+
+  // ---------- photography ----------
+  (function () {
+    var html = '';
+    DRINKS.forEach(function (d) {
+      if (!d.photo) return;
+      html += '<figure class="ptile"><img src="' + blobUrl(d.photo) + '" alt="' + esc(d.name) + ' photo" loading="lazy">' +
+        '<figcaption><b>' + esc(d.name) + '</b>Photo-real</figcaption>' +
+        '<button type="button" class="btn small2" data-photo="' + d.key + '" aria-label="Download ' + esc(d.name) + ' photo">Download</button></figure>';
+    });
+    $('photos').innerHTML = html;
+    $('photos').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-photo]'); if (!b || !downloads) return;
+      var d = drink(b.dataset.photo); if (!d) return;
+      var name = 'meme-on-10_' + d.key + '-photo.jpg';
+      b.disabled = true;
+      fetch(d.photo).then(function (r) { return r.blob(); })
+        .then(function (blob) { return downloads.save({ filename: name, data: blob }); })
+        .then(function () { say('Downloaded ' + name + '.'); })
+        .catch(function (e) { if (!(e && e.code === 'declined')) say('Download did not work in this browser.'); })
+        .then(function () { b.disabled = false; });
+    });
+  })();
 
   // ---------- start ----------
   var t0 = 'grid';
