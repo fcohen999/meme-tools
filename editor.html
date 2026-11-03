@@ -155,7 +155,7 @@ const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n
 const NS='http://www.w3.org/2000/svg';
 const VERSION='v25', VERSION_DATE='2026-11-03';
 const CHANGELOG=[
- ['v25','New sidebar: one view with a Simple on/off switch; every part of the logo has its own section (closed to start) that opens when you click that part; − / + buttons you can hold down instead of sliders; layouts grouped into Logo and Made with the logo. No more dragging or snapping: click a part, then use the arrow keys, + / −, Tab and Esc (the pink line still shows when things line up). The sidebar can be made wider or narrower by dragging its left edge. Menu words can now be edited in Google Sheets.'],
+ ['v25','New sidebar: one view with a Simple on/off switch; every part of the logo has its own section (closed to start) that opens when you click that part; − / + buttons you can hold down instead of sliders; layouts grouped into Logo and Made with the logo. No more dragging or snapping: click a part, then use the arrow keys, + / −, Tab and Esc (the pink line still shows when things line up). The sidebar can be made wider or narrower by dragging its left edge. Menu words can now be edited in Google Sheets, pasted straight from a Google Doc or Word (headings, bold dish names and prices are read from the formatting), or saved and opened as a text file.'],
  ['v24','Brand colors: olive, navy and cream, with charcoal for text. New “Brand” color presets at the top of the list; every older preset is still there. New logos start in charcoal and olive on cream; menu text starts in charcoal. The homepage can open any layout directly.'],
  ['v23','New Menu tab: a US Letter menu page in the brand style (one-line header, basil on cream, Jost caps dish names, Bodoni descriptions, prices in basil). The words are editable by typing like a document or in boxes.'],
  ['v22','Oval and squiggle now have their own separate colors'],
@@ -672,18 +672,128 @@ function renderSheetMode(box){
   fi.onchange=()=>{ const fl=fi.files[0]; if(!fl) return; fl.text().then(t=>{ t=t.replace(/^﻿/,''); load(t,/\.tsv$/i.test(fl.name)||t.includes('\t')?'\t':','); }); fi.value=''; };
 }
 
+/* ============ PASTE FROM GOOGLE DOCS / WORD (reads the document's formatting) ============
+   headings (or bigger text) = sections · bold or CAPITAL lines = dishes · normal text under a dish = what's in it
+   a number at the end of a heading or dish line = its price */
+const PRICE_ONLY=/^\$?\d{1,4}(?:\.\d{1,2})?$/;
+const PRICE_END=/\s*(?:[-–—|·…:]+\s*|\.{2,}\s*)?\$?(\d{1,4}(?:\.\d{1,2})?)$/;      // on heading and dish-name lines
+const PRICE_END_SEP=/\s*(?:[-–—|·…]+|\.{2,})\s*\$?(\d{1,4}(?:\.\d{1,2})?)$|\s+\$(\d{1,4}(?:\.\d{1,2})?)$/;   // after a description: needs a dash, dots or $
+function splitPrice(t,re=PRICE_END){ const m=t.match(re); if(m&&m.index>0) return [t.slice(0,m.index).trim(),m[1]||m[2]]; return [t.trim(),'']; }
+const cleanSep=t=>t.replace(/^[\s:–—\-|·]+|[\s:–—\-|·]+$/g,'').trim();
+function docBlocks(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const BLOCK=/^(P|H[1-6]|LI|DIV|TD|TH|BLOCKQUOTE|PRE|DT|DD)$/, BLOCKSEL='p,h1,h2,h3,h4,h5,h6,li,div,td,th,blockquote,pre,dt,dd';
+  const boldOf=el=>{ for(let e=el;e&&e.nodeType===1;e=e.parentElement){
+      const w=(e.style&&e.style.fontWeight)||'';
+      if(w){ if(w==='bold'||w==='bolder'||+w>=600) return true; return false; }   // Google Docs wraps everything in <b style="font-weight:normal">
+      if(/^(B|STRONG)$/.test(e.tagName)) return true;
+      if(BLOCK.test(e.tagName)) break; }
+    return false; };
+  const sizeOf=el=>{ for(let e=el;e&&e.nodeType===1;e=e.parentElement){ const v=e.style&&e.style.fontSize; if(v){ const m=v.match(/([\d.]+)\s*(pt|px)?/); if(m) return m[2]==='px'?+m[1]*0.75:+m[1]; } } return 0; };
+  let leaves=[...doc.body.querySelectorAll(BLOCKSEL)].filter(e=>!e.querySelector(BLOCKSEL));
+  if(!leaves.length) leaves=[doc.body];
+  const blocks=[];
+  leaves.forEach(bl=>{
+    const head=/^H[1-6]$/.test(bl.tagName)||bl.classList.contains('title');
+    let line=[];
+    const flush=()=>{
+      const norm=s=>s.replace(/ /g,' ').replace(/\s+/g,' ');
+      const text=norm(line.map(s=>s.t).join('')).trim();
+      if(text){
+        const real=line.filter(s=>s.t.trim()), tot=real.reduce((a,s)=>a+s.t.trim().length,0)||1;
+        const bold=real.filter(s=>s.b).reduce((a,s)=>a+s.t.trim().length,0)/tot;
+        let pre=''; for(const s of line){ if(s.b||!s.t.trim()) pre+=s.t; else break; }
+        blocks.push({text,head,bold,boldPre:norm(pre).trim(),size:Math.max(0,...real.map(s=>s.z))});
+      }
+      line=[];
+    };
+    const walk=n=>n.childNodes.forEach(c=>{
+      if(c.nodeType===3) line.push({t:c.nodeValue,b:boldOf(c.parentElement),z:sizeOf(c.parentElement)});
+      else if(c.nodeType===1){ if(c.tagName==='BR') flush(); else if(!/^(STYLE|SCRIPT|META|TITLE)$/.test(c.tagName)) walk(c); }
+    });
+    walk(bl); flush();
+  });
+  return blocks;
+}
+function blocksToMenu(blocks){
+  const sizes={}; blocks.forEach(b=>{ if(b.size) sizes[b.size]=(sizes[b.size]||0)+b.text.length; });
+  const body=+(Object.keys(sizes).sort((a,b)=>sizes[b]-sizes[a])[0]||0);
+  const caps=t=>/\p{Lu}/u.test(t)&&!/\p{Ll}/u.test(t)&&t.length<=60;
+  const lines=blocks.map(b=>{
+    let kind='plain';
+    if(b.head||(body&&b.size>=body+3)||/^#/.test(b.text)) kind='head';
+    else if(PRICE_ONLY.test(b.text)) kind='price';
+    else if(b.bold>=0.6||caps(splitPrice(b.text)[0])) kind='dish';
+    else if(b.bold>0&&b.boldPre.length>=2) kind='dishdesc';
+    return {kind,text:b.text.replace(/^#+\s*/,''),boldPre:b.boldPre};
+  });
+  // group into sections; in a section that has bold/CAPITAL dish names, normal lines are descriptions
+  const groups=[]; let g=null;
+  lines.forEach(l=>{ if(l.kind==='head'||!g){ g={head:l.kind==='head'?l:null,lines:[]}; groups.push(g); if(l.kind==='head') return; } g.lines.push(l); });
+  const out=[];
+  groups.forEach(gr=>{
+    const [title,price]=gr.head?splitPrice(gr.head.text):['',''];
+    const sec={title,price,items:[]}; out.push(sec);
+    const emph=gr.lines.some(l=>l.kind==='dish'||l.kind==='dishdesc');
+    let dish=null;
+    const addDish=(name,desc,pr)=>{ let [n,p]=splitPrice(cleanSep(name)); if(pr) p=pr; let d=cleanSep(desc||'');
+      if(!p&&d){ const [d2,p2]=splitPrice(d,PRICE_END_SEP); if(p2){ d=d2; p=p2; } }
+      dish={name:n,desc:d,price:p}; sec.items.push(dish); };
+    const nameDesc=t=>{ const i=t.indexOf(':'); if(i>0) return [t.slice(0,i),t.slice(i+1)];
+      const m=t.match(/\s[–—-]\s/); if(m) return [t.slice(0,m.index),t.slice(m.index+m[0].length)]; return [t,'']; };
+    gr.lines.forEach(l=>{
+      if(l.kind==='price'){ const p=l.text.replace('$',''); if(dish&&!dish.price) dish.price=p; else if(!sec.price) sec.price=p; return; }
+      if(l.kind==='dish'){ const [n,d]=nameDesc(l.text); addDish(n,d); return; }
+      if(l.kind==='dishdesc'){ addDish(l.boldPre,l.text.slice(l.boldPre.length)); return; }
+      if(emph&&dish){ dish.desc=(dish.desc?dish.desc+' ':'')+l.text; if(!dish.price){ const [d2,p2]=splitPrice(dish.desc,PRICE_END_SEP); if(p2){ dish.desc=d2; dish.price=p2; } } return; }
+      const [n,d]=nameDesc(l.text); addDish(n,d);
+    });
+  });
+  const kept=out.filter(s=>s.items.length);
+  return kept.length?kept:out.filter(s=>s.title);
+}
+// the menu as "type like a document" text; a section with no title just lists its dishes
+function menuAsText(m){
+  return m.map(sec=>{
+    const head=(sec.title||'').trim()||(sec.price||'').trim()?['# '+[sec.title,sec.price].filter(x=>(x||'').trim()).join(' ')]:[];
+    const lines=(sec.items||[]).map(it=>{ const n=(it.name||'').trim(), pr=(it.price||'').trim(), d=(it.desc||'').replace(/\s+/g,' ').trim(); const nm=pr?(n+' ('+pr+')'):n; return d?(nm+': '+d):nm; }).filter(Boolean);
+    return head.concat(lines).join('\n');
+  }).join('\n\n');
+}
+function renderTextMode(box){
+  const how=document.createElement('div'); how.className='hint';
+  how.innerHTML='<b>Paste straight from a Google Doc or Word:</b> headings become sections, <b>bold</b> or CAPITAL lines become dishes, and the normal text under a dish is what’s in it. A number at the end of a heading or dish is its price.'
+    +'<br><b>Or type it here:</b> one dish per line, <b>Name: what’s in it</b>. A line that starts with <b>#</b> is a heading (the number at the end is its price). To give one dish its own price, write <b>Name (26): what’s in it</b>.';
+  const ta=document.createElement('textarea'); ta.value=menuToText(); ta.rows=24; ta.spellcheck=true;
+  ta.style.cssText='width:100%;font:inherit;font-size:15px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-top:8px;resize:vertical';
+  const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
+  ta.oninput=()=>{ M=parseMenuText(ta.value); render(); st.textContent=''; };
+  ta.addEventListener('paste',e=>{
+    const html=e.clipboardData&&e.clipboardData.getData('text/html'); if(!html) return;   // plain text pastes as usual
+    const m=blocksToMenu(docBlocks(html)), n=m.reduce((a,s)=>a+s.items.length,0);
+    if(!n) return;
+    e.preventDefault();
+    const a=ta.selectionStart, z=ta.selectionEnd, v=ta.value;   // keep what's pasted on its own lines
+    const txt=(a>0&&v[a-1]!=='\n'?'\n':'')+menuAsText(m)+(z<v.length&&v[z]!=='\n'?'\n':'');
+    ta.setRangeText(txt,a,z,'end');
+    M=parseMenuText(ta.value); render();
+    st.style.color='#3f6b35'; st.textContent=`Pasted from your document: ${m.filter(s=>s.title).length} section${m.filter(s=>s.title).length===1?'':'s'}, ${n} dish${n===1?'':'es'}. Check the menu page; if something landed in the wrong place, fix it in the box.`;
+  });
+  const files=document.createElement('div'); files.className='hint'; files.style.marginTop='10px';
+  files.innerHTML='<a href="#" data-a="dl">Download the menu as a text file</a> · <a href="#" data-a="open">Open a text file</a><input type="file" accept=".txt,text/plain" hidden>';
+  const fi=files.querySelector('input');
+  files.querySelector('[data-a="dl"]').onclick=e=>{ e.preventDefault(); download(new Blob([menuToText()+'\n'],{type:'text/plain;charset=utf-8'}),`meme-on-10-menu_${new Date().toISOString().slice(0,10)}.txt`); };
+  files.querySelector('[data-a="open"]').onclick=e=>{ e.preventDefault(); fi.click(); };
+  fi.onchange=()=>{ const fl=fi.files[0]; if(!fl) return; fl.text().then(t=>{ ta.value=t.replace(/^﻿/,'').replace(/\r\n?/g,'\n'); M=parseMenuText(ta.value); render();
+    const n=M.reduce((a,s)=>a+s.items.length,0); st.style.color=n?'#3f6b35':'#b35a3e'; st.textContent=n?`Opened “${fl.name}”: ${n} dish${n===1?'':'es'}.`:'That file has no dishes in it.'; }); fi.value=''; };
+  box.append(how,ta,st,files);
+}
+
 /* ============ MENU TEXT EDITOR ============ */
 function renderMenuEditor(){
   const box=document.getElementById('menuEditor'); if(!box) return; box.innerHTML='';
   if(menuMode==='sheet'){ renderSheetMode(box); return; }
-  if(menuMode==='text'){
-    const how=document.createElement('div'); how.className='hint';
-    how.innerHTML='One dish per line: <b>Name: what’s in it</b>. A line that starts with <b>#</b> is a heading (the number at the end is its price). To give one dish its own price, write it like <b>Name (26): what’s in it</b>. You can also paste your menu in from a Google Doc.';
-    const ta=document.createElement('textarea'); ta.value=menuToText(); ta.rows=24; ta.spellcheck=true;
-    ta.style.cssText='width:100%;font:inherit;font-size:15px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-top:8px;resize:vertical';
-    ta.oninput=()=>{ M=parseMenuText(ta.value); render(); };
-    box.append(how,ta); return;
-  }
+  if(menuMode==='text'){ renderTextMode(box); return; }
   const inp=(ph,val,on)=>{ const i=document.createElement('input'); i.type='text'; i.placeholder=ph; i.value=val||''; i.style.fontSize='14px'; i.oninput=()=>{on(i.value);render();}; return i; };
   const btn=(label,fn)=>{ const b=document.createElement('button'); b.textContent=label; b.onclick=fn; return b; };
   const redo=()=>{ renderMenuEditor(); render(); };
