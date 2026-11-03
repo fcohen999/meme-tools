@@ -5,7 +5,7 @@
 Bump the editor's update number in `editor.html`:
 
 ```js
-const VERSION='v26', VERSION_DATE='2026-11-03', UPDATE=9;
+const VERSION='v26', VERSION_DATE='YYYY-MM-DD', UPDATE=N;   // near the top of the script
 ```
 
 Add 1 to `UPDATE` (and set `VERSION_DATE` to today) in the same branch, before merging.
