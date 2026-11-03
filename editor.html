@@ -316,6 +316,7 @@ const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n
 const NS='http://www.w3.org/2000/svg';
 const VERSION='v26', VERSION_DATE='2026-11-03', UPDATE=15;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 15','Menu page header: choose “My Header” to put the header you made on the Header tab at the top of the menu (in the menu’s colors or the Header tab’s own), and “Edit the header on the Header tab” jumps there, with a button to come back.'],
  ['v26 · 13','Tidier sidebar: settings grouped under small headings, every control lines up, plainer names (for example “Hairline detail”, “CAPS”, “Style 1 / 2”), a ↺ button to put any one setting back, the colors in use shown on the Colors bar, and settings that do nothing right now are dimmed with the reason. The Background color is called “Inside the oval” on the oval logo and “Awning” on the awning. The links that repeated the top nav are gone. The export buttons always fit on screen. The Social post maker now uses this same panel.'],
  ['v26','Change the order of the pieces on every layout (for example the tagline above “mémé on 10”, or the squiggle first in a header), and hide pieces you don’t want. The header, awning and menu page can use any version of the logo: one line, the oval logo, the logo without the oval, or a saved version.'],
  ['v25','New sidebar: one view with a Simple on/off switch; every part of the logo has its own section (closed to start) that opens when you click that part; − / + buttons you can hold down instead of sliders; layouts grouped into Logo and Made with the logo. No more dragging or snapping: click a part, then use the arrow keys, + / −, Tab and Esc (the pink line still shows when things line up). The sidebar can be made wider or narrower by dragging its left edge. Menu words can now be edited in Google Sheets, pasted straight from a Google Doc or Word (headings, bold dish names and prices are read from the formatting), or saved and opened as a text file.'],
@@ -517,7 +518,8 @@ const secColors=[['h','Colors','colors'],['swatches'],['sub','Your colors'],['co
 const OPTNAME={onCase:{lowercase:'lowercase',caps:'CAPS'},squiggle:{A:'Style 1',B:'Style 2'},amp:{sans:'Plain &',Bodoni:'Bodoni &'},
   oval:{'hand-drawn':'Hand-drawn',clean:'Clean line'},align:{left:'Left',center:'Center',right:'Right'},columns:{1:'1 column',2:'2 columns'},
   onWeight:{400:'400 Regular',500:'500 Medium',600:'600 Semibold',700:'700 Bold'},
-  headAlign:{'spread across':'Spread out','together on the left':'Left','together in the center':'Center'}};
+  headAlign:{'spread across':'Spread out','together on the left':'Left','together in the center':'Center'},
+  headColors:{menu:'Menu colors',header:'Header tab colors'}};
 const optName=(k,o)=>(OPTNAME[k]&&OPTNAME[k][o]!==undefined)?OPTNAME[k][o]:String(o);
 // What some color settings are called on each layout (they color different things)
 function colorLabel(k,lab){
@@ -535,7 +537,7 @@ const SKIP={'1d':['accent'],'1c':['transparent']};
 
 /* ============ MENU TEXT (Menu tab) — follows the brand guidelines, section 08 ============ */
 const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-function menuSVG(S,G,M){
+function menuSVG(S,G,M,top=200){
   const sc=G.menuScale/100, ink=G.menuInk, brand=G.menuBrand;
   const cols=+G.columns===2?2:1, L=64, R=786, GAP=48;
   const colW=cols===2?(R-L-GAP)/2:(R-L);
@@ -543,7 +545,7 @@ function menuSVG(S,G,M){
   const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
   const step=19*sc, toDesc=21*sc, itemGap=34*sc, secGap=48*sc;
   const wrap=(t,w,fam,wt,sz,ls)=>{ const words=String(t||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean); const lines=[]; let c=''; words.forEach(wd=>{ const tr=c?c+' '+wd:wd; if(c&&measure(tr,fam,wt,sz,ls)>w){lines.push(c);c=wd;} else c=tr; }); if(c) lines.push(c); return lines; };
-  let y=200, out='', end=200, first=true;
+  let y=top, out='', end=top, first=true;
   M.forEach(sec=>{
     const items=(sec.items||[]).filter(it=>(it.name||'').trim()||(it.desc||'').trim());
     const title=(sec.title||'').trim(), price=(sec.price||'').trim().replace(/^\$/,'');
@@ -766,10 +768,11 @@ const LAYOUTS = {
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','Menu text size',70,130,1,'smaller','bigger'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
+    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','Menu text size',70,130,1,'smaller','bigger'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
-    geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2' },
-    panel:[
+    geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headSrc:'menu', headColors:'menu', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2' },
+    // a getter, so the header settings change with “Which header”
+    get panel(){ return [
       ['h','Menu words','words'],['menuedit'],
       ['h','Look','look'],
       ['hint','Follows the brand guidelines: US Letter page, one-line header without the squiggle, no divider lines.'],
@@ -777,14 +780,21 @@ const LAYOUTS = {
       ['pick','columns','Columns',[2,1]],
       ['pick','order','Tagline word order',['Kitchen & Cocktails','Cocktails & Kitchen']],
       ['hint','Same setting as Tagline → Word order on the logo layouts: changing it here changes it there too.'],
-      ['h','Page header','order'],['logopick','Which logo'],['order','Left to right'],
-      ['hint','Tick a piece to show it, untick to hide it.'],
-      ['sub','Placement'],
-      ['pick','headAlign','Pieces sit',['spread across','together on the left','together in the center']],
-      ['range','menuLogo','Logo size',60,160,1],
+      ['h','Page header','order'],['headsrc'],
+      // the menu's own header settings; with “My Header” the Header tab's settings are used instead
+      ...(G.mn.headSrc==='mine'?[
+        ['pick','headColors','Header colors',['menu','header']],
+        ['hint','“Menu colors” draws your header in the menu’s logo color on the menu page. “Header tab colors” keeps the colors and background you set on the Header tab.'],
+      ]:[
+        ['logopick','Which logo'],['order','Left to right'],
+        ['hint','Tick a piece to show it, untick to hide it.'],
+        ['sub','Placement'],
+        ['pick','headAlign','Pieces sit',['spread across','together on the left','together in the center']],
+        ['range','menuLogo','Logo size',60,160,1],
+      ]),
       ['h','Colors','colors'],
       ['color','menuBrand','Logo, headings, prices'],['color','menuInk','Dish names and tagline'],['color','menuBg','Page'],
-    ],
+    ]; },
     build(S,G){
       const brand=G.menuBrand, ink=G.menuInk;
       const S2=Object.assign({},S,{ink:brand,accent:brand,sqColor:brand,bg:G.menuBg,transparent:false});
@@ -805,8 +815,14 @@ const LAYOUTS = {
         tag:()=>(spread&&n>1&&seq[n-1]==='tag')
           ?`<text x="${HR}" y="141" text-anchor="end" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`
           :`<text x="${f(xs.tag)}" y="141" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`};
-      const head=PIECES.filter(p=>seq.includes(p)).map(p=>draw[p]()).join('').replace(/ data-el="[^"]*"/g,'');
-      const mt=menuSVG(S,G,M);
+      let head, top=200;
+      if(G.headSrc==='mine'){
+        // the header made on the Header tab, across the full width of the page; the menu starts below it
+        const hb=LAYOUTS.hd.build(G.headColors==='header'?S:Object.assign({},S2,{transparent:true}),headerGeo());
+        const hh=850*hb.H/hb.W; top=Math.max(200,hh+70);
+        head=hb.svg.replace(/^\s*<svg[^>]*>/,`<svg x="0" y="0" width="850" height="${f(hh)}" viewBox="0 0 ${f(hb.W)} ${f(hb.H)}">`).replace(/ data-el="[^"]*"/g,'');
+      } else head=PIECES.filter(p=>seq.includes(p)).map(p=>draw[p]()).join('').replace(/ data-el="[^"]*"/g,'');
+      const mt=menuSVG(S,G,M,top);
       const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs><rect width="850" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}</svg>`;
       return {W:816,H:1056,svg,over:mt.end>1100-56};
     }
@@ -854,6 +870,8 @@ const MENU_DEFAULT=[
 let M=JSON.parse(JSON.stringify(MENU_DEFAULT));
 let S=Object.assign({},SHARED_DEFAULTS);
 const G={}; Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));
+const headerGeo=()=>G.hd;   // the Header tab's settings (the menu page can use that header)
+let backToMenu=false;       // came to the Header tab from the menu page: show a way back
 const isGeo=k=>k in G[cur];
 const get=k=>isGeo(k)?G[cur][k]:S[k];
 const put=(k,v)=>{ if(isGeo(k)) G[cur][k]=v; else S[k]=v; };
@@ -1270,6 +1288,31 @@ function logoPickBlock(label){
   return r;
 }
 
+// Menu page: which header sits at the top (the menu's own one-line header, or the one made on the Header tab)
+function goLayout(k){ cur=k; sel=null; history.replaceState(null,'','#'+(k==='mn'?'menu':k)); window.dispatchEvent(new HashChangeEvent('hashchange')); buildPanel(); render(); autosave(); }
+function headSrcBlock(){
+  const d=document.createElement('div');
+  const r=document.createElement('div'); r.className='row2 stack';
+  r.innerHTML='<label>Which header</label><div class="seg small" role="group" aria-label="Which header"></div>';
+  const sg=r.querySelector('.seg');
+  const bs=[['menu','Menu header'],['mine','My Header']].map(([v,t])=>{
+    const b=document.createElement('button'); b.type='button'; b.textContent=t;
+    b.onclick=()=>{ if(G.mn.headSrc===v) return; G.mn.headSrc=v; OPEN.mn.add('order'); buildPanel(); render(); };
+    sg.appendChild(b); return [v,b]; });
+  refs.push(()=>bs.forEach(([v,b])=>{ const on=(G.mn.headSrc||'menu')===v; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); }));
+  d.appendChild(r);
+  const h=document.createElement('div'); h.className='hint'; h.style.margin='4px 0 8px';
+  h.textContent=G.mn.headSrc==='mine'
+    ?'Uses the header you made on the Header tab (its logo, pieces, sizes and width), across the top of the page. Changes you make there show here.'
+    :'The menu’s own one-line header. To use a header you designed instead, choose “My Header”.';
+  d.appendChild(h);
+  const b=document.createElement('div'); b.className='btns';
+  b.innerHTML='<button type="button">Edit the header on the Header tab →</button>';
+  b.firstChild.onclick=()=>{ G.mn.headSrc='mine'; backToMenu=true; goLayout('hd'); };
+  d.appendChild(b);
+  return d;
+}
+
 /* ============ PANEL ============ */
 const panel=document.getElementById('panel');
 let refs=[];
@@ -1398,7 +1441,7 @@ function accSummary(id,el){
   if(id==='colors') refs.push(()=>{
     const cs=LAYOUTS[cur].ownColors?[G[cur].menuBrand,G[cur].menuInk,G[cur].menuBg]:[S.accent,sqCol(S),S.ink,...(S.transparent?[]:[S.bg])];
     el.innerHTML=cs.map(c=>`<span class="dot" style="background:${c}"></span>`).join(''); });
-  if(id==='order') refs.push(()=>{ const g=G[cur]; el.textContent=shownSeq(g).map(k=>pieceName(k,g).replace(/[“”]/g,'')).join(' · ')||'nothing shown'; });
+  if(id==='order') refs.push(()=>{ const g=G[cur]; if(cur==='mn'&&g.headSrc==='mine'){ el.textContent='My Header'; return; } el.textContent=shownSeq(g).map(k=>pieceName(k,g).replace(/[“”]/g,'')).join(' · ')||'nothing shown'; });
 }
 function buildPanel(){
   applyMode();
@@ -1410,6 +1453,12 @@ function buildPanel(){
   panel.appendChild(top);
   const sw=top.querySelector('#simpleSw'); sw.checked=simple;
   sw.onchange=()=>{ mode=sw.checked?'simple':'full'; buildPanel(); render(); };
+  if(cur==='hd'&&backToMenu){
+    const b=document.createElement('div'); b.className='btns'; b.style.marginTop='14px';
+    b.innerHTML='<button type="button" class="primary">← Back to the menu page</button><span class="hint">The menu page uses this header.</span>';
+    b.firstChild.onclick=()=>{ backToMenu=false; goLayout('mn'); };
+    panel.appendChild(b);
+  }
   if(cur!=='mn'){
     const kick=document.createElement('div'); kick.className='kicker'; kick.textContent='Layout'; panel.appendChild(kick);
     panel.appendChild(layoutPicker());
@@ -1448,9 +1497,10 @@ function buildPanel(){
     const label=simple&&B[k]?dropPart(B[k],acc&&acc.dataset.sec):item[2];
     if(t==='hint'){ if(lastShown&&(!simple||cur==='mn')){ const d=document.createElement('div'); d.className='hint'; d.textContent=item[1]; body.appendChild(d); } return; }
     if(skip.includes(k)){ lastShown=false; return; }
-    const visible=!simple||basic||['menuedit','versions','swatches','color','order','logopick'].includes(t)||k==='transparent';
+    const visible=!simple||basic||['menuedit','headsrc','versions','swatches','color','order','logopick'].includes(t)||k==='transparent';
     if(!visible){ lastShown=false; return; }
     if(t==='menuedit'){ add(menuEditorBlock()); renderMenuEditor(); return; }
+    if(t==='headsrc'){ add(headSrcBlock()); return; }
     if(t==='order'){ add(orderBlock(item[1])); return; }
     if(t==='logopick'){ add(logoPickBlock(item[1])); return; }
     if(t==='range'){ const [,,,min,max,step]=item; add(stepperRow(k,label,min,max,step)); return; }
