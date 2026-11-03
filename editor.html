@@ -1151,7 +1151,8 @@ const CHEV='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentCol
 const OPEN={};   // which sections are open, per layout (all closed to start)
 const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-');
 const LNAME={'1b':['Oval','1b'],'1d':['No oval','1d'],'1c':['Awning','1c'],'hd':['Header',''],'mn':['Menu page','']};
-const LGROUPS=[['Logo',['1b','1d','1c']],['Made with the logo',['hd','mn']]];
+// The menu page has its own tab in the top nav, so it is not in the logo tab's picker.
+const LGROUPS=[['Logo',['1b','1d']],['Made with the logo',['1c','hd']]];
 const POSKEYS=['wmX','wmY','onX','onY','sqX','sqY','tagX','tagY'];
 // "Simple" shows the settings listed in each layout's simple list (with their plain-word labels), plus left/right and up/down
 function basics(L){ const m={}; (LAYOUTS[L].simple||[]).forEach(i=>{ if(i[0]!=='h'&&i[1]) m[i[1]]=i[2]; }); return m; }
@@ -1166,7 +1167,7 @@ function layoutPicker(){
       const [nm,code]=LNAME[k]||[LAYOUTS[k].tab,'']; b.textContent=nm;
       if(code){ const s=document.createElement('small'); s.textContent=code; b.appendChild(s); }
       b.className=k===cur?'on':''; b.setAttribute('aria-selected',k===cur);
-      b.onclick=()=>{ if(k===cur) return; cur=k; sel=null; buildPanel(); render(); };
+      b.onclick=()=>{ if(k===cur) return; cur=k; sel=null; history.replaceState(null,'','#'+k); buildPanel(); render(); };
       seg.appendChild(b);
     });
     g.appendChild(seg); wrap.appendChild(g);
@@ -1227,13 +1228,13 @@ function buildPanel(){
   refs=[]; panel.innerHTML=''; panel.className='panel';
   const simple=mode==='simple', B=basics(cur);
   const top=document.createElement('div');
-  top.innerHTML=`<div class="titlerow"><h1>Mémé on 10 · Logo editor</h1><label class="switch" title="Simple shows only the everyday settings. Your logo stays the same either way."><input type="checkbox" id="simpleSw"><span class="track"><span class="knob"></span></span>Simple</label></div><p class="nav"><a href="index.html">← Home</a> · <a href="guidelines.html">Brand guidelines</a> · <a href="print.html">Print</a> · <a href="social.html">Social media →</a></p>`;
+  top.innerHTML=`<div class="titlerow"><h1>Mémé on 10 · ${cur==='mn'?'Menu':'Logo'} editor</h1><label class="switch" title="Simple shows only the everyday settings. Your logo stays the same either way."><input type="checkbox" id="simpleSw"><span class="track"><span class="knob"></span></span>Simple</label></div><p class="nav"><a href="index.html">← Home</a> · <a href="guidelines.html">Brand guidelines</a> · <a href="print.html">Print</a> · <a href="social.html">Social media →</a></p>`;
   panel.appendChild(top);
   const sw=top.querySelector('#simpleSw'); sw.checked=simple;
   sw.onchange=()=>{ mode=sw.checked?'simple':'full'; buildPanel(); render(); };
-  const kick=document.createElement('div'); kick.className='kicker'; kick.textContent='Layout'; panel.appendChild(kick);
-  panel.appendChild(layoutPicker());
   if(cur!=='mn'){
+    const kick=document.createElement('div'); kick.className='kicker'; kick.textContent='Layout'; panel.appendChild(kick);
+    panel.appendChild(layoutPicker());
     const help=document.createElement('div'); help.className='helpbox';
     help.innerHTML='<b>Click a part of the logo</b> to open its settings. <b>Arrow keys</b> move it, <b>+ / −</b> make it bigger or smaller (Shift for bigger steps). <b>Tab</b> goes to the next part, <b>Esc</b> lets go. Hold a <b>− / +</b> button to keep going.'
       +'<span class="only-full"> A pink line shows when a part lines up with the center or another part. <span class="inlock">'+LOCK_SVG+'</span> = also change it on every layout.</span>';
@@ -1472,7 +1473,9 @@ function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur
 function restore(){ try{ const v=JSON.parse(localStorage.getItem('meme10_last')||'null'); if(!v) return;
   S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(['text','docs','sheet','boxes'].includes(v.menuMode)) menuMode=v.menuMode; }catch(e){} }
 restore(); loadVersions();
-{ const h=decodeURIComponent(location.hash.slice(1)); if(h==='menu') cur='mn'; else if(LAYOUTS[h]) cur=h; else if(h==='logo' && cur==='mn') cur='1b'; }
+{ const h=decodeURIComponent(location.hash.slice(1)); if(h==='menu') cur='mn'; else if(LAYOUTS[h]) cur=h; else if(cur==='mn' && h!=='mn') cur='1b';
+  // Keep the address in step with what is shown, so the top nav underlines the right tab.
+  history.replaceState(null,'','#'+(cur==='mn'?'menu':cur)); window.dispatchEvent(new HashChangeEvent('hashchange')); }
 buildPanel(); render();
 if(document.fonts){
   const loaded=()=>[...document.fonts].filter(f=>f.status==='loaded').length;
