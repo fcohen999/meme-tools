@@ -9,6 +9,9 @@
 <style id="pageStyle"></style>
 <style>
 :root{--ink:#2b2724;--muted:#6b635b;--line:#d9d1c6;--panel:#f6f2ea;--accent:#b35a3e}
+:root{color-scheme:light}   /* the editor is always light, even when the computer is in dark mode */
+input,select,textarea{color:var(--ink);background-color:#fff}
+input::placeholder,textarea::placeholder{color:#9a9188}
 *{box-sizing:border-box}
 body{margin:0;background:#ece7df;color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px}
 .app{display:grid;grid-template-columns:minmax(0,1fr) 7px var(--side,420px);min-height:100vh}
