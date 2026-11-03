@@ -138,6 +138,122 @@ body.resizing{cursor:col-resize;user-select:none}
 button.armed,button.link.armed{background:#b35a3e!important;color:#fff!important;border-color:#b35a3e!important;text-decoration:none;padding:6px 10px}
 body.simple .row2>label,body.simple .checkrow{font-size:14px}
 body.simple .stepper .sb{width:40px;height:34px}
+/* ---- update 10: polish pass ---- */
+:root{--sel:#1f6fd1;--ok:#3f6b35;--bad:#b35a3e;--ctl:164px;--hover:#efe9df;--card:#fff;--radius:8px}
+/* the page fits the window: the top nav, then the canvas and the sidebar side by side, each scrolling on its own */
+@media(min-width:901px){
+  body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  .gnav{flex:none}
+  .app{flex:1;min-height:0}
+  .stage,.grip{position:static;height:auto;min-height:0}
+  .panel{max-height:none;min-height:0}
+}
+button:hover{background:var(--hover);color:var(--ink)}
+button:disabled{opacity:.35;cursor:default}
+button:disabled:hover{background:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--sel);outline-offset:2px}
+select:hover,input[type=text]:hover,input[type=number]:hover{border-color:#b9b0a5}
+.bar{padding:2px 0}
+.bar .sep{width:1px;height:24px;background:var(--line);margin:0 2px}
+.bar label{color:var(--muted)}
+#selInfo{font-variant-numeric:tabular-nums}
+/* panel head */
+.titlerow h1{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.titlerow h1 small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:2px;letter-spacing:0}
+.kicker{margin:22px 0 8px;font-weight:600}
+.lgl{font-weight:600;letter-spacing:.02em}
+/* help box: keys look like keys */
+.helpbox{padding:12px 14px 12px}
+.helpbox p{margin:0 0 6px;color:var(--ink)}
+.helpbox ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline}
+.helpbox li{display:contents}
+.helpbox li>span:first-child{white-space:nowrap}
+kbd{display:inline-block;min-width:20px;padding:1px 5px;font:600 11px/16px ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--ink);background:#faf7f1;border:1px solid #cfc6b9;border-bottom-width:2px;border-radius:4px}
+/* accordion sections */
+.acc{border-radius:var(--radius);transition:box-shadow .15s,border-color .15s}
+.acc-h{padding:12px 14px;min-height:46px}
+.acc-h:hover{background:#faf7f1}
+.acc-sum{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:400;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+.acc-sum .dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.18);flex:none}
+.acc-badge{font-size:10px;letter-spacing:.06em;text-transform:uppercase;background:var(--sel);color:#fff;border-radius:10px;padding:2px 8px}
+.acc.sel .acc-sum{display:none}
+.acc.sel{border-color:var(--sel);box-shadow:0 0 0 1px var(--sel)}
+.acc-b{padding:4px 14px 14px}
+.acc-b>.hint{margin:4px 0 8px!important;padding-left:10px;border-left:2px solid var(--line)}
+/* a small heading inside a section */
+.sub{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px;display:flex;align-items:center;gap:8px}
+.sub::after{content:'';flex:1;height:1px;background:var(--line)}
+.acc-b>.sub:first-child{margin-top:10px}
+/* setting rows: label on the left, every control the same width on the right */
+.row2{grid-template-columns:minmax(0,1fr) var(--ctl) 26px;gap:10px;margin:6px 0;min-height:32px}
+.row2.stack{grid-template-columns:1fr;gap:6px}
+.lab{display:flex;align-items:center;gap:4px;min-width:0}
+.lab label{font-size:13px;line-height:1.3}
+.reset{visibility:hidden;flex:none;width:20px;height:20px;padding:0;border:none;border-radius:50%;background:none;color:var(--muted);font-size:13px;line-height:20px}
+.reset.on{visibility:visible}
+.reset:hover{background:var(--hover);color:var(--ink)}
+.row2 select{width:var(--ctl);max-width:none}
+.row2.stack select{width:100%}
+.stepper{width:var(--ctl);position:relative}
+.stepper input{flex:1;width:0;min-width:0;font-variant-numeric:tabular-nums}
+.stepper .unit{position:absolute;right:40px;top:0;line-height:30px;font-size:11px;color:var(--muted);pointer-events:none}
+.stepper.has-unit input{padding-right:16px;padding-left:2px}
+body.simple .stepper .unit{right:46px;line-height:34px}
+.row2 .seg.small{width:var(--ctl);display:flex}
+.row2 .seg.small button{flex:1;padding:6px 6px}
+.row2.stack .seg.small{width:100%}
+.colorctl{width:var(--ctl);display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:5px;background:#fff;padding:3px 8px 3px 3px;cursor:pointer}
+.colorctl:hover{border-color:#b9b0a5}
+.colorctl input[type=color]{width:34px!important;height:24px!important;border:none;padding:0;background:none;cursor:pointer;flex:none}
+.colorctl input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.colorctl input[type=color]::-webkit-color-swatch{border:1px solid rgba(0,0,0,.18);border-radius:3px}
+.colorctl code{font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);text-transform:uppercase}
+.row2.off,.checkrow.off{opacity:.45}
+.row2 .why{grid-column:1/-1;font-size:11.5px;color:var(--muted);margin:-2px 0 2px}
+.checkrow{line-height:1.35;cursor:pointer}
+.checkrow input{accent-color:var(--ink);width:16px;height:16px;flex:none;margin:0}
+/* color presets */
+.swl{font-size:11px;color:var(--muted);font-weight:600;margin:10px 0 2px}
+.sw{gap:7px;margin:6px 0 10px}
+.sw button{width:28px;height:28px;border-color:rgba(0,0,0,.2)}
+.sw button:hover{transform:scale(1.08)}
+.sw button.on,.chips button.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
+.chips{margin:6px 0 10px}
+.chips button.on{border-color:var(--ink)}
+/* order list */
+.order .sl{font-size:12px;color:var(--muted);font-weight:600}
+.ord{padding:4px 4px 4px 10px;gap:4px;border-radius:6px}
+.ord label{cursor:pointer;flex:1}
+.ord input{accent-color:var(--ink);margin:0}
+.ord .n{display:inline-block;width:16px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ord button{width:30px;height:28px;padding:0;border-color:transparent;background:none;color:var(--muted)}
+.ord button:not(:disabled):hover{background:var(--hover);color:var(--ink)}
+.ord.off{background:#faf7f1}
+/* saved versions */
+.vlist{margin:8px 0;border:1px solid var(--line);border-radius:6px;background:#fff;overflow:hidden}
+.vlist:empty{display:none}
+.vrow{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 10px;border-top:1px solid var(--line)}
+.vrow:first-child{border-top:none}
+.vrow .vn{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vrow .vn small{color:var(--muted);margin-left:6px}
+.vrow button{padding:4px 10px;font-size:12px}
+.ver input[type=text]{flex:1}
+/* menu: edit in boxes */
+.mcard{border:1px solid var(--line);background:#fff;border-radius:var(--radius);padding:12px;margin:12px 0}
+.mcard .mk{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.mgrid{display:grid;grid-template-columns:1fr 76px;gap:8px}
+.mgrid .fl{font-size:11px;color:var(--muted);margin-bottom:-4px}
+.mdish{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
+.mdish textarea{width:100%;font:inherit;font-size:13px;padding:6px 7px;border:1px solid var(--line);border-radius:3px;margin-top:6px;resize:vertical}
+.mcard .ver button{padding:4px 9px;font-size:12px}
+.status.ok{color:var(--ok)}.status.bad{color:var(--bad)}
+/* footer */
+.foot{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.foot details summary{cursor:pointer}
+.foot details ul{padding-left:18px;margin:8px 0}
+@media(max-width:900px){.acc-sum{display:none}}
+@media(max-width:480px){:root{--ctl:138px}.panel{padding:16px 14px 48px}.acc-b{padding:4px 10px 12px}.row2{gap:8px}.stepper .sb,body.simple .stepper .sb{width:34px}body.simple .stepper .unit{right:40px}}
+@media print{body{display:block;height:auto;overflow:visible}.gnav{display:none}}
 </style>
 </head>
 <body>
@@ -208,6 +324,7 @@ body.simple .stepper .sb{width:40px;height:34px}
       <button class="primary" id="btnPdf">Export PDF</button>
       <button id="btnSvg" class="only-full">Download SVG</button>
       <button id="btnPng">Download PNG</button>
+      <span class="sep only-full" aria-hidden="true"></span>
       <label class="only-full" style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="gd"> Show center lines</label><span class="hint only-full" id="selInfo"></span><span class="hint" id="pdfHint" style="flex-basis:100%">PDF: in the window that opens, choose “Save as PDF”, set Margins to “None”, and turn on “Background graphics”.</span>
     </div>
   </div>
@@ -222,8 +339,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-03', UPDATE=9;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-03', UPDATE=10;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 10','Tidier sidebar: settings grouped under small headings, every control lines up, plainer names (for example “Hairline detail”, “CAPS”, “Style 1 / 2”), a ↺ button to put any one setting back, the colors in use shown on the Colors bar, and settings that do nothing right now are dimmed with the reason. The Background color is called “Inside the oval” on the oval logo and “Awning” on the awning. The links that repeated the top nav are gone. The export buttons always fit on screen.'],
  ['v26','Change the order of the pieces on every layout (for example the tagline above “mémé on 10”, or the squiggle first in a header), and hide pieces you don’t want. The header, awning and menu page can use any version of the logo: one line, the oval logo, the logo without the oval, or a saved version.'],
  ['v25','New sidebar: one view with a Simple on/off switch; every part of the logo has its own section (closed to start) that opens when you click that part; − / + buttons you can hold down instead of sliders; layouts grouped into Logo and Made with the logo. No more dragging or snapping: click a part, then use the arrow keys, + / −, Tab and Esc (the pink line still shows when things line up). The sidebar can be made wider or narrower by dragging its left edge. Menu words can now be edited in Google Sheets, pasted straight from a Google Doc or Word (headings, bold dish names and prices are read from the formatting), or saved and opened as a text file.'],
  ['v24','Brand colors: olive, navy and cream, with charcoal for text. New “Brand” color presets at the top of the list; every older preset is still there. New logos start in charcoal and olive on cream; menu text starts in charcoal. The homepage can open any layout directly.'],
@@ -348,7 +466,7 @@ ${body}
 
 /* ============ PIECE ORDER + WHICH LOGO ============ */
 const PIECES=['name','sq','tag'];
-const PIECE_NAMES={name:'“mémé on 10”',sq:'Squiggle',tag:'Tagline (Kitchen & Cocktails)'};
+const PIECE_NAMES={name:'“mémé on 10”',sq:'Squiggle',tag:'Tagline'};
 // every piece in the chosen order (shown or hidden)
 function fullSeq(g){ const seq=(Array.isArray(g.seq)?g.seq:[]).filter(k=>PIECES.includes(k)); PIECES.forEach(k=>{ if(!seq.includes(k)) seq.push(k); }); return seq; }
 // only the pieces that are shown, in order
@@ -390,30 +508,55 @@ function nestLogo(b,x,y,h){
 
 /* ============ PANEL BUILDING BLOCKS (reused by layouts) ============ */
 // each item: [type,key,label,...]
-const xyz=(off,sMin=50,sMax=160)=>[
-  ['range','%S','Size %',sMin,sMax,1],
+const xyz=(off,sMin=50,sMax=160)=>[['sub','Size and position'],
+  ['range','%S','Size',sMin,sMax,1],
   ['range','%X','Left / right',-off,off,1],
   ['range','%Y','Up / down',-off,off,1]];
 const withPrefix=(items,p)=>items.map(i=>i[0]==='range'?[i[0],i[1].replace('%',p),...i.slice(2)]:i);
-const secWordmark=(off)=>[['h','Wordmark “mémé”','wm'],...withPrefix(xyz(off),'wm').map(i=>i[1]==='wmS'?['range','wmScale',...i.slice(2)]:i)];
-const secOn=(off)=>[['h','Text “on 10”','on'],
-  ['pick','onCase','Case',['lowercase','caps']],
+const secWordmark=(off)=>[['h','“mémé” wordmark','wm'],...withPrefix(xyz(off),'wm').map(i=>i[1]==='wmS'?['range','wmScale',...i.slice(2)]:i)];
+const secOn=(off)=>[['h','“on 10”','on'],
+  ['sub','Lettering'],
+  ['pick','onCase','Letters',['lowercase','caps']],
   ['pick','onFont','Font',['Bodoni Moda','Libre Bodoni','DM Serif Display','Prata','Playfair Display']],
   ['pick','onWeight','Weight',[400,500,600,700]],
-  ['range','opsz','Bodoni detail',6,96,1],
+  ['range','opsz','Hairline detail',6,96,1],
+  ['sub','Spacing'],
   ['range','onSpace','Letter spacing',-3,20,0.5],
   ['range','onWordGap','Space between “on” and “10”',-15,30,0.5],
   ...withPrefix(xyz(off),'on').map(i=>i[1]==='onS'?['range','onScale',...i.slice(2)]:i)];
 const secSq=(off)=>[['h','Squiggle','sq'],
   ['pick','squiggle','Style',['A','B']],
-  ['range','sqThick','Line weight',-3,10,0.1],['hint','Line weight: 0 is your original squiggle. Above 0 is bolder, below 0 is thinner (thinner needs a solid background color, not transparent).'],
+  ['range','sqThick','Line weight',-3,10,0.1],['hint','0 is your original squiggle. Above 0 is bolder, below 0 is thinner (thinner needs a solid background, not transparent).'],
   ...withPrefix(xyz(off,40,220),'sq').map(i=>i[1]==='sqS'?['range','sqScale',...i.slice(2)]:i)];
-const tagTop=[['h','Tagline','tag'],
-  ['pick','order','Order',['Kitchen & Cocktails','Cocktails & Kitchen']],
-  ['pick','tagFont','Font',['Jost','Gotham','Montserrat','Figtree']],
-  ['pick','amp','Ampersand',['sans','Bodoni']]];
+// DUPLICATE: font names (Jost, Bodoni Moda…) and the Montserrat stand-in for Gotham are also spelled out in prep(), menuSVG() and the header/awning builds.
 const tagHint=['hint','Gotham isn’t a free font. If it isn’t installed on this computer, the preview and PDF use Montserrat instead.'];
-const secColors=[['h','Colors'],['swatches'],['color','accent','Oval'],['color','sqColor','Squiggle'],['color','ink','Text'],['color','bg','Background'],['check','transparent','Transparent background']];
+const tagTop=[['h','Tagline','tag'],
+  ['sub','Words'],
+  ['pick','order','Word order',['Kitchen & Cocktails','Cocktails & Kitchen']],
+  ['pick','tagFont','Font',['Jost','Gotham','Montserrat','Figtree']],tagHint,
+  ['pick','amp','“&” style',['sans','Bodoni']],
+  ['sub','Size and spacing']];
+const tagPos=[['sub','Position']];
+const secColors=[['h','Colors','colors'],['swatches'],['sub','Your colors'],['color','accent','Oval'],['color','sqColor','Squiggle'],['color','ink','Text'],['color','bg','Background'],['check','transparent','Transparent background (no fill)']];
+// Option names shown on the buttons and lists (the saved value stays the same)
+const OPTNAME={onCase:{lowercase:'lowercase',caps:'CAPS'},squiggle:{A:'Style 1',B:'Style 2'},amp:{sans:'Plain &',Bodoni:'Bodoni &'},
+  oval:{'hand-drawn':'Hand-drawn',clean:'Clean line'},align:{left:'Left',center:'Center',right:'Right'},columns:{1:'1 column',2:'2 columns'},
+  onWeight:{400:'400 Regular',500:'500 Medium',600:'600 Semibold',700:'700 Bold'},
+  headAlign:{'spread across':'Spread out','together on the left':'Left','together in the center':'Center'}};
+const optName=(k,o)=>(OPTNAME[k]&&OPTNAME[k][o]!==undefined)?OPTNAME[k][o]:String(o);
+// What some color settings are called on each layout (they color different things)
+function colorLabel(k,lab){
+  if(k==='bg') return {'1b':'Inside the oval','1c':'Awning'}[cur]||lab;
+  if(k==='accent') return {'1c':'Oval (oval logo only)','hd':'Bottom line and oval logo'}[cur]||lab;
+  return lab;
+}
+// Settings that only do something when another setting is on; otherwise they are dimmed, with the reason
+const NEEDS={opsz:[()=>get('onFont')==='Bodoni Moda','Only changes Bodoni Moda.'],
+  ruleW:[()=>!!get('rule'),'Turn on “Line along the bottom” to use this.'],
+  padX:[()=>get('align')!=='center','Only used when the logo is on the left or right.'],
+  tagWidth:[()=>get('tagCurve')!==0,'Only used when the tagline is curved.']};
+// Which settings to skip on a layout (they do nothing there)
+const SKIP={'1d':['accent'],'1c':['transparent']};
 
 /* ============ MENU TEXT (Menu tab) — follows the brand guidelines, section 08 ============ */
 const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -474,20 +617,23 @@ const LAYOUTS = {
           wmScale:107.9,wmX:0.7,wmY:-3.49, onScale:107.14,onX:4.78,onY:2, sqScale:104.84,sqX:0,sqY:10.05,sqThick:0,
           tagSize:24,tagSpace:5,tagCurve:104.5,tagWidth:256.2,tagX:0,tagY:0,tagSkew:3 },
     panel:[
-      ['h','Order'],['order','Top to bottom'],['hint','Tick a piece to show it, untick to hide it. A tagline at the top curves along the top of the oval; in the middle it is straight.'],
+      ['h','Order and pieces','order'],['order','Top to bottom'],['hint','Tick a piece to show it, untick to hide it. A tagline at the top curves along the top of the oval; in the middle it is straight.'],
       ['h','Oval','oval'],
       ['pick','oval','Style',['hand-drawn','clean']],
+      ['sub','Shape'],
       ['range','rx','Width',150,420,1],
       ['range','ry','Height',80,260,1],
+      ['sub','Line'],
       ['range','thickD','Line weight',-3,10,0.1],
+      ['hint','0 is your original line. Above 0 is bolder, below 0 is thinner. Works on both ovals.'],
       ['check','sqFollow','Squiggle line follows the oval line (half as much)'],
-      ['hint','Line weight: 0 is your original line. Above 0 is bolder, below 0 is thinner. Works on both ovals.'],
       ...secWordmark(120), ['range','gap','Space before “on 10”',-20,60,1],
       ...secOn(120), ...secSq(120),
       ...tagTop,
       ['range','tagSize','Size',10,36,0.5],['range','tagSpace','Letter spacing',0,14,0.1],
-      ['range','tagCurve','Curve',0,200,1],['range','tagWidth','Curve width',80,300,1],['range','tagX','Left / right',-200,200,1],['range','tagY','Up / down',-100,100,1],
-      tagHint,
+      ['sub','Curve'],
+      ['range','tagCurve','Curve',0,200,1],['range','tagWidth','Curve width',80,300,1],
+      ...tagPos,['range','tagX','Left / right',-200,200,1],['range','tagY','Up / down',-100,100,1],
     ],
     build(S,G){
       const clean=G.oval==='clean', HS=clean?null:handShape(), TH=clean?Math.max(0.3,3.5+G.thickD):0,
@@ -533,15 +679,14 @@ const LAYOUTS = {
           wmScale:100,wmX:0,wmY:0, onScale:100,onX:0,onY:0, sqScale:100,sqX:0,sqY:0,sqThick:0,
           tagSize:22,tagSpace:6,tagX:0,tagY:0 },
     panel:[
-      ['h','Order'],['order','Top to bottom'],['hint','Tick a piece to show it, untick to hide it.'],
-      ['h','Canvas'],
+      ['h','Order and pieces','order'],['order','Top to bottom'],['hint','Tick a piece to show it, untick to hide it.'],
+      ['h','Page size','canvas'],
       ['range','W','Width',300,1200,1],['range','H','Height',150,600,1],
       ...secWordmark(150), ['range','gap','Space before “on 10”',-20,80,1],
       ...secOn(150), ...secSq(150),
       ...tagTop,
       ['range','tagSize','Size',10,48,0.5],['range','tagSpace','Letter spacing',0,20,0.1],
-      ['range','tagX','Left / right',-200,200,1],['range','tagY','Up / down',-120,120,1],
-      tagHint,
+      ...tagPos,['range','tagX','Left / right',-200,200,1],['range','tagY','Up / down',-120,120,1],
     ],
     build(S,G){
       const W=G.W,H=G.H,cx=W/2,cy=H/2;
@@ -566,17 +711,17 @@ const LAYOUTS = {
           wmScale:100,wmX:0,wmY:0, onScale:100,onX:0,onY:0, sqScale:100,sqX:0,sqY:0,sqThick:0,
           tagSize:30,tagSpace:9,tagX:0,tagY:0 },
     panel:[
-      ['h','Logo and order'],['logopick','Which logo'],['order','Left to right'],['hint','Tick a piece to show it, untick to hide it. With the oval logo you may want to hide the squiggle and tagline, since the oval already has them. “mémé” size and position also move the logo.'],
-      ['h','Awning'],
+      ['h','Logo and pieces','order'],['logopick','Which logo'],['order','Left to right'],['hint','Tick a piece to show it, untick to hide it. With the oval logo you may want to hide the squiggle and tagline, since the oval already has them. “mémé” size and position also move the logo.'],
+      ['h','Awning','awning'],
       ['range','W','Width',900,2600,1],
-      ['check','scallop','Scalloped bottom edge'],['hint','The awning color is the Background color below.'],
+      ['check','scallop','Scalloped bottom edge'],
+      ['sub','Spacing'],
       ['range','gap','Space before “on 10”',-20,80,1],
       ['range','gap2','Space between pieces',10,200,1],
       ...secWordmark(300), ...secOn(300), ...secSq(300),
       ...tagTop,
       ['range','tagSize','Size',14,60,0.5],['range','tagSpace','Letter spacing',0,24,0.1],
-      ['range','tagX','Left / right',-300,300,1],['range','tagY','Up / down',-60,60,1],
-      tagHint,
+      ...tagPos,['range','tagX','Left / right',-300,300,1],['range','tagY','Up / down',-60,60,1],
     ],
     build(S,G){
       const PADX=48,PADT=26,BAND=150,PADB=14,SC=G.scallop?30:0;
@@ -609,19 +754,21 @@ const LAYOUTS = {
           wmScale:100,wmX:0,wmY:0, onScale:100,onX:0,onY:0, sqScale:100,sqX:0,sqY:0,sqThick:0,
           tagSize:30,tagSpace:9,tagX:0,tagY:0 },
     panel:[
-      ['h','Logo and order'],['logopick','Which logo'],['order','Left to right'],['hint','Tick a piece to show it, untick to hide it. With the oval logo you may want to hide the squiggle and tagline, since the oval already has them. “mémé” size and position also move the logo.'],
-      ['h','Header'],
+      ['h','Logo and pieces','order'],['logopick','Which logo'],['order','Left to right'],['hint','Tick a piece to show it, untick to hide it. With the oval logo you may want to hide the squiggle and tagline, since the oval already has them. “mémé” size and position also move the logo.'],
+      ['h','Header','header'],
       ['range','W','Width',600,3000,1],['range','H','Height',80,400,1],
-      ['pick','align','Align logo',['left','center','right']],
+      ['sub','Placement'],
+      ['pick','align','Logo position',['left','center','right']],
       ['range','padX','Side margin',0,300,1],
+      ['sub','Bottom line'],
       ['check','rule','Line along the bottom'],['range','ruleW','Line thickness',0.5,14,0.1],
+      ['sub','Spacing'],
       ['range','gap','Space before “on 10”',-20,80,1],
       ['range','gap2','Space between pieces',10,200,1],
       ...secWordmark(300), ...secOn(300), ...secSq(300),
       ...tagTop,
       ['range','tagSize','Size',14,60,0.5],['range','tagSpace','Letter spacing',0,24,0.1],
-      ['range','tagX','Left / right',-300,300,1],['range','tagY','Up / down',-60,60,1],
-      tagHint,
+      ...tagPos,['range','tagX','Left / right',-300,300,1],['range','tagY','Up / down',-60,60,1],
     ],
     build(S,G){
       const W=G.W,H=G.H,cy=H/2;
@@ -648,18 +795,20 @@ const LAYOUTS = {
     pieces:'h',
     geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2' },
     panel:[
-      ['h','Menu words'],['menuedit'],
-      ['h','Look'],
-      ['range','menuScale','Menu text size %',70,130,1],
-      ['pick','columns','Columns',[2,1]],
-      ['pick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],
+      ['h','Menu words','words'],['menuedit'],
+      ['h','Look','look'],
       ['hint','Follows the brand guidelines: US Letter page, one-line header without the squiggle, no divider lines.'],
-      ['h','Header'],['logopick','Which logo'],['order','Left to right'],
-      ['pick','headAlign','Pieces',['spread across','together on the left','together in the center']],
-      ['range','menuLogo','Logo size %',60,160,1],
+      ['range','menuScale','Menu text size',70,130,1],
+      ['pick','columns','Columns',[2,1]],
+      ['pick','order','Tagline word order',['Kitchen & Cocktails','Cocktails & Kitchen']],
+      ['hint','Same setting as Tagline → Word order on the logo layouts: changing it here changes it there too.'],
+      ['h','Page header','order'],['logopick','Which logo'],['order','Left to right'],
       ['hint','Tick a piece to show it, untick to hide it.'],
-      ['h','Colors'],
-      ['color','menuBrand','Logo, headings, prices'],['color','menuInk','Dish names + tagline'],['color','menuBg','Page'],
+      ['sub','Placement'],
+      ['pick','headAlign','Pieces sit',['spread across','together on the left','together in the center']],
+      ['range','menuLogo','Logo size',60,160,1],
+      ['h','Colors','colors'],
+      ['color','menuBrand','Logo, headings, prices'],['color','menuInk','Dish names and tagline'],['color','menuBg','Page'],
     ],
     build(S,G){
       const brand=G.menuBrand, ink=G.menuInk;
@@ -736,6 +885,8 @@ const put=(k,v)=>{ if(isGeo(k)) G[cur][k]=v; else S[k]=v; };
 
 /* ============ MENU TEXT AS A DOCUMENT ============ */
 let menuMode='text';
+// DUPLICATE: menuAsText() below does almost the same thing. The difference: this one always writes a “#” line for
+// every section (even one with no name), so typing it back never merges two sections. Keep both until that is sorted.
 function menuToText(){
   return M.map(sec=>{
     const head='# '+[sec.title,sec.price].filter(x=>(x||'').trim()).join(' ');
@@ -988,6 +1139,7 @@ function readDocPaste(html,plain){
   return m;
 }
 // the menu as "type like a document" text; a section with no title just lists its dishes
+// DUPLICATE: see menuToText() above.
 function menuAsText(m){
   return m.map(sec=>{
     const head=(sec.title||'').trim()||(sec.price||'').trim()?['# '+[sec.title,sec.price].filter(x=>(x||'').trim()).join(' ')]:[];
@@ -1063,38 +1215,43 @@ function renderMenuEditor(){
   if(menuMode==='sheet'){ renderSheetMode(box); return; }
   if(menuMode==='docs'){ renderDocsMode(box); return; }
   if(menuMode==='text'){ renderTextMode(box); return; }
-  const inp=(ph,val,on)=>{ const i=document.createElement('input'); i.type='text'; i.placeholder=ph; i.value=val||''; i.style.fontSize='14px'; i.oninput=()=>{on(i.value);render();}; return i; };
-  const btn=(label,fn)=>{ const b=document.createElement('button'); b.textContent=label; b.onclick=fn; return b; };
+  const inp=(ph,val,on,aria)=>{ const i=document.createElement('input'); i.type='text'; i.placeholder=ph; i.value=val||''; i.style.fontSize='14px'; i.setAttribute('aria-label',aria||ph); i.oninput=()=>{on(i.value);render();}; return i; };
+  const btn=(label,fn,title)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=label; b.onclick=fn; if(title){ b.title=title; b.setAttribute('aria-label',title); } return b; };
+  const fl=t=>{ const d=document.createElement('div'); d.className='fl'; d.textContent=t; return d; };
   const redo=()=>{ renderMenuEditor(); render(); };
   const mv=(arr,i,d)=>{ const j=i+d; if(j<0||j>=arr.length) return; [arr[i],arr[j]]=[arr[j],arr[i]]; redo(); };
   M.forEach((sec,si)=>{
-    const card=document.createElement('div'); card.style.cssText='border:1px solid var(--line);background:#fff;border-radius:6px;padding:12px;margin:12px 0';
-    const hd=document.createElement('div'); hd.style.cssText='display:grid;grid-template-columns:1fr 72px;gap:8px';
-    hd.append(inp('Section title (like Cocktails)',sec.title,v=>{sec.title=v;}), inp('Price',sec.price,v=>{sec.price=v;}));
+    const card=document.createElement('div'); card.className='mcard';
+    const mk=document.createElement('div'); mk.className='mk'; mk.textContent=`Section ${si+1} of ${M.length}`; card.appendChild(mk);
+    const hd=document.createElement('div'); hd.className='mgrid';
+    hd.append(fl('Section name'),fl('Price for all'),inp('Like Cocktails',sec.title,v=>{sec.title=v;},'Section name'), inp('—',sec.price,v=>{sec.price=v;},'Price for the whole section'));
     card.appendChild(hd);
     sec.items=sec.items||[];
     sec.items.forEach((it,ii)=>{
-      const row=document.createElement('div'); row.style.cssText='border-top:1px solid var(--line);margin-top:10px;padding-top:10px';
-      const nm=inp('Name',it.name,v=>{it.name=v;}); nm.style.fontWeight='600';
-      const pr=inp('Price',it.price,v=>{it.price=v;}); const top=document.createElement('div'); top.style.cssText='display:grid;grid-template-columns:1fr 72px;gap:8px'; top.append(nm,pr);
-      const ds=document.createElement('textarea'); ds.rows=2; ds.placeholder='What’s in it (leave empty for a simple list)'; ds.value=it.desc||'';
-      ds.style.cssText='width:100%;font:inherit;font-size:13px;padding:5px 6px;border:1px solid var(--line);border-radius:3px;margin-top:6px;resize:vertical'; ds.oninput=()=>{it.desc=ds.value;render();};
-      const ctl=document.createElement('div'); ctl.className='ver'; ctl.append(document.createElement('span'),
-        btn('↑',()=>mv(sec.items,ii,-1)), btn('↓',()=>mv(sec.items,ii,1)),
+      const row=document.createElement('div'); row.className='mdish';
+      const nm=inp('Dish or drink name',it.name,v=>{it.name=v;},`Dish ${ii+1} name`); nm.style.fontWeight='600';
+      const pr=inp(sec.price?'—':'Price',it.price,v=>{it.price=v;},`Dish ${ii+1} price (only if it differs from the section)`); const top=document.createElement('div'); top.className='mgrid'; top.append(nm,pr);
+      const ds=document.createElement('textarea'); ds.rows=2; ds.placeholder='What’s in it (leave empty for a simple list)'; ds.value=it.desc||''; ds.setAttribute('aria-label',`Dish ${ii+1}: what’s in it`);
+      ds.oninput=()=>{it.desc=ds.value;render();};
+      const up=btn('↑',()=>mv(sec.items,ii,-1),'Move this dish up'), dn=btn('↓',()=>mv(sec.items,ii,1),'Move this dish down');
+      if(ii===0) up.disabled=true; if(ii===sec.items.length-1) dn.disabled=true;
+      const ctl=document.createElement('div'); ctl.className='ver'; ctl.append(document.createElement('span'), up, dn,
         twoStep(btn('Delete',()=>{}),'Click again to delete',()=>{ sec.items.splice(ii,1); redo(); }));
       row.append(top,ds,ctl); card.appendChild(row);
     });
+    const su=btn('Section ↑',()=>mv(M,si,-1),'Move this section up'), sd=btn('Section ↓',()=>mv(M,si,1),'Move this section down');
+    if(si===0) su.disabled=true; if(si===M.length-1) sd.disabled=true;
     const foot=document.createElement('div'); foot.className='ver'; foot.style.marginTop='10px'; foot.append(
-      btn('Add a drink or beer',()=>{ sec.items.push({name:'',desc:''}); redo(); }), document.createElement('span'),
-      btn('Section ↑',()=>mv(M,si,-1)), btn('Section ↓',()=>mv(M,si,1)),
+      btn('+ Add a drink or beer',()=>{ sec.items.push({name:'',desc:''}); redo(); }), document.createElement('span'),
+      su, sd,
       twoStep(btn('Delete section',()=>{}),'Click again to delete the whole section',()=>{ M.splice(si,1); redo(); }));
     card.appendChild(foot); box.appendChild(card);
   });
-  box.appendChild(btn('Add a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); redo(); }));
+  box.appendChild(btn('+ Add a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); redo(); }));
 }
 function menuEditorBlock(){
   const d=document.createElement('div');
-  d.innerHTML='<div class="hint" style="margin-bottom:8px">The menu page updates as you type.</div><div id="menuModes" class="seg menuseg"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><button type="button" class="link" id="menuStartOver" style="margin-top:10px">Start the menu over (puts back the original menu)</button>';
+  d.innerHTML='<div class="hint" style="margin-bottom:8px">How do you want to change the words? The menu page updates as you type.</div><div id="menuModes" class="seg menuseg" role="group" aria-label="How to change the words"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><button type="button" class="link" id="menuStartOver" style="margin-top:10px">Start the menu over (puts back the original menu)</button>';
   twoStep(d.querySelector('#menuStartOver'),'Click again to replace your menu with the original',()=>{ M=JSON.parse(JSON.stringify(MENU_DEFAULT)); renderMenuEditor(); render(); });
   const modes=d.querySelector('#menuModes');
   const defs=[['text','Type like a document'],['docs','From Google Docs'],['sheet','From Google Sheets'],['boxes','Edit in boxes']], bs=[];
@@ -1106,6 +1263,7 @@ function menuEditorBlock(){
 }
 
 /* ============ ORDER + LOGO PICKERS (simple and full views) ============ */
+const pieceName=(k,g)=>k==='name'&&g.logo&&g.logo!=='line'?'Logo':PIECE_NAMES[k];
 function orderBlock(label){
   const d=document.createElement('div'); d.className='order';
   const horiz=LAYOUTS[cur].pieces==='h';
@@ -1114,9 +1272,10 @@ function orderBlock(label){
     d.innerHTML=''; const t=document.createElement('div'); t.className='sl'; t.textContent=label; d.appendChild(t);
     seq.forEach((k,i)=>{
       const r=document.createElement('div'); r.className='ord'+(off.includes(k)?' off':'');
-      const nm=k==='name'&&g.logo&&g.logo!=='line'?'Logo':PIECE_NAMES[k];
-      r.innerHTML=`<label><input type="checkbox"${off.includes(k)?'':' checked'}> <span></span></label><button title="${horiz?'Move left':'Move up'}">${horiz?'←':'↑'}</button><button title="${horiz?'Move right':'Move down'}">${horiz?'→':'↓'}</button>`;
-      r.querySelector('span').textContent=`${i+1}. ${nm}`;
+      const nm=pieceName(k,g);
+      r.innerHTML=`<label><input type="checkbox"${off.includes(k)?'':' checked'}> <span class="n">${i+1}</span><span></span></label><button type="button">${horiz?'←':'↑'}</button><button type="button">${horiz?'→':'↓'}</button>`;
+      r.querySelector('span:not(.n)').textContent=nm;
+      const [t1,t2]=r.querySelectorAll('button'); t1.title=t1.ariaLabel=`Move ${nm} ${horiz?'left':'up'}`; t2.title=t2.ariaLabel=`Move ${nm} ${horiz?'right':'down'}`;
       r.querySelector('input').onchange=e=>{ const o=(g.off||[]).filter(x=>x!==k); if(!e.target.checked) o.push(k); g.off=o; paint(); render(); };
       const mv=dd=>{ const j=i+dd; if(j<0||j>=seq.length) return; const a=seq.slice(); [a[i],a[j]]=[a[j],a[i]]; g.seq=a; paint(); render(); };
       const [b1,b2]=r.querySelectorAll('button'); b1.onclick=()=>mv(-1); b2.onclick=()=>mv(1); if(i===0) b1.disabled=true; if(i===seq.length-1) b2.disabled=true;
@@ -1127,9 +1286,9 @@ function orderBlock(label){
 }
 function logoPickBlock(label){
   const r=document.createElement('div'); r.className='row2 stack';
-  r.innerHTML=`<label></label><select></select><span></span>`;
+  r.innerHTML=`<label></label><select></select>`;
   r.firstChild.textContent=label;
-  const s_=r.querySelector('select');
+  const s_=r.querySelector('select'); s_.id='logoPick'; r.firstChild.htmlFor='logoPick';
   s_.onchange=()=>{ G[cur].logo=s_.value; sync(); render(); };
   refs.push(()=>{ const ch=logoChoices(); s_.innerHTML=''; ch.forEach(([v,t])=>{ const o=document.createElement('option'); o.value=v; o.textContent=t; s_.appendChild(o); });
     s_.value=ch.some(c=>c[0]===G[cur].logo)?G[cur].logo:'line'; });
@@ -1150,6 +1309,7 @@ function applyMode(){
 const CHEV='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
 const OPEN={};   // which sections are open, per layout (all closed to start)
 const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+// DUPLICATE: these short names repeat each layout's `stab` (and `tab` holds a third, longer name). One place would be enough.
 const LNAME={'1b':['Oval','1b'],'1d':['No oval','1d'],'1c':['Awning','1c'],'hd':['Header',''],'mn':['Menu page','']};
 // The menu page has its own tab in the top nav, so it is not in the logo tab's picker.
 const LGROUPS=[['Logo',['1b','1d']],['Made with the logo',['1c','hd']]];
@@ -1182,12 +1342,37 @@ function lockBtn(k){
   return b;
 }
 function afterSet(k,v){ if(k==='thickD'&&G[cur].sqFollow) G[cur].sqThick=Math.round(v*5)/10; }  // squiggle line follows the oval line at half the amount
+/* ---- shared bits of a setting row ---- */
+const UNIT={wmScale:'%',onScale:'%',sqScale:'%',menuScale:'%',menuLogo:'%'};
+let uid=0;
+// the value a setting starts with on this layout
+const defOf=k=>k in LAYOUTS[cur].geo?LAYOUTS[cur].geo[k]:SHARED_DEFAULTS[k];
+// label on the left, with a ↺ button that shows when the setting has been changed
+function labCell(k,label,inputId,onReset){
+  const d=document.createElement('div'); d.className='lab';
+  const l=document.createElement('label'); l.textContent=label; if(inputId) l.htmlFor=inputId; d.appendChild(l);
+  if(onReset){
+    const b=document.createElement('button'); b.type='button'; b.className='reset'; b.textContent='↺';
+    b.title=b.ariaLabel='Put “'+label+'” back to how it started';
+    b.onclick=()=>{ onReset(); sync(); };
+    refs.push(()=>{ const dv=defOf(k); b.classList.toggle('on',dv!==undefined&&String(get(k))!==String(dv)); });
+    d.appendChild(b);
+  }
+  return d;
+}
+// dim a row (and say why) when it does nothing right now
+function needs(r,k){
+  if(!NEEDS[k]) return;
+  const w=document.createElement('div'); w.className='why'; w.textContent=NEEDS[k][1]; r.appendChild(w);
+  refs.push(()=>{ const ok=NEEDS[k][0](); r.classList.toggle('off',!ok); w.hidden=ok; });
+}
 function stepperRow(k,label,min,max,step){
-  const r=document.createElement('div'); r.className='row2';
-  r.innerHTML=`<label></label><div class="stepper"><button type="button" class="sb" aria-label="Less">−</button><input type="number" step="${step}" inputmode="decimal"><button type="button" class="sb" aria-label="More">+</button></div><span class="lk"></span>`;
-  r.querySelector('label').textContent=label;
-  const [minus,nb,plus]=r.querySelector('.stepper').children;
-  nb.setAttribute('aria-label',label);
+  const r=document.createElement('div'); r.className='row2'; const id='f'+(++uid), u=UNIT[k]||'';
+  r.innerHTML=`<div class="stepper${u?' has-unit':''}"><button type="button" class="sb">−</button><input type="number" id="${id}" step="${step}" min="${min}" max="${max}" inputmode="decimal">${u?`<span class="unit">${u}</span>`:''}<button type="button" class="sb">+</button></div><span class="lk"></span>`;
+  const [minus,nb]=r.querySelectorAll('.stepper .sb, .stepper input'), plus=r.querySelectorAll('.stepper .sb')[1];
+  minus.ariaLabel='Less '+label.toLowerCase(); plus.ariaLabel='More '+label.toLowerCase();
+  nb.title=`From ${min} to ${max}`;
+  r.prepend(labCell(k,label,id,()=>commit(defOf(k),true)));
   if(k in LINKMODE) r.querySelector('.lk').replaceWith(lockBtn(k));
   const commit=(v,clamp)=>{ v=+v; if(clamp) v=Math.min(max,Math.max(min,v)); v=Math.round(v*1000)/1000;
     const old=get(k); if(v===old) return; put(k,v); propagate(k,old,v); afterSet(k,v); render(); };
@@ -1204,31 +1389,49 @@ function stepperRow(k,label,min,max,step){
   };
   hold(minus,-1); hold(plus,1);
   refs.push(()=>{ if(document.activeElement!==nb) nb.value=get(k); });
+  needs(r,k);
   return r;
 }
 function pickRow(k,label,opts){
-  const num=typeof opts[0]==='number';
-  const r=document.createElement('div'); r.className='row2'+(opts.length<=3&&opts.join('').length>16?' stack':'');
-  const lab=document.createElement('label'); lab.textContent=label; r.appendChild(lab);
-  if(opts.length<=3){
-    const sg=document.createElement('div'); sg.className='seg small';
-    const bs=opts.map(o=>{ const b=document.createElement('button'); b.type='button'; b.textContent=o; b.onclick=()=>{ put(k,o); render(); sync(); }; sg.appendChild(b); return [o,b]; });
-    refs.push(()=>bs.forEach(([o,b])=>b.classList.toggle('on',String(get(k))===String(o))));
+  const num=typeof opts[0]==='number', seg=opts.length<=3, id='f'+(++uid);
+  const r=document.createElement('div'); r.className='row2'+(seg&&opts.map(o=>optName(k,o)).join('').length>24?' stack':'');
+  const setTo=v=>{ put(k,v); render(); sync(); };
+  r.appendChild(labCell(k,label,seg?null:id,()=>setTo(defOf(k))));
+  if(seg){
+    const sg=document.createElement('div'); sg.className='seg small'; sg.setAttribute('role','group'); sg.ariaLabel=label;
+    const bs=opts.map(o=>{ const b=document.createElement('button'); b.type='button'; b.textContent=optName(k,o); b.onclick=()=>setTo(o); sg.appendChild(b); return [o,b]; });
+    refs.push(()=>bs.forEach(([o,b])=>{ const on=String(get(k))===String(o); b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); }));
     r.appendChild(sg);
   } else {
-    const s=document.createElement('select'); s.innerHTML=opts.map(o=>`<option value="${o}">${o}</option>`).join('');
-    s.onchange=()=>{ put(k,num?+s.value:s.value); render(); };
+    const s=document.createElement('select'); s.id=id;
+    opts.forEach(o=>{ const op=document.createElement('option'); op.value=o; op.textContent=optName(k,o); s.appendChild(op); });
+    s.onchange=()=>setTo(num?+s.value:s.value);
     refs.push(()=>{ s.value=get(k); }); r.appendChild(s);
   }
   r.appendChild(document.createElement('span'));
+  needs(r,k);
   return r;
+}
+const PARTWORD={wm:'“mémé”',on:'“on 10”',oval:'Oval',sq:'Squiggle|The squiggle',tag:'Tagline'};
+function dropPart(label,sec){
+  if(!PARTWORD[sec]) return label;
+  const t=label.replace(new RegExp('^(?:'+PARTWORD[sec]+')\\s+','i'),'');
+  return t===label?label:t[0].toUpperCase()+t.slice(1);
+}
+// a short summary on a closed section's title bar: the colors in use, or the order of the pieces
+function accSummary(id,el){
+  if(id==='colors') refs.push(()=>{
+    const cs=LAYOUTS[cur].ownColors?[G[cur].menuBrand,G[cur].menuInk,G[cur].menuBg]:[S.accent,sqCol(S),S.ink,...(S.transparent?[]:[S.bg])];
+    el.innerHTML=cs.map(c=>`<span class="dot" style="background:${c}"></span>`).join(''); });
+  if(id==='order') refs.push(()=>{ const g=G[cur]; el.textContent=shownSeq(g).map(k=>pieceName(k,g).replace(/[“”]/g,'')).join(' · ')||'nothing shown'; });
 }
 function buildPanel(){
   applyMode();
   refs=[]; panel.innerHTML=''; panel.className='panel';
   const simple=mode==='simple', B=basics(cur);
   const top=document.createElement('div');
-  top.innerHTML=`<div class="titlerow"><h1>Mémé on 10 · ${cur==='mn'?'Menu':'Logo'} editor</h1><label class="switch" title="Simple shows only the everyday settings. Your logo stays the same either way."><input type="checkbox" id="simpleSw"><span class="track"><span class="knob"></span></span>Simple</label></div><p class="nav"><a href="index.html">← Home</a> · <a href="guidelines.html">Brand guidelines</a> · <a href="print.html">Print</a> · <a href="social.html">Social media →</a></p>`;
+  // (The row of links to Home, Brand guidelines, Print and Social that used to sit here repeated the top nav, so it is gone.)
+  top.innerHTML=`<div class="titlerow"><h1>${cur==='mn'?'Menu':'Logo'} editor<small>${simple?'Simple: the everyday settings':'All settings'}</small></h1><label class="switch" title="Simple shows only the everyday settings. Your work stays the same either way."><input type="checkbox" id="simpleSw"><span class="track"><span class="knob"></span></span>Simple</label></div>`;
   panel.appendChild(top);
   const sw=top.querySelector('#simpleSw'); sw.checked=simple;
   sw.onchange=()=>{ mode=sw.checked?'simple':'full'; buildPanel(); render(); };
@@ -1236,30 +1439,40 @@ function buildPanel(){
     const kick=document.createElement('div'); kick.className='kicker'; kick.textContent='Layout'; panel.appendChild(kick);
     panel.appendChild(layoutPicker());
     const help=document.createElement('div'); help.className='helpbox';
-    help.innerHTML='<b>Click a part of the logo</b> to open its settings. <b>Arrow keys</b> move it, <b>+ / −</b> make it bigger or smaller (Shift for bigger steps). <b>Tab</b> goes to the next part, <b>Esc</b> lets go. Hold a <b>− / +</b> button to keep going.'
-      +'<span class="only-full"> A pink line shows when a part lines up with the center or another part. <span class="inlock">'+LOCK_SVG+'</span> = also change it on every layout.</span>';
+    help.innerHTML='<p><b>Click a part of the logo</b> to open its settings.</p><ul>'
+      +'<li><span><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></span><span>move it</span></li>'
+      +'<li><span><kbd>+</kbd><kbd>−</kbd></span><span>bigger or smaller (hold <kbd>Shift</kbd> for big steps, or hold a − / + button)</span></li>'
+      +'<li><span><kbd>Tab</kbd></span><span>next part</span></li><li><span><kbd>Esc</kbd></span><span>let go</span></li>'
+      +'<li class="only-full"><span class="inlock">'+LOCK_SVG+'</span><span>link: also change it on every layout. A pink line shows when a part lines up.</span></li>'
+      +'<li><span>↺</span><span>put one setting back to how it started</span></li></ul>';
     panel.appendChild(help);
   }
   const items=LAYOUTS[cur].panel.concat(LAYOUTS[cur].ownColors?[]:secColors,[['h','Saved versions'],['versions']]);
   if(!OPEN[cur]) OPEN[cur]=new Set();
-  let acc=null, body=panel, shown=0, lastShown=true;
+  let acc=null, body=panel, shown=0, lastShown=true, sub=null;
   const finish=()=>{ if(acc&&!shown) acc.remove(); };
-  const add=el=>{ body.appendChild(el); shown++; lastShown=true; };
+  // a small heading inside a section waits until something under it is shown (Simple hides many settings)
+  const add=el=>{ if(sub){ body.appendChild(sub); sub=null; } body.appendChild(el); shown++; lastShown=true; };
+  const skip=SKIP[cur]||[];
   items.forEach(item=>{
     const t=item[0];
     if(t==='h'){
-      finish();
+      finish(); sub=null;
       const id=item[2]||slug(item[1]);
       acc=document.createElement('section'); acc.className='acc'+(OPEN[cur].has(id)?' open':''); acc.dataset.sec=id;
-      acc.innerHTML=`<button type="button" class="acc-h" aria-expanded="${OPEN[cur].has(id)}">${CHEV}<span class="acc-t"></span><span class="acc-badge">selected</span></button><div class="acc-b"></div>`;
+      acc.innerHTML=`<button type="button" class="acc-h" aria-expanded="${OPEN[cur].has(id)}">${CHEV}<span class="acc-t"></span><span class="acc-sum" aria-hidden="true"></span><span class="acc-badge">Selected</span></button><div class="acc-b"></div>`;
       acc.querySelector('.acc-t').textContent=item[1];
+      accSummary(id,acc.querySelector('.acc-sum'));
       const a=acc, hb=acc.querySelector('.acc-h');
       hb.onclick=()=>{ const o=a.classList.toggle('open'); hb.setAttribute('aria-expanded',o); if(o) OPEN[cur].add(id); else OPEN[cur].delete(id); };
       panel.appendChild(acc); body=acc.querySelector('.acc-b'); shown=0; lastShown=true; return;
     }
+    if(t==='sub'){ const d=document.createElement('div'); d.className='sub'; d.textContent=item[1]; sub=d; return; }
     const k=item[1], basic=(k in B)||POSKEYS.includes(k);
-    const label=simple&&B[k]?B[k]:item[2];
-    if(t==='hint'){ if(lastShown&&(!simple||cur==='mn')){ const d=document.createElement('div'); d.className='hint'; d.textContent=item[1]; d.style.margin='6px 0'; body.appendChild(d); } return; }
+    // Simple labels name their part (“on 10” size); inside that part's own section the name is already on the title bar
+    const label=simple&&B[k]?dropPart(B[k],acc&&acc.dataset.sec):item[2];
+    if(t==='hint'){ if(lastShown&&(!simple||cur==='mn')){ const d=document.createElement('div'); d.className='hint'; d.textContent=item[1]; body.appendChild(d); } return; }
+    if(skip.includes(k)){ lastShown=false; return; }
     const visible=!simple||basic||['menuedit','versions','swatches','color','order','logopick'].includes(t)||k==='transparent';
     if(!visible){ lastShown=false; return; }
     if(t==='menuedit'){ add(menuEditorBlock()); renderMenuEditor(); return; }
@@ -1268,10 +1481,11 @@ function buildPanel(){
     if(t==='range'){ const [,,,min,max,step]=item; add(stepperRow(k,label,min,max,step)); return; }
     if(t==='pick'){ add(pickRow(k,label,item[3])); return; }
     if(t==='color'){
-      const r=document.createElement('div'); r.className='row2';
-      r.innerHTML=`<label></label><input type="color"><span></span>`; r.querySelector('label').textContent=label;
-      const inp=r.querySelector('input'); inp.oninput=()=>{put(k,inp.value); render();};
-      refs.push(()=>{inp.value=k==='sqColor'?sqCol(S):get(k);});
+      const r=document.createElement('div'); r.className='row2'; const id='f'+(++uid), lab=colorLabel(k,label);
+      r.innerHTML=`<label class="colorctl"><input type="color" id="${id}"><code></code></label><span></span>`;
+      r.prepend(labCell(k,lab,id,()=>{ if(k==='sqColor') delete S.sqColor; else put(k,defOf(k)); render(); }));
+      const inp=r.querySelector('input'), hex=r.querySelector('code'); inp.oninput=()=>{put(k,inp.value); hex.textContent=inp.value; render(); sync();};
+      refs.push(()=>{inp.value=k==='sqColor'?sqCol(S):get(k); hex.textContent=inp.value;});
       add(r); return;
     }
     if(t==='check'){
@@ -1282,29 +1496,39 @@ function buildPanel(){
       add(r); return;
     }
     if(t==='swatches'){
-      const d=document.createElement('div'); d.className=simple?'chips':'sw';
-      PRESETS.forEach(p=>{
-        const b=document.createElement('button'); b.type='button'; b.title=p[0];
-        b.innerHTML=simple?`<span class="dot" style="background:linear-gradient(135deg,${p[3]} 0 50%,${p[2]} 50%)"></span><span></span>`:`<i style="background:linear-gradient(135deg,${p[3]} 0 50%,${p[2]} 50%)"></i>`;
-        if(simple) b.lastChild.textContent=p[0];
-        b.onclick=()=>{S.ink=p[1];S.accent=p[2];S.sqColor=p[2];S.bg=p[3];S.transparent=false;sync();render();};
-        d.appendChild(b);
-      });
-      add(d); return;
+      const isOn=p=>!S.transparent&&[S.ink,S.accent,sqCol(S),S.bg].join()===[p[1],p[2],p[2],p[3]].join();
+      const group=(name,list)=>{
+        const l=document.createElement('div'); l.className='swl'; l.textContent=name; add(l);
+        const d=document.createElement('div'); d.className=simple?'chips':'sw';
+        list.forEach(p=>{
+          const b=document.createElement('button'); b.type='button'; b.title=p[0]; b.ariaLabel='Colors: '+p[0];
+          b.innerHTML=simple?`<span class="dot" style="background:linear-gradient(135deg,${p[3]} 0 50%,${p[2]} 50%)"></span><span></span>`:`<i style="background:linear-gradient(135deg,${p[3]} 0 50%,${p[2]} 50%)"></i>`;
+          if(simple) { const t=p[0].replace(/^Brand: /,''); b.lastChild.textContent=t[0].toUpperCase()+t.slice(1); }
+          b.onclick=()=>{S.ink=p[1];S.accent=p[2];S.sqColor=p[2];S.bg=p[3];S.transparent=false;sync();render();};
+          refs.push(()=>{ const on=isOn(p); b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); });
+          d.appendChild(b);
+        });
+        add(d);
+      };
+      group('Brand colors',PRESETS.filter(p=>p[0].startsWith('Brand:')));
+      group('More presets',PRESETS.filter(p=>!p[0].startsWith('Brand:')));
+      return;
     }
     if(t==='versions'){
       const wrap=document.createElement('div');
-      wrap.innerHTML='<div class="ver"><input type="text" id="verName" placeholder="Name this version, e.g. Mom’s favorite"><button id="verSave">Save</button></div><div id="verList"></div><div class="hint" id="verNote">Your last settings and saved versions are remembered in this browser automatically. To keep them safe or move them to another computer, use the file buttons.</div><div class="ver" style="margin-top:8px"><button id="verExport">Save versions to a file</button><button id="verImport">Open a versions file</button><input type="file" id="verFile" accept=".json" style="display:none"></div>';
+      wrap.innerHTML='<div class="ver"><input type="text" id="verName" aria-label="Name for this version" placeholder="Name this version, e.g. Mom’s favorite"><button id="verSave" class="primary">Save</button></div><div id="verList" class="vlist"></div><div class="hint" id="verNote">Your last settings and saved versions are remembered in this browser automatically. To keep them safe or move them to another computer, use the file buttons.</div><div class="ver" style="margin-top:8px"><button id="verExport">Save versions to a file</button><button id="verImport">Open a versions file</button><input type="file" id="verFile" accept=".json" style="display:none"></div>';
       add(wrap); return;
     }
   });
   finish();
   const foot=document.createElement('div'); foot.className='foot';
-  foot.innerHTML='<button id="btnReset">Reset everything</button><div class="hint" style="margin-top:12px">Editor '+VERSION+' · update '+UPDATE+'</div>';
-  foot.insertAdjacentHTML('beforeend',`<details class="hint only-full" style="margin-top:14px"><summary style="cursor:pointer">Editor ${VERSION} · ${VERSION_DATE} · what changed</summary><ul style="padding-left:18px;margin:8px 0">${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`);
+  // one version line (it used to be shown twice: once plain, once on the "what changed" list)
+  foot.innerHTML='<button id="btnReset">Reset everything</button>'
+    +`<details class="hint"><summary>Editor ${VERSION} · update ${UPDATE} · ${VERSION_DATE}</summary><ul>${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`;
   panel.appendChild(foot);
   twoStep(document.getElementById('btnReset'),'Click again to reset every layout and the menu (saved versions are kept)',()=>{ S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT));Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();});
   document.getElementById('verSave').onclick=saveVersion;
+  document.getElementById('verName').onkeydown=e=>{ if(e.key==='Enter') saveVersion(); };
   document.getElementById('verExport').onclick=()=>{ const cur_={layout:cur,S:Object.assign({},S),G:JSON.parse(JSON.stringify(G)),M:JSON.parse(JSON.stringify(M))}; download(new Blob([JSON.stringify(Object.assign({'(current settings)':cur_},mem),null,1)],{type:'application/json'}),`meme-on-10-logo-editor-saved-versions_${new Date().toISOString().slice(0,10)}.json`); };
   document.getElementById('verImport').onclick=()=>document.getElementById('verFile').click();
   document.getElementById('verFile').onchange=e=>{ const fl=e.target.files[0]; if(!fl) return; fl.text().then(tx=>{ try{ const o=JSON.parse(tx); delete o['(current settings)']; Object.assign(mem,o); persist(); renderVersions(); }catch(err){ document.getElementById('verNote').textContent='That file could not be read.'; } }); };
@@ -1323,15 +1547,16 @@ function saveVersion(){
 function renderVersions(){
   const l=document.getElementById('verList'); if(!l) return; l.innerHTML='';
   const names=Object.keys(mem);
-  if(!names.length){ l.innerHTML='<div class="hint">No saved versions yet.</div>'; return; }
+  if(!names.length){ l.className='hint'; l.textContent='No saved versions yet.'; return; }
+  l.className='vlist';
   names.forEach(n=>{
-    const r=document.createElement('div'); r.className='ver';
-    r.innerHTML=`<span></span><button>Load</button><button>Delete</button>`;
-    r.firstChild.textContent=`${n}  ·  ${(LAYOUTS[mem[n].layout]||{}).tab||''}`;
+    const r=document.createElement('div'); r.className='vrow';
+    r.innerHTML=`<span class="vn"><span></span><small></small></span><button type="button">Load</button><button type="button">Delete</button>`;
+    r.querySelector('.vn span').textContent=n; r.querySelector('.vn small').textContent=(LNAME[mem[n].layout]||[(LAYOUTS[mem[n].layout]||{}).tab||''])[0];
     r.children[1].onclick=()=>{ const v=mem[n]; S=Object.assign({},SHARED_DEFAULTS,v.S);
       Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k]));
       if(v.M) M=JSON.parse(JSON.stringify(v.M)); cur=LAYOUTS[v.layout]?v.layout:'1b'; LINKS=new Set(v.links||[]); sel=null; buildPanel(); render(); };
-    r.children[2].onclick=()=>{delete mem[n];persist();renderVersions();sync();render();};
+    twoStep(r.children[2],'Delete?',()=>{delete mem[n];persist();renderVersions();sync();render();});
     l.appendChild(r);
   });
 }
