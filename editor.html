@@ -65,7 +65,7 @@ body.simple .only-full{display:none!important}
 body.simple #btnPdf{font-size:16px;padding:12px 22px}
 @media print{
   body{background:none}
-  .app{display:block}.panel,.bar,.hint,.grip{display:none!important}
+  .app{display:block;min-height:0}.panel,.bar,.hint,.grip{display:none!important}
   .stage{position:static;height:auto;padding:0}
   .canvas{background:none;padding:0;border-radius:0;display:block}
   .canvas svg{max-width:none;max-height:none}
@@ -116,7 +116,7 @@ body.resizing{cursor:col-resize;user-select:none}
 .row2 select{width:auto;max-width:210px}
 .row2 input[type=color]{width:128px;height:30px}
 .stepper{display:flex;border:1px solid #b9b0a5;border-radius:5px;overflow:hidden;background:#fff}
-.stepper .sb{border:none;border-radius:0;padding:0;width:34px;height:30px;font-size:17px;line-height:1;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+.stepper .sb{-webkit-tap-highlight-color:transparent;border:none;border-radius:0;padding:0;width:34px;height:30px;font-size:17px;line-height:1;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
 .stepper .sb:hover{background:#efe9df;color:var(--ink)}
 .stepper .sb:active{background:#e3dccf}
 .stepper input{width:64px;border:none;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font:inherit;font-size:13px;padding:0 2px;-moz-appearance:textfield;appearance:textfield;background:#fff}
@@ -548,7 +548,7 @@ function propagate(k,old,nv){
     if(L===cur||!(k in G[L])) return;
     const m=LINKMODE[k], cu=G[L][k]; let v;
     if(m==='same') v=nv; else if(m==='delta') v=cu+(nv-old); else v=old?cu*nv/old:cu;
-    const sp=rangeOf(L,k); if(sp){ v=Math.min(sp[4],Math.max(sp[3],v)); v=Math.round(v/sp[5])*sp[5]; v=+v.toFixed(3); }
+    const sp=rangeOf(L,k); if(sp){ v=Math.min(sp[4],Math.max(sp[3],v)); v=+v.toFixed(3); }   // same exact value everywhere (no rounding to whole steps)
     G[L][k]=v;
   });
 }
@@ -928,7 +928,7 @@ function render(){
   LAST=LAYOUTS[cur].build(S,G[cur]);
   document.getElementById('canvas').innerHTML=LAST.svg; autosave(); overlay();
   const mw=document.getElementById('menuWarn'); if(mw) mw.textContent=LAST.over?'The menu is longer than the page. Make the text smaller or use 2 columns.':'';
-  document.getElementById('pageStyle').textContent=`@page{size:${f(LAST.W)}px ${f(LAST.H)}px;margin:0}@media print{.canvas svg{width:${f(LAST.W)}px!important;height:${f(LAST.H)}px!important}}`;
+  document.getElementById('pageStyle').textContent=`@page{size:${f(LAST.W)}px ${f(LAST.H)}px;margin:0}@media print{html,body{margin:0;height:auto}.app,.stage,.canvas{height:${f(LAST.H)}px!important;overflow:hidden}.canvas svg{width:${f(LAST.W)}px!important;height:${f(LAST.H)}px!important}}`;
 }
 const fileBase=()=>'meme-on-10-'+LAYOUTS[cur].file+'-logo_'+VERSION_DATE;
 function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
