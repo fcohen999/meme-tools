@@ -9,9 +9,12 @@
 <style id="pageStyle"></style>
 <style>
 :root{--ink:#2b2724;--muted:#6b635b;--line:#d9d1c6;--panel:#f6f2ea;--accent:#b35a3e}
+:root{color-scheme:light}   /* the editor is always light, even when the computer is in dark mode */
+input,select,textarea{color:var(--ink);background-color:#fff}
+input::placeholder,textarea::placeholder{color:#9a9188}
 *{box-sizing:border-box}
 body{margin:0;background:#ece7df;color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px}
-.app{display:grid;grid-template-columns:minmax(0,1fr) 380px;min-height:100vh}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 7px var(--side,420px);min-height:100vh}
 .stage{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:24px;gap:14px}
 .canvas{flex:1;display:flex;align-items:center;justify-content:center;background:#e3ddd2;border-radius:6px;padding:24px;overflow:hidden}
 .canvas svg{cursor:default;max-width:100%;max-height:100%;width:auto;height:auto;display:block}
@@ -21,7 +24,7 @@ button:hover{background:var(--ink);color:#f3ede1}
 button.primary{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
 button.primary:hover{background:var(--accent);border-color:var(--accent)}
 .hint{font-size:12px;color:var(--muted);line-height:1.5}
-.panel{background:var(--panel);border-left:1px solid var(--line);padding:20px 22px 60px;overflow:auto;max-height:100vh}
+.panel{background:var(--panel);padding:20px 22px 60px;overflow:auto;max-height:100vh}
 h1{font-size:16px;margin:0 0 2px;font-weight:600}
 h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px;padding-top:16px;border-top:1px solid var(--line)}
 .row{display:grid;grid-template-columns:110px 1fr 62px 26px;gap:10px;align-items:center;margin:7px 0}
@@ -43,7 +46,7 @@ input[type=color]{width:100%;height:30px;border:1px solid var(--line);border-rad
 .ver span{flex:1}
 .ver button{padding:4px 9px;font-size:12px}
 .disabled{opacity:.45;pointer-events:none}
-@media(max-width:900px){.app{grid-template-columns:1fr}.stage{position:static;height:auto}.canvas{min-height:300px}.panel{max-height:none}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.grip{display:none}.stage{position:static;height:auto}.canvas{min-height:300px}.panel{max-height:none}}
 body.simple .only-full{display:none!important}
 .simple-panel h1{font-size:22px;margin:0 0 4px}
 .simple-panel .lead{font-size:14px;color:var(--muted);line-height:1.5;margin:0 0 6px}
@@ -65,14 +68,71 @@ body.simple .only-full{display:none!important}
 body.simple #btnPdf{font-size:16px;padding:12px 22px}
 @media print{
   body{background:none}
-  .app{display:block}.panel,.bar,.hint{display:none!important}
+  .app{display:block;min-height:0}.panel,.bar,.hint,.grip{display:none!important}
   .stage{position:static;height:auto;padding:0}
   .canvas{background:none;padding:0;border-radius:0;display:block}
   .canvas svg{max-width:none;max-height:none}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 .panel h2.sel{color:#1f6fd1}.panel h2.sel::before{content:'● '}
-.canvas.dragging svg{cursor:grabbing}
+/* ---- v25 sidebar ---- */
+.grip{position:sticky;top:0;height:100vh;cursor:col-resize;border-left:1px solid var(--line);background:var(--panel);touch-action:none;outline:none}
+.grip:hover,.grip.on,.grip:focus-visible{background:#d9d1c6;border-left-color:#b9b0a5}
+body.resizing{cursor:col-resize;user-select:none}
+.canvas{outline:none}
+.titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nav{margin:6px 0 0;font-size:14px}.nav a{color:#1f6fd1}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.switch .track{width:36px;height:20px;border-radius:10px;background:#c9c0b4;position:relative;transition:background .15s}
+.switch .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.switch input:checked+.track{background:var(--ink)}
+.switch input:checked+.track .knob{left:18px}
+.switch input:focus-visible+.track{outline:2px solid #1f6fd1;outline-offset:2px}
+.kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
+.lgroups{display:flex;flex-wrap:wrap;gap:10px 16px}
+.lgl{font-size:11px;color:var(--muted);margin-bottom:5px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid #b9b0a5;border-radius:6px;overflow:hidden;background:#fff;max-width:100%}
+.seg button{border:none;border-radius:0;border-right:1px solid #e3dccf;padding:8px 12px;background:#fff}
+.seg button:last-child{border-right:none}
+.seg button small{font-size:10px;opacity:.6;margin-left:5px}
+.seg button.on{background:var(--ink);color:#f3ede1}
+.seg button:not(.on):hover{background:#efe9df;color:var(--ink)}
+.seg.small button{padding:5px 10px;font-size:12px}
+.helpbox{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--muted);margin:16px 0 6px}
+.helpbox b{color:var(--ink)}
+.inlock{display:inline-block;width:13px;height:13px;vertical-align:-2px}.inlock svg{width:13px;height:13px}
+.acc{background:#fff;border:1px solid var(--line);border-radius:8px;margin:10px 0;overflow:hidden}
+.acc-h{width:100%;display:flex;align-items:center;gap:10px;border:none;border-radius:0;background:none;padding:13px 14px;font-size:14px;font-weight:600;text-align:left}
+.acc-h:hover{background:#faf7f1;color:var(--ink)}
+.chev{width:15px;height:15px;flex:none;transition:transform .15s;color:var(--muted)}
+.acc.open .chev{transform:rotate(90deg)}
+.acc-t{flex:1}
+.acc-badge{display:none;font-size:11px;font-weight:600;color:#1f6fd1}
+.acc.sel{border-color:#1f6fd1;box-shadow:0 0 0 1px #1f6fd1}
+.acc.sel .acc-badge{display:inline}
+.acc-b{display:none;padding:6px 14px 14px;border-top:1px solid var(--line)}
+.acc.open .acc-b{display:block}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) auto 26px;gap:10px;align-items:center;margin:8px 0}
+.row2>label{font-size:13px;line-height:1.3}
+.row2.stack{grid-template-columns:1fr}.row2.stack>span{display:none}
+.row2 select{width:auto;max-width:210px}
+.row2 input[type=color]{width:128px;height:30px}
+.stepper{display:flex;border:1px solid #b9b0a5;border-radius:5px;overflow:hidden;background:#fff}
+.stepper .sb{-webkit-tap-highlight-color:transparent;border:none;border-radius:0;padding:0;width:34px;height:30px;font-size:17px;line-height:1;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+.stepper .sb:hover{background:#efe9df;color:var(--ink)}
+.stepper .sb:active{background:#e3dccf}
+.stepper input{width:64px;border:none;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font:inherit;font-size:13px;padding:0 2px;-moz-appearance:textfield;appearance:textfield;background:#fff}
+.stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.checkrow{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13px}
+.steps{padding-left:20px;margin:12px 0 10px;line-height:1.7;font-size:14px}.steps li{margin:6px 0}.steps button{padding:4px 10px}
+.steps a,.acc .hint a{color:#1f6fd1}
+.pastebox{width:100%;min-height:150px;font:13px ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff}
+.foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
+#menuModes.menuseg{display:grid;grid-template-columns:1fr 1fr}.menuseg button{padding:10px 6px;font-size:13px;white-space:nowrap;border-bottom:1px solid #e3dccf}.menuseg button:nth-child(2n){border-right:none}.menuseg button:nth-child(n+3){border-bottom:none}
+button.armed,button.link.armed{background:#b35a3e!important;color:#fff!important;border-color:#b35a3e!important;text-decoration:none;padding:6px 10px}
+body.simple .row2>label,body.simple .checkrow{font-size:14px}
+body.simple .stepper .sb{width:40px;height:34px}
 </style>
 </head>
 <body>
@@ -86,6 +146,7 @@ body.simple #btnPdf{font-size:16px;padding:12px 22px}
       <label class="only-full" style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="gd"> Show center lines</label><span class="hint only-full" id="selInfo"></span><span class="hint" id="pdfHint" style="flex-basis:100%">PDF: in the window that opens, choose “Save as PDF”, set Margins to “None”, and turn on “Background graphics”.</span>
     </div>
   </div>
+  <div class="grip" id="grip" tabindex="0" role="separator" aria-orientation="vertical" aria-label="Sidebar width" title="Drag to make the sidebar wider or narrower. Double-click to reset."></div>
   <div class="panel" id="panel"></div>
 </div>
 
@@ -96,8 +157,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v24', VERSION_DATE='2026-11-02';
+const VERSION='v25', VERSION_DATE='2026-11-03', UPDATE=6;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v25','New sidebar: one view with a Simple on/off switch; every part of the logo has its own section (closed to start) that opens when you click that part; − / + buttons you can hold down instead of sliders; layouts grouped into Logo and Made with the logo. No more dragging or snapping: click a part, then use the arrow keys, + / −, Tab and Esc (the pink line still shows when things line up). The sidebar can be made wider or narrower by dragging its left edge. Menu words can now be edited in Google Sheets, pasted straight from a Google Doc or Word (headings, bold dish names and prices are read from the formatting), or saved and opened as a text file.'],
  ['v24','Brand colors: olive, navy and cream, with charcoal for text. New “Brand” color presets at the top of the list; every older preset is still there. New logos start in charcoal and olive on cream; menu text starts in charcoal. The homepage can open any layout directly.'],
  ['v23','New Menu tab: a US Letter menu page in the brand style (one-line header, basil on cream, Jost caps dish names, Bodoni descriptions, prices in basil). The words are editable by typing like a document or in boxes.'],
  ['v22','Oval and squiggle now have their own separate colors'],
@@ -298,8 +360,8 @@ function menuSVG(S,G,M){
 const LAYOUTS = {
   '1b': {
     tab:'1b Horizontal oval', stab:'Oval', file:'horizontal-oval',
-    simple:[['h','The oval'],['srange','rx','Oval width',150,420,1,'narrower','wider'],['srange','ry','Oval height',80,260,1,'shorter','taller'],['srange','thickD','Oval line (the squiggle follows)',-3,10,0.1,'thinner','thicker',['sqThick',0.5]],['h','Sizes'],['srange','wmScale','“mémé” size',50,160,1,'smaller','bigger'],['srange','onScale','“on 10” size',50,160,1,'smaller','bigger'],['srange','onSpace','“on 10” letter spacing',-3,20,0.5,'tighter','wider'],['srange','onWordGap','Space between “on” and “10”',-15,30,0.5,'closer','wider'],['srange','sqScale','Squiggle size',40,200,1,'smaller','bigger'],['srange','tagSize','Tagline size',10,36,0.5,'smaller','bigger'],['srange','tagCurve','Tagline curve',0,200,1,'flatter','more curved'],['h','Words'],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','onCase','“on 10” letters',['lowercase','caps']],],
-    geo:{ oval:'hand-drawn', rx:322.35, ry:142.75, thickD:0, gap:14,
+    simple:[['h','The oval'],['srange','rx','Oval width',150,420,1,'narrower','wider'],['srange','ry','Oval height',80,260,1,'shorter','taller'],['srange','thickD','Oval line weight',-3,10,0.1,'thinner','thicker'],['scheck','sqFollow','The squiggle line follows the oval line'],['h','Sizes'],['srange','wmScale','“mémé” size',50,160,1,'smaller','bigger'],['srange','onScale','“on 10” size',50,160,1,'smaller','bigger'],['srange','onSpace','“on 10” letter spacing',-3,20,0.5,'tighter','wider'],['srange','onWordGap','Space between “on” and “10”',-15,30,0.5,'closer','wider'],['srange','sqScale','Squiggle size',40,200,1,'smaller','bigger'],['srange','tagSize','Tagline size',10,36,0.5,'smaller','bigger'],['srange','tagCurve','Tagline curve',0,200,1,'flatter','more curved'],['h','Words'],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','onCase','“on 10” letters',['lowercase','caps']],],
+    geo:{ oval:'hand-drawn', rx:322.35, ry:142.75, thickD:0, sqFollow:true, gap:14,
           wmScale:107.9,wmX:0.7,wmY:-3.49, onScale:107.14,onX:4.78,onY:2, sqScale:104.84,sqX:0,sqY:10.05,sqThick:0,
           tagSize:24,tagSpace:5,tagCurve:104.5,tagWidth:256.2,tagX:0,tagY:0,tagSkew:3 },
     panel:[
@@ -308,6 +370,7 @@ const LAYOUTS = {
       ['range','rx','Width',150,420,1],
       ['range','ry','Height',80,260,1],
       ['range','thickD','Line weight',-3,10,0.1],
+      ['check','sqFollow','Squiggle line follows the oval line (half as much)'],
       ['hint','Line weight: 0 is your original line. Above 0 is bolder, below 0 is thinner. Works on both ovals.'],
       ...secWordmark(120), ['range','gap','Space before “on 10”',-20,60,1],
       ...secOn(120), ...secSq(120),
@@ -489,7 +552,7 @@ function propagate(k,old,nv){
     if(L===cur||!(k in G[L])) return;
     const m=LINKMODE[k], cu=G[L][k]; let v;
     if(m==='same') v=nv; else if(m==='delta') v=cu+(nv-old); else v=old?cu*nv/old:cu;
-    const sp=rangeOf(L,k); if(sp){ v=Math.min(sp[4],Math.max(sp[3],v)); v=Math.round(v/sp[5])*sp[5]; v=+v.toFixed(3); }
+    const sp=rangeOf(L,k); if(sp){ v=Math.min(sp[4],Math.max(sp[3],v)); v=+v.toFixed(3); }   // same exact value everywhere (no rounding to whole steps)
     G[L][k]=v;
   });
 }
@@ -548,17 +611,306 @@ function parseMenuText(t){
   return out;
 }
 
+/* ============ MENU AS A GOOGLE SHEET (Section · Dish · What’s in it · Price) ============ */
+const SHEET_HEAD=['Section','Dish','What’s in it','Price'];
+function menuRows(){
+  const rows=[SHEET_HEAD];
+  M.forEach(sec=>{ rows.push([sec.title||'','','',sec.price||'']);
+    (sec.items||[]).forEach(it=>rows.push(['',it.name||'',(it.desc||'').replace(/\s+/g,' ').trim(),it.price||''])); });
+  return rows;
+}
+const toTSV=rows=>rows.map(r=>r.map(c=>String(c).replace(/[\t\r\n]+/g,' ')).join('\t')).join('\n');
+const toCSV=rows=>rows.map(r=>r.map(c=>{ c=String(c); return /[",\r\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(',')).join('\r\n');
+function parseDelimited(t,dl){   // handles cells in quotes (Sheets quotes cells that contain line breaks)
+  const rows=[]; let row=[],cell='',q=false;
+  for(let i=0;i<t.length;i++){ const ch=t[i];
+    if(q){ if(ch==='"'){ if(t[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=ch; }
+    else if(ch==='"'&&cell===''){ q=true; }
+    else if(ch===dl){ row.push(cell); cell=''; }
+    else if(ch==='\n'||ch==='\r'){ if(ch==='\r'&&t[i+1]==='\n') i++; row.push(cell); rows.push(row); row=[]; cell=''; }
+    else cell+=ch; }
+  if(cell!==''||row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+function rowsToMenu(rows){
+  const out=[]; let sec=null;
+  rows.forEach((r,i)=>{
+    const c=r.map(x=>String(x||'').replace(/\s+/g,' ').trim()); while(c.length<4) c.push('');
+    const [s,dish,desc,price]=c;
+    if(i===0&&/^section$/i.test(s)&&/^dish/i.test(dish)) return;   // header row
+    if(!s&&!dish&&!desc&&!price) return;
+    if(s&&!dish&&!desc){ sec={title:s,price,items:[]}; out.push(sec); return; }   // a row with only a section name starts a new section
+    if(s&&(!sec||sec.title!==s)){ sec={title:s,price:'',items:[]}; out.push(sec); }
+    if(!sec){ sec={title:'',price:'',items:[]}; out.push(sec); }
+    if(dish||desc) sec.items.push({name:dish,desc,price});
+  });
+  return out;
+}
+function copyText(txt,btn){
+  const old=btn.textContent, done=ok=>{ btn.textContent=ok?'Copied ✓':'Copy didn’t work'; setTimeout(()=>btn.textContent=old,1800); };
+  const fallback=()=>{ const ta=document.createElement('textarea'); ta.value=txt; ta.style.cssText='position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand('copy'); }catch(e){} ta.remove(); done(ok); };
+  if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(txt).then(()=>done(true),fallback); else fallback();
+}
+function renderSheetMode(box){
+  const ol=document.createElement('ol'); ol.className='steps';
+  ol.innerHTML='<li><b>First time only:</b> press <button type="button" id="mCopy">Copy the menu</button>, then open a new Google Sheet (<a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a>), click the first box (A1) and paste.</li>'
+    +'<li>Make your changes in the Sheet. Keep the four columns: <b>Section</b>, <b>Dish</b>, <b>What’s in it</b>, <b>Price</b>. A row with only a Section name starts a new section.</li>'
+    +'<li>When you’re ready: in the Sheet, select everything (<b>Ctrl+A</b>, or <b>⌘A</b> on a Mac), copy, and paste in the box below. The menu updates right away.</li>';
+  const ta=document.createElement('textarea'); ta.className='pastebox'; ta.placeholder='Paste from Google Sheets here'; ta.rows=8; ta.spellcheck=false;
+  const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
+  const load=(text,dl)=>{
+    if(!text.trim()){ st.textContent=''; return; }
+    const m=rowsToMenu(parseDelimited(text,dl||(text.includes('\t')?'\t':',')));
+    const n=m.reduce((a,s)=>a+s.items.length,0);
+    if(!n){ st.style.color='#b35a3e'; st.textContent='That doesn’t look like the menu sheet yet. Make sure the four columns (Section, Dish, What’s in it, Price) are there.'; return; }
+    M=m; st.style.color='#3f6b35'; st.textContent=`Menu updated: ${m.length} section${m.length===1?'':'s'}, ${n} dish${n===1?'':'es'}.`; render();
+  };
+  ta.oninput=()=>load(ta.value);
+  ta.addEventListener('paste',e=>{
+    const cd=e.clipboardData; if(!cd) return; const plain=cd.getData('text/plain')||'';
+    if(!plain.trim()||/^\s*section\s*[\t,]/i.test(plain)) return;   // the real sheet: read it as columns
+    const m=readDocPaste(cd.getData('text/html'),plain), n=m.reduce((a,s)=>a+s.items.length,0);
+    if(!n) return;
+    e.preventDefault(); M=m; render();
+    const ns=m.filter(s=>s.title).length;
+    docsNote=`That looked like a Google Doc, not the Sheet, so it was read as a document: ${ns} section${ns===1?'':'s'}, ${n} dish${n===1?'':'es'}. The box shows how it was read; you can fix anything in it.`;
+    menuMode='docs'; buildPanel(); render();
+  });
+  const alt=document.createElement('div'); alt.className='hint'; alt.style.marginTop='10px';
+  alt.innerHTML='Copy not working? <a href="#" id="mCsv">Download the menu as a spreadsheet file</a> and open it in Google Sheets with File → Import. To bring a spreadsheet file back, <a href="#" id="mOpen">open it here</a> (in Sheets: File → Download → .csv).<input type="file" id="mFile" accept=".csv,.tsv,.txt" hidden>';
+  box.append(ol,ta,st,alt);
+  box.querySelector('#mCopy').onclick=e=>copyText(toTSV(menuRows()),e.currentTarget);
+  box.querySelector('#mCsv').onclick=e=>{ e.preventDefault(); download(new Blob(['﻿'+toCSV(menuRows())],{type:'text/csv'}),`meme-on-10-menu_${new Date().toISOString().slice(0,10)}.csv`); };
+  const fi=box.querySelector('#mFile');
+  box.querySelector('#mOpen').onclick=e=>{ e.preventDefault(); fi.click(); };
+  fi.onchange=()=>{ const fl=fi.files[0]; if(!fl) return; fl.text().then(t=>{ t=t.replace(/^﻿/,''); load(t,/\.tsv$/i.test(fl.name)||t.includes('\t')?'\t':','); }); fi.value=''; };
+}
+
+/* ============ PASTE FROM GOOGLE DOCS / WORD (reads the document's formatting) ============
+   headings (or bigger text) = sections · bold or CAPITAL lines = dishes · normal text under a dish = what's in it
+   a number at the end of a heading or dish line = its price */
+const PRICE_ONLY=/^\$?\d{1,4}(?:\.\d{1,2})?$/;
+const PRICE_END=/\s*(?:[-–—|·…:]+\s*|\.{2,}\s*)?\$?(\d{1,4}(?:\.\d{1,2})?)$/;      // on heading and dish-name lines
+const PRICE_END_SEP=/\s*(?:[-–—|·…]+|\.{2,})\s*\$?(\d{1,4}(?:\.\d{1,2})?)$|\s+\$(\d{1,4}(?:\.\d{1,2})?)$/;   // after a description: needs a dash, dots or $
+function splitPrice(t,re=PRICE_END){ const pm=t.match(/\s*\(\$?(\d{1,4}(?:\.\d{1,2})?)\)$/); if(pm&&pm.index>0) return [t.slice(0,pm.index).trim(),pm[1]]; const m=t.match(re); if(m&&m.index>0&&!/(\badd|\bplus|\+)\s*$/i.test(t.slice(0,m.index))) return [t.slice(0,m.index).trim(),m[1]||m[2]]; return [t.trim(),'']; }
+const cleanSep=t=>t.replace(/^[\s:–—\-|·]+|[\s:–—\-|·]+$/g,'').trim();
+// one line of a document -> blocks. Tabs (or 3+ spaces) split it into columns: each column is its own dish,
+// except "Beers <tab> 10", which is a name and its price
+function lineBlocks(raw,base,out){
+  const norm=s=>s.replace(/ /g,' ').replace(/[ \t]+/g,' ').trim();
+  const cells=raw.replace(/ /g,' ').split(/\t+| {3,}/).map(norm).filter(Boolean);
+  if(!cells.length) return false;
+  if(cells.length===1||(cells.length===2&&PRICE_ONLY.test(cells[1]))){ out.push(Object.assign({},base,{text:cells.join(' ')})); return true; }
+  cells.forEach((c,i)=>out.push(Object.assign({},base,{text:c,cell:true,boldPre:base.bold>=0.6?c:'',gap:i===0&&base.gap})));
+  return true;
+}
+function docBlocks(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const BLOCK=/^(P|H[1-6]|LI|DIV|TD|TH|BLOCKQUOTE|PRE|DT|DD)$/, BLOCKSEL='p,h1,h2,h3,h4,h5,h6,li,div,td,th,blockquote,pre,dt,dd';
+  const boldOf=el=>{ for(let e=el;e&&e.nodeType===1;e=e.parentElement){
+      const w=(e.style&&e.style.fontWeight)||'';
+      if(w){ if(w==='bold'||w==='bolder'||+w>=600) return true; return false; }   // Google Docs wraps everything in <b style="font-weight:normal">
+      if(/^(B|STRONG)$/.test(e.tagName)) return true;
+      if(BLOCK.test(e.tagName)) break; }
+    return false; };
+  const sizeOf=el=>{ for(let e=el;e&&e.nodeType===1;e=e.parentElement){ const v=e.style&&e.style.fontSize; if(v){ const m=v.match(/([\d.]+)\s*(pt|px)?/); if(m) return m[2]==='px'?+m[1]*0.75:+m[1]; } } return 0; };
+  const isLeaf=e=>!e.querySelector(BLOCKSEL);
+  // leaf paragraphs and loose <br>s, in document order (Google Docs puts blank lines between paragraphs as <br>)
+  let nodes=[...doc.body.querySelectorAll(BLOCKSEL+',br')].filter(e=>e.tagName==='BR'?!(e.parentElement&&e.parentElement.closest(BLOCKSEL)&&isLeaf(e.parentElement.closest(BLOCKSEL))):isLeaf(e));
+  if(!nodes.some(e=>e.tagName!=='BR')) nodes=[doc.body];
+  const blocks=[]; let gap=false;
+  nodes.forEach(bl=>{
+    if(bl.tagName==='BR'){ gap=true; return; }
+    const head=/^H[1-6]$/.test(bl.tagName)||bl.classList.contains('title'), hn=/^H[1-6]$/.test(bl.tagName)?+bl.tagName[1]:0;
+    let line=[], any=false;
+    const flush=()=>{
+      const raw=line.map(s=>s.t).join(''), real=line.filter(s=>s.t.trim());
+      if(real.length){
+        const tot=real.reduce((a,s)=>a+s.t.trim().length,0)||1;
+        const bold=real.filter(s=>s.b).reduce((a,s)=>a+s.t.trim().length,0)/tot;
+        let pre=''; for(const s of line){ if(s.b||!s.t.trim()) pre+=s.t; else break; }
+        lineBlocks(raw,{head,hn,bold,boldPre:pre.replace(/ /g,' ').replace(/\s+/g,' ').trim(),size:Math.max(0,...real.map(s=>s.z)),gap},blocks);
+        gap=false; any=true;
+      } else if(any||line.length) gap=true;   // an empty line inside a paragraph
+      line=[];
+    };
+    const walk=n=>n.childNodes.forEach(c=>{
+      if(c.nodeType===3) line.push({t:c.nodeValue,b:boldOf(c.parentElement),z:sizeOf(c.parentElement)});
+      else if(c.nodeType===1){ if(c.tagName==='BR') flush(); else if(!/^(STYLE|SCRIPT|META|TITLE)$/.test(c.tagName)) walk(c); }
+    });
+    walk(bl); flush();
+    if(!any) gap=true;   // an empty paragraph is a blank line
+  });
+  return blocks;
+}
+function plainBlocks(text){
+  const out=[]; let gap=false;
+  String(text).replace(/^﻿/,'').split(/\r?\n/).forEach(l=>{ if(lineBlocks(l,{head:false,bold:0,boldPre:'',size:0,gap},out)) gap=false; else gap=true; });
+  return out;
+}
+const looksDesc=t=>/,/.test(t)||t.length>40;
+function blocksToMenu(blocks){
+  const sizes={}; blocks.forEach(b=>{ if(b.size) sizes[b.size]=(sizes[b.size]||0)+b.text.length; });
+  const body=+(Object.keys(sizes).sort((a,b)=>sizes[b]-sizes[a])[0]||0);
+  const caps=t=>/\p{Lu}/u.test(t)&&!/\p{Ll}/u.test(t)&&t.length<=60;
+  // skip the restaurant name / tagline / a big title at the top: they are not sections
+  const isTitle=(b,i)=>/m[ée]m[ée]\s+on\s+10/i.test(b.text)||(i<3&&/^(kitchen\s*&\s*cocktails|cocktails\s*&\s*kitchen)$/i.test(b.text))||(i===0&&b.size>=24&&!splitPrice(b.text)[1]&&!blocks.slice(1).some(x=>x.size>=b.size*0.9));   // a big title, unless other lines (sections) are as big
+  blocks=blocks.filter((b,i)=>!isTitle(b,i));
+  const lines=blocks.map(b=>{
+    let kind='plain';
+    if(b.head||(body&&b.size>=body+3)||/^#/.test(b.text)) kind='head';
+    else if(PRICE_ONLY.test(b.text)) kind='price';
+    else if(b.bold>=0.6||caps(splitPrice(b.text)[0])) kind='dish';
+    else if(b.bold>0&&b.boldPre.length>=2) kind='dishdesc';
+    // how important a heading is: its text size, or for Heading 1-6 without a size, its level
+    const rank=kind==='head'?(b.size||(7-(b.hn||1))*4):0;
+    return {kind,rank,text:b.text.replace(/^#+\s*/,''),boldPre:b.boldPre,gap:!!b.gap,cell:!!b.cell};
+  });
+  // dish names written as headings (or bigger text)?
+  {
+    const heads=lines.filter(l=>l.kind==='head'), ranks=[...new Set(heads.map(l=>l.rank))].sort((a,b)=>b-a);
+    // a heading with just one line of ingredients under it is really a dish name
+    const oneLine=l=>{ const i=lines.indexOf(l), a=lines[i+1], z=lines[i+2]; return a&&a.kind!=='head'&&!a.cell&&(looksDesc(a.text)||!z||z.kind==='head'); };
+    const mostly=arr=>arr.length>=2&&arr.filter(oneLine).length/arr.length>=0.6;
+    const lower=heads.filter(l=>l.rank<ranks[0]);
+    if(ranks.length>=2&&mostly(lower)) lower.forEach(l=>{ l.kind='dish'; });   // two sizes: big = sections, smaller = dish names
+    else if(ranks.length===1&&heads.length>=3&&mostly(heads)) heads.forEach(l=>{ l.kind='dish'; });   // one heading style used for everything
+  }
+  const hasGaps=lines.some(l=>l.gap);
+  // no real headings (a big title alone doesn't count)? then work out which lines are section names
+  const realHead=lines.some((l,i)=>l.kind==='head'&&lines.slice(i+1).some((x,j,a)=>x.kind!=='head'&&a.slice(0,j).every(y=>y.kind!=='head')));
+  if(!realHead) lines.forEach((l,i)=>{
+    if(l.text.includes(':')||l.cell) return;
+    const nx=lines[i+1], nn=lines[i+2], pv=lines[i-1];
+    if(!nx) return;
+    const priced=!!splitPrice(l.text)[1];
+    if(l.kind==='dish'){   // bold / CAPITAL
+      const starts=!pv||pv.kind==='head'||pv.kind==='plain'||pv.kind==='price';
+      if(!starts) return;
+      if(priced){ if((nx.kind==='dish'&&!splitPrice(nx.text)[1])||nx.cell) l.kind='head'; return; }   // "COCKTAILS 19" over dishes without prices
+      if(nx.kind==='dishdesc'||(nx.kind==='dish'&&(splitPrice(nx.text)[1]||(nn&&nn.kind==='plain')))) l.kind='head';
+      return;
+    }
+    if(l.kind==='plain'&&!lines.some(x=>x.kind==='dish'||x.kind==='dishdesc')){   // no formatting at all
+      const starts=!pv||l.gap||pv.kind==='head'||(pv.kind==='plain'&&looksDesc(pv.text));
+      const nameLike=x=>x&&(x.kind==='plain')&&!looksDesc(x.text)&&!splitPrice(x.text)[1];
+      if(starts&&!looksDesc(l.text)&&l.text.length<=30&&(nx.cell||(nameLike(nx)&&(nx.gap||(nn&&!nn.gap&&!nn.cell&&looksDesc(nn.text)))))) l.kind='head';
+    }
+  });
+  // group into sections; in a section that has bold/CAPITAL dish names, normal lines are descriptions
+  const groups=[]; let g=null;
+  lines.forEach(l=>{ if(l.kind==='head'||!g){ g={head:l.kind==='head'?l:null,lines:[]}; groups.push(g); if(l.kind==='head') return; } g.lines.push(l); });
+  const out=[];
+  groups.forEach(gr=>{
+    const [title,price]=gr.head?splitPrice(gr.head.text):['',''];
+    const sec={title,price,items:[]}; out.push(sec);
+    const emph=gr.lines.some(l=>l.kind==='dish'||l.kind==='dishdesc');
+    let dish=null;
+    const addDish=(name,desc,l,first)=>{ let [n,p]=splitPrice(cleanSep(name)); let d=cleanSep(desc||'');
+      if(!p&&d){ const [d2,p2]=splitPrice(d,PRICE_END_SEP); if(p2){ d=d2; p=p2; } }
+      dish={name:n,desc:d,price:p,_cell:l.cell,_start:l.gap||first}; sec.items.push(dish); };
+    const nameDesc=t=>{ const i=t.indexOf(':'); if(i>0) return [t.slice(0,i),t.slice(i+1)];
+      const m=t.match(/\s[–—]\s|\s-\s/); if(m) return [t.slice(0,m.index),t.slice(m.index+m[0].length)]; return [t,'']; };
+    const addDesc=t=>{ dish.desc=(dish.desc?dish.desc+' ':'')+t; if(!dish.price){ const [d2,p2]=splitPrice(dish.desc,PRICE_END_SEP); if(p2){ dish.desc=d2; dish.price=p2; } } };
+    gr.lines.forEach((l,i)=>{
+      if(l.kind==='price'){ const p=l.text.replace('$',''); if(dish&&!dish.price) dish.price=p; else if(!sec.price) sec.price=p; return; }
+      if(l.kind==='dish'){ const [n,d]=nameDesc(l.text); addDish(n,d,l,i===0); return; }
+      if(l.kind==='dishdesc'){ addDish(l.boldPre,l.text.slice(l.boldPre.length),l,i===0); return; }
+      if(emph&&dish&&!l.cell){ addDesc(l.text); return; }
+      if(!emph&&dish&&!dish._cell&&!l.cell&&!l.gap){   // no formatting: the line under a dish name is what's in it
+        if(!dish.desc&&(looksDesc(l.text)||(hasGaps&&dish._start))){ addDesc(l.text); return; }
+        const nxt=gr.lines[i+1], isName=!looksDesc(l.text)&&nxt&&!nxt.gap&&!nxt.cell&&looksDesc(nxt.text);   // a name with its description under it starts a new dish
+        if(dish.desc&&!isName&&(/[,;&]$/.test(dish.desc)||/^\p{Ll}/u.test(l.text))){ addDesc(l.text); return; }
+      }
+      const [n,d]=nameDesc(l.text); addDish(n,d,l,i===0);
+    });
+  });
+  out.forEach(s=>s.items.forEach(it=>{ delete it._cell; delete it._start; }));
+  const kept=out.filter(s=>s.items.length);
+  return kept.length?kept:out.filter(s=>s.title);
+}
+// whatever was pasted (a Google Doc, Word, or plain text) -> menu
+function readDocPaste(html,plain){
+  let m=html?blocksToMenu(docBlocks(html)):[];
+  if(!m.reduce((a,s)=>a+s.items.length,0)&&(plain||'').trim()) m=/^\s*#/m.test(plain)?parseMenuText(plain):blocksToMenu(plainBlocks(plain));
+  return m;
+}
+// the menu as "type like a document" text; a section with no title just lists its dishes
+function menuAsText(m){
+  return m.map(sec=>{
+    const head=(sec.title||'').trim()||(sec.price||'').trim()?['# '+[sec.title,sec.price].filter(x=>(x||'').trim()).join(' ')]:[];
+    const lines=(sec.items||[]).map(it=>{ const n=(it.name||'').trim(), pr=(it.price||'').trim(), d=(it.desc||'').replace(/\s+/g,' ').trim(); const nm=pr?(n+' ('+pr+')'):n; return d?(nm+': '+d):nm; }).filter(Boolean);
+    return head.concat(lines).join('\n');
+  }).join('\n\n');
+}
+let docsNote='';
+function renderDocsMode(box){
+  const ol=document.createElement('ol'); ol.className='steps';
+  ol.innerHTML='<li>Open your menu in <b>Google Docs</b> (Word works too). Select everything (<b>Ctrl+A</b>, or <b>⌘A</b> on a Mac) and copy.</li>'
+    +'<li>Click in the box below and paste. The menu updates right away and replaces the one that’s there.</li>';
+  const tips=document.createElement('div'); tips.className='hint'; tips.style.margin='0 0 8px';
+  tips.innerHTML='<b>How it reads your Doc:</b> section names in a <b>Heading</b> style (or bigger text) become sections. Dish names in <b>bold</b> or CAPITALS become dishes, and the normal text under a dish is what’s in it. A number at the end of a section or dish line is its price.';
+  const ta=document.createElement('textarea'); ta.className='pastebox'; ta.placeholder='Paste from Google Docs here'; ta.rows=10; ta.spellcheck=false;
+  ta.style.fontFamily='inherit'; ta.style.fontSize='14px';
+  const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
+  const say=(good,msg)=>{ st.style.color=good?'#3f6b35':'#b35a3e'; st.textContent=msg; };
+  ta.addEventListener('paste',e=>{
+    const cd=e.clipboardData; if(!cd) return;
+    const m=readDocPaste(cd.getData('text/html'),cd.getData('text/plain'));
+    e.preventDefault();
+    const n=m.reduce((a,s)=>a+s.items.length,0);
+    if(!n){ say(false,'Nothing to read there. Copy the menu from your Google Doc first, then paste here.'); return; }
+    M=m; render(); ta.value=menuAsText(m);
+    const ns=m.filter(s=>s.title).length;
+    say(true,`Menu updated: ${ns} section${ns===1?'':'s'}, ${n} dish${n===1?'':'es'}. The box shows how your Doc was read; you can fix anything in it.`);
+  });
+  ta.oninput=()=>{ if(ta.value.trim()){ M=parseMenuText(ta.value); render(); } };
+  box.append(ol,tips,ta,st);
+  if(docsNote){ ta.value=menuAsText(M); say(true,docsNote); docsNote=''; }
+}
+function renderTextMode(box){
+  const how=document.createElement('div'); how.className='hint';
+  how.innerHTML='One dish per line, <b>Name: what’s in it</b>. A line that starts with <b>#</b> is a heading (the number at the end is its price). To give one dish its own price, write <b>Name (26): what’s in it</b>. (Copying from a Google Doc? Use <b>From Google Docs</b> above.)';
+  const ta=document.createElement('textarea'); ta.value=menuToText(); ta.rows=24; ta.spellcheck=true;
+  ta.style.cssText='width:100%;font:inherit;font-size:15px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-top:8px;resize:vertical';
+  const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
+  ta.oninput=()=>{ M=parseMenuText(ta.value); render(); st.textContent=''; };
+  ta.addEventListener('paste',e=>{
+    const html=e.clipboardData&&e.clipboardData.getData('text/html'); if(!html) return;   // plain text pastes as usual
+    const m=blocksToMenu(docBlocks(html)), n=m.reduce((a,s)=>a+s.items.length,0);
+    if(!n) return;
+    e.preventDefault();
+    const a=ta.selectionStart, z=ta.selectionEnd, v=ta.value;   // keep what's pasted on its own lines
+    const txt=(a>0&&v[a-1]!=='\n'?'\n':'')+menuAsText(m)+(z<v.length&&v[z]!=='\n'?'\n':'');
+    ta.setRangeText(txt,a,z,'end');
+    M=parseMenuText(ta.value); render();
+    st.style.color='#3f6b35'; st.textContent=`Pasted from your document: ${m.filter(s=>s.title).length} section${m.filter(s=>s.title).length===1?'':'s'}, ${n} dish${n===1?'':'es'}. Check the menu page; if something landed in the wrong place, fix it in the box.`;
+  });
+  const files=document.createElement('div'); files.className='hint'; files.style.marginTop='10px';
+  files.innerHTML='<a href="#" data-a="dl">Download the menu as a text file</a> · <a href="#" data-a="open">Open a text file</a><input type="file" accept=".txt,text/plain" hidden>';
+  const fi=files.querySelector('input');
+  files.querySelector('[data-a="dl"]').onclick=e=>{ e.preventDefault(); download(new Blob([menuToText()+'\n'],{type:'text/plain;charset=utf-8'}),`meme-on-10-menu_${new Date().toISOString().slice(0,10)}.txt`); };
+  files.querySelector('[data-a="open"]').onclick=e=>{ e.preventDefault(); fi.click(); };
+  fi.onchange=()=>{ const fl=fi.files[0]; if(!fl) return; fl.text().then(t=>{ ta.value=t.replace(/^﻿/,'').replace(/\r\n?/g,'\n'); M=parseMenuText(ta.value); render();
+    const n=M.reduce((a,s)=>a+s.items.length,0); st.style.color=n?'#3f6b35':'#b35a3e'; st.textContent=n?`Opened “${fl.name}”: ${n} dish${n===1?'':'es'}.`:'That file has no dishes in it.'; }); fi.value=''; };
+  box.append(how,ta,st,files);
+}
+
+/* click once: the button asks "Click again to …"; click again within 5 seconds to do it */
+function twoStep(b,ask,fn){
+  const label=b.textContent; let t=null;
+  b.addEventListener('click',()=>{
+    if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent=ask; b.classList.add('armed'); t=setTimeout(()=>{ delete b.dataset.armed; b.textContent=label; b.classList.remove('armed'); },5000); return; }
+    clearTimeout(t); delete b.dataset.armed; b.textContent=label; b.classList.remove('armed'); fn();
+  });
+  return b;
+}
 /* ============ MENU TEXT EDITOR ============ */
 function renderMenuEditor(){
   const box=document.getElementById('menuEditor'); if(!box) return; box.innerHTML='';
-  if(menuMode==='text'){
-    const how=document.createElement('div'); how.className='hint';
-    how.innerHTML='One dish per line: <b>Name: what’s in it</b>. A line that starts with <b>#</b> is a heading (the number at the end is its price). To give one dish its own price, write it like <b>Name (26): what’s in it</b>. You can also paste your menu in from a Google Doc.';
-    const ta=document.createElement('textarea'); ta.value=menuToText(); ta.rows=24; ta.spellcheck=true;
-    ta.style.cssText='width:100%;font:inherit;font-size:15px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-top:8px;resize:vertical';
-    ta.oninput=()=>{ M=parseMenuText(ta.value); render(); };
-    box.append(how,ta); return;
-  }
+  if(menuMode==='sheet'){ renderSheetMode(box); return; }
+  if(menuMode==='docs'){ renderDocsMode(box); return; }
+  if(menuMode==='text'){ renderTextMode(box); return; }
   const inp=(ph,val,on)=>{ const i=document.createElement('input'); i.type='text'; i.placeholder=ph; i.value=val||''; i.style.fontSize='14px'; i.oninput=()=>{on(i.value);render();}; return i; };
   const btn=(label,fn)=>{ const b=document.createElement('button'); b.textContent=label; b.onclick=fn; return b; };
   const redo=()=>{ renderMenuEditor(); render(); };
@@ -577,24 +929,25 @@ function renderMenuEditor(){
       ds.style.cssText='width:100%;font:inherit;font-size:13px;padding:5px 6px;border:1px solid var(--line);border-radius:3px;margin-top:6px;resize:vertical'; ds.oninput=()=>{it.desc=ds.value;render();};
       const ctl=document.createElement('div'); ctl.className='ver'; ctl.append(document.createElement('span'),
         btn('↑',()=>mv(sec.items,ii,-1)), btn('↓',()=>mv(sec.items,ii,1)),
-        btn('Delete',()=>{ if(confirm('Delete “'+(it.name||'this item')+'”?')){ sec.items.splice(ii,1); redo(); } }));
+        twoStep(btn('Delete',()=>{}),'Click again to delete',()=>{ sec.items.splice(ii,1); redo(); }));
       row.append(top,ds,ctl); card.appendChild(row);
     });
     const foot=document.createElement('div'); foot.className='ver'; foot.style.marginTop='10px'; foot.append(
       btn('Add a drink or beer',()=>{ sec.items.push({name:'',desc:''}); redo(); }), document.createElement('span'),
       btn('Section ↑',()=>mv(M,si,-1)), btn('Section ↓',()=>mv(M,si,1)),
-      btn('Delete section',()=>{ if(confirm('Delete the whole “'+(sec.title||'this')+'” section?')){ M.splice(si,1); redo(); } }));
+      twoStep(btn('Delete section',()=>{}),'Click again to delete the whole section',()=>{ M.splice(si,1); redo(); }));
     card.appendChild(foot); box.appendChild(card);
   });
   box.appendChild(btn('Add a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); redo(); }));
 }
 function menuEditorBlock(){
   const d=document.createElement('div');
-  d.innerHTML='<div class="hint" style="margin-bottom:8px">The menu page updates as you type.</div><div id="menuModes" style="display:flex;gap:8px;flex-wrap:wrap"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div>';
+  d.innerHTML='<div class="hint" style="margin-bottom:8px">The menu page updates as you type.</div><div id="menuModes" class="seg menuseg"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><button type="button" class="link" id="menuStartOver" style="margin-top:10px">Start the menu over (puts back the original menu)</button>';
+  twoStep(d.querySelector('#menuStartOver'),'Click again to replace your menu with the original',()=>{ M=JSON.parse(JSON.stringify(MENU_DEFAULT)); renderMenuEditor(); render(); });
   const modes=d.querySelector('#menuModes');
-  const defs=[['text','Type like a document'],['boxes','Edit in boxes']], bs=[];
-  const paint=()=>bs.forEach(([m,b])=>{ const on=menuMode===m; b.style.background=on?'var(--ink)':'#fff'; b.style.color=on?'#f3ede1':'var(--ink)'; b.style.borderColor=on?'var(--ink)':'#b9b0a5'; });
-  defs.forEach(([m,label])=>{ const b=document.createElement('button'); b.textContent=label; b.style.cssText+=';padding:10px 14px;font-size:14px';
+  const defs=[['text','Type like a document'],['docs','From Google Docs'],['sheet','From Google Sheets'],['boxes','Edit in boxes']], bs=[];
+  const paint=()=>bs.forEach(([m,b])=>b.classList.toggle('on',menuMode===m));
+  defs.forEach(([m,label])=>{ const b=document.createElement('button'); b.textContent=label; b.type='button';
     b.onclick=()=>{ menuMode=m; renderMenuEditor(); paint(); }; bs.push([m,b]); modes.appendChild(b); });
   paint();
   return d;
@@ -611,139 +964,160 @@ function applyMode(){
     ? 'A window opens. Where it says “Destination”, choose “Save as PDF”, then press Save.'
     : 'PDF: in the window that opens, choose “Save as PDF” as the destination, then Save.';
 }
-function buildSimple(){
-  panel.className='panel simple-panel';
-  const head=document.createElement('div');
-  head.innerHTML='<h1>Mémé on 10 logo</h1><p style="margin:6px 0 0;font-size:14px"><a href="index.html" style="color:#1f6fd1">← Home</a> · <a href="guidelines.html" style="color:#1f6fd1">Brand guidelines</a> · <a href="print.html" style="color:#1f6fd1">Print</a> · <a href="social.html" style="color:#1f6fd1">Social media →</a></p><p class="lead">1. Pick a style. 2. Move the sliders. 3. Pick colors. 4. Press “Save as PDF” under the logo.</p>';
-  panel.appendChild(head);
-  const h=document.createElement('h2'); h.textContent='Pick a style'; panel.appendChild(h);
-  const tabs=document.createElement('div'); tabs.className='stabs';
-  Object.keys(LAYOUTS).forEach(k=>{ const b=document.createElement('button'); b.textContent=LAYOUTS[k].stab||LAYOUTS[k].tab; b.className=k===cur?'on':''; b.onclick=()=>{cur=k;sel=null;buildPanel();render();}; tabs.appendChild(b); });
-  panel.appendChild(tabs);
-  LAYOUTS[cur].simple.forEach(item=>{
-    const t=item[0];
-    if(t==='h'){ const x=document.createElement('h2'); x.textContent=item[1]; panel.appendChild(x); return; }
-    if(t==='menuedit'){ panel.appendChild(menuEditorBlock()); renderMenuEditor(); return; }
-    if(t==='scolor'){ const [,k,label]=item; const r=document.createElement('div'); r.className='spick';
-      r.innerHTML=`<div class="sl">${label}</div><input type="color" style="width:100%;height:42px;border:1px solid var(--line);border-radius:4px;padding:2px;background:#fff">`;
-      const inp=r.querySelector('input'); inp.oninput=()=>{put(k,inp.value);render();};
-      refs.push(()=>{inp.value=get(k);}); panel.appendChild(r); return; }
-    if(t==='srange'){ const [,k,label,min,max,step,lo,hi,follow]=item;
-      const r=document.createElement('div'); r.className='srow';
-      r.innerHTML=`<div class="sl">${label}</div><input type="range" min="${min}" max="${max}" step="${step}"><div class="se"><span>${lo}</span><span>${hi}</span></div>`;
-      const rg=r.querySelector('input');
-      rg.oninput=()=>{ const old=get(k); put(k,+rg.value); propagate(k,old,+rg.value); if(follow&&follow[0] in G[cur]) G[cur][follow[0]]=Math.round(+rg.value*follow[1]*10)/10; render(); };
-      refs.push(()=>{rg.value=get(k);}); panel.appendChild(r); return; }
-    if(t==='spick'){ const [,k,label,opts]=item;
-      const r=document.createElement('div'); r.className='spick';
-      r.innerHTML=`<div class="sl">${label}</div><select>${opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
-      const sel_=r.querySelector('select'); sel_.onchange=()=>{put(k,sel_.value);render();};
-      refs.push(()=>{sel_.value=get(k);}); panel.appendChild(r); return; }
-    if(t==='scheck'){ const [,k,label]=item;
-      const r=document.createElement('label'); r.style.cssText='display:flex;gap:10px;align-items:center;margin:16px 0;font-size:15px;font-weight:600';
-      r.innerHTML=`<input type="checkbox" style="width:20px;height:20px"> ${label}`;
-      const inp=r.querySelector('input'); inp.onchange=()=>{put(k,inp.checked);render();};
-      refs.push(()=>{inp.checked=!!get(k);}); panel.appendChild(r); return; }
+const CHEV='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+const OPEN={};   // which sections are open, per layout (all closed to start)
+const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+const LNAME={'1b':['Oval','1b'],'1d':['No oval','1d'],'1c':['Awning','1c'],'hd':['Header',''],'mn':['Menu page','']};
+const LGROUPS=[['Logo',['1b','1d','1c']],['Made with the logo',['hd','mn']]];
+const POSKEYS=['wmX','wmY','onX','onY','sqX','sqY','tagX','tagY'];
+// "Simple" shows the settings listed in each layout's simple list (with their plain-word labels), plus left/right and up/down
+function basics(L){ const m={}; (LAYOUTS[L].simple||[]).forEach(i=>{ if(i[0]!=='h'&&i[1]) m[i[1]]=i[2]; }); return m; }
+function layoutPicker(){
+  const wrap=document.createElement('div'); wrap.className='lgroups';
+  LGROUPS.forEach(([name,keys])=>{
+    const g=document.createElement('div'); g.className='lgroup';
+    const l=document.createElement('div'); l.className='lgl'; l.textContent=name; g.appendChild(l);
+    const seg=document.createElement('div'); seg.className='seg'; seg.setAttribute('role','tablist');
+    keys.filter(k=>LAYOUTS[k]).forEach(k=>{
+      const b=document.createElement('button'); b.type='button'; b.setAttribute('role','tab'); b.title=LAYOUTS[k].tab;
+      const [nm,code]=LNAME[k]||[LAYOUTS[k].tab,'']; b.textContent=nm;
+      if(code){ const s=document.createElement('small'); s.textContent=code; b.appendChild(s); }
+      b.className=k===cur?'on':''; b.setAttribute('aria-selected',k===cur);
+      b.onclick=()=>{ if(k===cur) return; cur=k; sel=null; buildPanel(); render(); };
+      seg.appendChild(b);
+    });
+    g.appendChild(seg); wrap.appendChild(g);
   });
-  if(!LAYOUTS[cur].ownColors){
-  const ch=document.createElement('h2'); ch.textContent='Colors'; panel.appendChild(ch);
-  const chips=document.createElement('div'); chips.className='chips';
-  PRESETS.forEach(p=>{ const b=document.createElement('button'); b.innerHTML=`<span class="dot" style="background:linear-gradient(135deg,${p[3]} 0 50%,${p[2]} 50%)"></span><span>${p[0]}</span>`;
-    b.onclick=()=>{S.ink=p[1];S.accent=p[2];S.sqColor=p[2];S.bg=p[3];S.transparent=false;sync();render();}; chips.appendChild(b); });
-  panel.appendChild(chips);
-  const cc=document.createElement('h2'); cc.textContent='Or pick your own colors'; panel.appendChild(cc);
-  [['accent','Oval'],['sqColor','Squiggle'],['ink','Letters'],['bg','Background']].forEach(([k,label])=>{
-    const r=document.createElement('div'); r.className='spick';
-    r.innerHTML=`<div class="sl">${label}</div><input type="color" style="width:100%;height:42px;border:1px solid var(--line);border-radius:4px;padding:2px;background:#fff">`;
-    const inp=r.querySelector('input'); inp.oninput=()=>{S[k]=inp.value; if(k==='bg') S.transparent=false; render();};
-    refs.push(()=>{inp.value=k==='sqColor'?sqCol(S):S[k];}); panel.appendChild(r); });
+  return wrap;
+}
+function lockBtn(k){
+  const b=document.createElement('button'); b.type='button'; b.className='lock only-full'; b.innerHTML=LOCK_SVG;
+  b.title='Link: when on, changing this also changes it on every other layout';
+  b.onclick=()=>{ if(LINKS.has(k)) LINKS.delete(k); else { LINKS.add(k); if(LINKMODE[k]==='same') propagate(k,get(k),get(k)); } sync(); render(); };
+  refs.push(()=>b.classList.toggle('on',LINKS.has(k)));
+  return b;
+}
+function afterSet(k,v){ if(k==='thickD'&&G[cur].sqFollow) G[cur].sqThick=Math.round(v*5)/10; }  // squiggle line follows the oval line at half the amount
+function stepperRow(k,label,min,max,step){
+  const r=document.createElement('div'); r.className='row2';
+  r.innerHTML=`<label></label><div class="stepper"><button type="button" class="sb" aria-label="Less">−</button><input type="number" step="${step}" inputmode="decimal"><button type="button" class="sb" aria-label="More">+</button></div><span class="lk"></span>`;
+  r.querySelector('label').textContent=label;
+  const [minus,nb,plus]=r.querySelector('.stepper').children;
+  nb.setAttribute('aria-label',label);
+  if(k in LINKMODE) r.querySelector('.lk').replaceWith(lockBtn(k));
+  const commit=(v,clamp)=>{ v=+v; if(clamp) v=Math.min(max,Math.max(min,v)); v=Math.round(v*1000)/1000;
+    const old=get(k); if(v===old) return; put(k,v); propagate(k,old,v); afterSet(k,v); render(); };
+  nb.addEventListener('input',()=>{ if(nb.value===''||isNaN(nb.value)) return; commit(nb.value,false); });
+  nb.addEventListener('change',()=>{ if(nb.value!==''&&!isNaN(nb.value)) commit(nb.value,true); nb.value=get(k); sync(); });
+  const bump=m=>{ commit(get(k)+m*step,true); nb.value=get(k); };
+  const hold=(btn,dir)=>{   // hold the button to keep going; it speeds up after a moment. Shift = steps of 10
+    let t1=null,t2=null,n=0;
+    const stop=()=>{ if(t1===null&&t2===null) return; clearTimeout(t1); clearInterval(t2); t1=t2=null; sync(); };
+    btn.addEventListener('pointerdown',e=>{ if(e.button!==0) return; e.preventDefault(); n=0; const sh=e.shiftKey;
+      const go=()=>{ n++; bump(dir*(sh?10:1)*(n>20?5:1)); }; go(); t1=setTimeout(()=>{ t2=setInterval(go,70); },400); });
+    ['pointerup','pointerleave','pointercancel'].forEach(x=>btn.addEventListener(x,stop));
+    btn.addEventListener('click',e=>{ if(e.detail===0){ bump(dir*(e.shiftKey?10:1)); sync(); } });   // Enter / Space
+  };
+  hold(minus,-1); hold(plus,1);
+  refs.push(()=>{ if(document.activeElement!==nb) nb.value=get(k); });
+  return r;
+}
+function pickRow(k,label,opts){
+  const num=typeof opts[0]==='number';
+  const r=document.createElement('div'); r.className='row2'+(opts.length<=3&&opts.join('').length>16?' stack':'');
+  const lab=document.createElement('label'); lab.textContent=label; r.appendChild(lab);
+  if(opts.length<=3){
+    const sg=document.createElement('div'); sg.className='seg small';
+    const bs=opts.map(o=>{ const b=document.createElement('button'); b.type='button'; b.textContent=o; b.onclick=()=>{ put(k,o); render(); sync(); }; sg.appendChild(b); return [o,b]; });
+    refs.push(()=>bs.forEach(([o,b])=>b.classList.toggle('on',String(get(k))===String(o))));
+    r.appendChild(sg);
+  } else {
+    const s=document.createElement('select'); s.innerHTML=opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+    s.onchange=()=>{ put(k,num?+s.value:s.value); render(); };
+    refs.push(()=>{ s.value=get(k); }); r.appendChild(s);
   }
-  const foot=document.createElement('div'); foot.style.cssText='margin-top:30px;display:flex;flex-direction:column;gap:10px;align-items:flex-start';
-  foot.innerHTML='<button id="btnStartOver">Start over</button><button class="link" id="btnFull">Show all controls</button>';
-  panel.appendChild(foot);
-  document.getElementById('btnStartOver').onclick=()=>{S=Object.assign({},SHARED_DEFAULTS);Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();};
-  document.getElementById('btnFull').onclick=()=>{mode='full';buildPanel();render();};
-  sync();
+  r.appendChild(document.createElement('span'));
+  return r;
 }
 function buildPanel(){
   applyMode();
-  if(mode==='simple'){ refs=[]; panel.innerHTML=''; buildSimple(); return; }
-  panel.className='panel';
-  refs=[]; panel.innerHTML='';
-  const head=document.createElement('div');
-  head.innerHTML='<h1>Mémé on 10 · Logo editor</h1><p style="margin:6px 0 0;font-size:14px"><a href="index.html" style="color:#1f6fd1">← Home</a> · <a href="guidelines.html" style="color:#1f6fd1">Brand guidelines</a> · <a href="print.html" style="color:#1f6fd1">Print</a> · <a href="social.html" style="color:#1f6fd1">Social media →</a></p><div class="hint">The chain icon next to a setting links it across all layouts. Pick a layout, then click any part of the logo to select it. Drag it, or use the arrow keys (Shift = bigger steps). Esc to deselect. Dragging snaps to the center and to other parts, and a pink line appears when things line up. Hold Alt to move freely.</div><div class="tabs" id="tabs"></div><div style="margin-top:12px"><button id="btnReset">Reset everything</button> <button class="link" id="btnSimple">Simple view</button></div>';
-  head.insertAdjacentHTML('beforeend',`<details class="hint" style="margin-top:14px"><summary style="cursor:pointer">Editor ${VERSION} · ${VERSION_DATE} · what changed</summary><ul style="padding-left:18px;margin:8px 0">${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`);
-  panel.appendChild(head);
-  const tabs=head.querySelector('#tabs');
-  Object.keys(LAYOUTS).forEach(k=>{
-    const b=document.createElement('button'); b.textContent=LAYOUTS[k].tab; b.className=k===cur?'on':'';
-    b.onclick=()=>{cur=k;sel=null;buildPanel();render();}; tabs.appendChild(b);
-  });
-  LAYOUTS[cur].panel.concat(LAYOUTS[cur].ownColors?[]:secColors,[['h','Saved versions'],['versions']]).forEach(item=>{
+  refs=[]; panel.innerHTML=''; panel.className='panel';
+  const simple=mode==='simple', B=basics(cur);
+  const top=document.createElement('div');
+  top.innerHTML=`<div class="titlerow"><h1>Mémé on 10 · Logo editor</h1><label class="switch" title="Simple shows only the everyday settings. Your logo stays the same either way."><input type="checkbox" id="simpleSw"><span class="track"><span class="knob"></span></span>Simple</label></div><p class="nav"><a href="index.html">← Home</a> · <a href="guidelines.html">Brand guidelines</a> · <a href="print.html">Print</a> · <a href="social.html">Social media →</a></p>`;
+  panel.appendChild(top);
+  const sw=top.querySelector('#simpleSw'); sw.checked=simple;
+  sw.onchange=()=>{ mode=sw.checked?'simple':'full'; buildPanel(); render(); };
+  const kick=document.createElement('div'); kick.className='kicker'; kick.textContent='Layout'; panel.appendChild(kick);
+  panel.appendChild(layoutPicker());
+  if(cur!=='mn'){
+    const help=document.createElement('div'); help.className='helpbox';
+    help.innerHTML='<b>Click a part of the logo</b> to open its settings. <b>Arrow keys</b> move it, <b>+ / −</b> make it bigger or smaller (Shift for bigger steps). <b>Tab</b> goes to the next part, <b>Esc</b> lets go. Hold a <b>− / +</b> button to keep going.'
+      +'<span class="only-full"> A pink line shows when a part lines up with the center or another part. <span class="inlock">'+LOCK_SVG+'</span> = also change it on every layout.</span>';
+    panel.appendChild(help);
+  }
+  const items=LAYOUTS[cur].panel.concat(LAYOUTS[cur].ownColors?[]:secColors,[['h','Saved versions'],['versions']]);
+  if(!OPEN[cur]) OPEN[cur]=new Set();
+  let acc=null, body=panel, shown=0, lastShown=true;
+  const finish=()=>{ if(acc&&!shown) acc.remove(); };
+  const add=el=>{ body.appendChild(el); shown++; lastShown=true; };
+  items.forEach(item=>{
     const t=item[0];
-    if(t==='h'){ const h=document.createElement('h2'); h.textContent=item[1]; if(item[2]) h.dataset.sec=item[2]; panel.appendChild(h); return; }
-    if(t==='menuedit'){ panel.appendChild(menuEditorBlock()); renderMenuEditor(); return; }
-    if(t==='hint'){ const d=document.createElement('div'); d.className='hint'; d.textContent=item[1]; d.style.margin='6px 0'; panel.appendChild(d); return; }
-    if(t==='range'){
-      const [,k,label,min,max,step]=item;
-      const r=document.createElement('div'); r.className='row';
-      r.innerHTML=`<label>${label}</label><input type="range" min="${min}" max="${max}" step="${step}"><input type="number" min="${min}" max="${max}" step="${step}"><span></span>`;
-      const [,rg,nb,lk]=r.children;
-      if(k in LINKMODE){
-        const b=document.createElement('button'); b.className='lock'; b.innerHTML=LOCK_SVG;
-        b.title='Link: when on, changing this also changes it on every other layout';
-        b.onclick=()=>{ if(LINKS.has(k)) LINKS.delete(k); else { LINKS.add(k); if(LINKMODE[k]==='same') propagate(k,get(k),get(k)); } sync(); render(); };
-        lk.replaceWith(b);
-        refs.push(()=>b.classList.toggle('on',LINKS.has(k)));
-      }
-      const set=v=>{ if(v===''||isNaN(v)) return; const old=get(k); put(k,+v); propagate(k,old,+v); render(); };
-      rg.oninput=()=>{set(rg.value); nb.value=rg.value;}; nb.oninput=()=>{set(nb.value); rg.value=nb.value;};
-      refs.push(()=>{rg.value=get(k); nb.value=get(k);});
-      panel.appendChild(r); return;
+    if(t==='h'){
+      finish();
+      const id=item[2]||slug(item[1]);
+      acc=document.createElement('section'); acc.className='acc'+(OPEN[cur].has(id)?' open':''); acc.dataset.sec=id;
+      acc.innerHTML=`<button type="button" class="acc-h" aria-expanded="${OPEN[cur].has(id)}">${CHEV}<span class="acc-t"></span><span class="acc-badge">selected</span></button><div class="acc-b"></div>`;
+      acc.querySelector('.acc-t').textContent=item[1];
+      const a=acc, hb=acc.querySelector('.acc-h');
+      hb.onclick=()=>{ const o=a.classList.toggle('open'); hb.setAttribute('aria-expanded',o); if(o) OPEN[cur].add(id); else OPEN[cur].delete(id); };
+      panel.appendChild(acc); body=acc.querySelector('.acc-b'); shown=0; lastShown=true; return;
     }
-    if(t==='pick'){
-      const [,k,label,opts]=item;
-      const r=document.createElement('div'); r.className='pick';
-      r.innerHTML=`<label>${label}</label><select>${opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
-      const sel=r.querySelector('select');
-      sel.onchange=()=>{ put(k,typeof opts[0]==='number'?+sel.value:sel.value); render(); };
-      refs.push(()=>{sel.value=get(k);});
-      panel.appendChild(r); return;
-    }
+    const k=item[1], basic=(k in B)||POSKEYS.includes(k);
+    const label=simple&&B[k]?B[k]:item[2];
+    if(t==='hint'){ if(lastShown&&(!simple||cur==='mn')){ const d=document.createElement('div'); d.className='hint'; d.textContent=item[1]; d.style.margin='6px 0'; body.appendChild(d); } return; }
+    const visible=!simple||basic||['menuedit','versions','swatches','color'].includes(t)||k==='transparent';
+    if(!visible){ lastShown=false; return; }
+    if(t==='menuedit'){ add(menuEditorBlock()); renderMenuEditor(); return; }
+    if(t==='range'){ const [,,,min,max,step]=item; add(stepperRow(k,label,min,max,step)); return; }
+    if(t==='pick'){ add(pickRow(k,label,item[3])); return; }
     if(t==='color'){
-      const [,k,label]=item;
-      const r=document.createElement('div'); r.className='pick';
-      r.innerHTML=`<label>${label}</label><input type="color">`;
+      const r=document.createElement('div'); r.className='row2';
+      r.innerHTML=`<label></label><input type="color"><span></span>`; r.querySelector('label').textContent=label;
       const inp=r.querySelector('input'); inp.oninput=()=>{put(k,inp.value); render();};
       refs.push(()=>{inp.value=k==='sqColor'?sqCol(S):get(k);});
-      panel.appendChild(r); return;
+      add(r); return;
     }
     if(t==='check'){
-      const [,k,label]=item;
-      const r=document.createElement('label'); r.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0;font-size:13px';
-      r.innerHTML=`<input type="checkbox"> ${label}`;
-      const inp=r.querySelector('input'); inp.onchange=()=>{put(k,inp.checked); render();};
+      const r=document.createElement('label'); r.className='checkrow';
+      r.innerHTML=`<input type="checkbox"> <span></span>`; r.querySelector('span').textContent=label;
+      const inp=r.querySelector('input'); inp.onchange=()=>{ put(k,inp.checked); if(k==='sqFollow'&&inp.checked) afterSet('thickD',get('thickD')); render(); sync(); };
       refs.push(()=>{inp.checked=!!get(k);});
-      panel.appendChild(r); return;
+      add(r); return;
     }
     if(t==='swatches'){
-      const d=document.createElement('div'); d.className='sw';
+      const d=document.createElement('div'); d.className=simple?'chips':'sw';
       PRESETS.forEach(p=>{
-        const b=document.createElement('button'); b.title=p[0];
-        b.innerHTML=`<i style="background:linear-gradient(135deg,${p[3]} 0 50%,${p[2]} 50%)"></i>`;
+        const b=document.createElement('button'); b.type='button'; b.title=p[0];
+        b.innerHTML=simple?`<span class="dot" style="background:linear-gradient(135deg,${p[3]} 0 50%,${p[2]} 50%)"></span><span></span>`:`<i style="background:linear-gradient(135deg,${p[3]} 0 50%,${p[2]} 50%)"></i>`;
+        if(simple) b.lastChild.textContent=p[0];
         b.onclick=()=>{S.ink=p[1];S.accent=p[2];S.sqColor=p[2];S.bg=p[3];S.transparent=false;sync();render();};
         d.appendChild(b);
       });
-      panel.appendChild(d); return;
+      add(d); return;
     }
     if(t==='versions'){
       const wrap=document.createElement('div');
       wrap.innerHTML='<div class="ver"><input type="text" id="verName" placeholder="Name this version, e.g. Mom’s favorite"><button id="verSave">Save</button></div><div id="verList"></div><div class="hint" id="verNote">Your last settings and saved versions are remembered in this browser automatically. To keep them safe or move them to another computer, use the file buttons.</div><div class="ver" style="margin-top:8px"><button id="verExport">Save versions to a file</button><button id="verImport">Open a versions file</button><input type="file" id="verFile" accept=".json" style="display:none"></div>';
-      panel.appendChild(wrap); return;
+      add(wrap); return;
     }
   });
-  document.getElementById('btnSimple').onclick=()=>{mode='simple';buildPanel();render();};
-  document.getElementById('btnReset').onclick=()=>{S=Object.assign({},SHARED_DEFAULTS);Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();};
+  finish();
+  const foot=document.createElement('div'); foot.className='foot';
+  foot.innerHTML='<button id="btnReset">Reset everything</button><div class="hint" style="margin-top:12px">Editor '+VERSION+' · update '+UPDATE+'</div>';
+  foot.insertAdjacentHTML('beforeend',`<details class="hint only-full" style="margin-top:14px"><summary style="cursor:pointer">Editor ${VERSION} · ${VERSION_DATE} · what changed</summary><ul style="padding-left:18px;margin:8px 0">${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`);
+  panel.appendChild(foot);
+  twoStep(document.getElementById('btnReset'),'Click again to reset every layout and the menu (saved versions are kept)',()=>{ S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT));Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();});
   document.getElementById('verSave').onclick=saveVersion;
   document.getElementById('verExport').onclick=()=>{ const cur_={layout:cur,S:Object.assign({},S),G:JSON.parse(JSON.stringify(G)),M:JSON.parse(JSON.stringify(M))}; download(new Blob([JSON.stringify(Object.assign({'(current settings)':cur_},mem),null,1)],{type:'application/json'}),`meme-on-10-logo-editor-saved-versions_${new Date().toISOString().slice(0,10)}.json`); };
   document.getElementById('verImport').onclick=()=>document.getElementById('verFile').click();
@@ -782,7 +1156,7 @@ function render(){
   LAST=LAYOUTS[cur].build(S,G[cur]);
   document.getElementById('canvas').innerHTML=LAST.svg; autosave(); overlay();
   const mw=document.getElementById('menuWarn'); if(mw) mw.textContent=LAST.over?'The menu is longer than the page. Make the text smaller or use 2 columns.':'';
-  document.getElementById('pageStyle').textContent=`@page{size:${f(LAST.W)}px ${f(LAST.H)}px;margin:0}@media print{.canvas svg{width:${f(LAST.W)}px!important;height:${f(LAST.H)}px!important}}`;
+  document.getElementById('pageStyle').textContent=`@page{size:${f(LAST.W)}px ${f(LAST.H)}px;margin:0}@media print{html,body{margin:0;height:auto}.app,.stage,.canvas{height:${f(LAST.H)}px!important;overflow:hidden}.canvas svg{width:${f(LAST.W)}px!important;height:${f(LAST.H)}px!important}}`;
 }
 const fileBase=()=>'meme-on-10-'+LAYOUTS[cur].file+'-logo_'+VERSION_DATE;
 function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
@@ -796,7 +1170,7 @@ document.getElementById('btnPng').onclick=()=>{
 };
 
 
-/* ============ CLICK TO SELECT / DRAG / ARROW KEYS ============ */
+/* ============ CLICK TO SELECT · ARROW KEYS · + / − ============ */
 const ELKEYS={wm:['wmX','wmY'],on:['onX','onY'],sq:['sqX','sqY'],tag:['tagX','tagY'],oval:[]};
 const ELNAME={wm:'Wordmark',on:'“on 10”',sq:'Squiggle',tag:'Tagline',oval:'Oval'};
 function svgEl(){ return document.querySelector('#canvas svg'); }
@@ -806,8 +1180,7 @@ function centersOf(svg,skip){ const o={}; svg.querySelectorAll('[data-el]').forE
 function line(svg,x1,y1,x2,y2,col,w,dash,op){ const l=document.createElementNS(NS,'line'); [['x1',x1],['y1',y1],['x2',x2],['y2',y2],['stroke',col],['stroke-width',w],['pointer-events','none'],['data-ui','1']].forEach(([a,v])=>l.setAttribute(a,v)); if(dash) l.setAttribute('stroke-dasharray',dash); if(op) l.setAttribute('opacity',op); svg.appendChild(l); }
 function overlay(){
   document.querySelectorAll('#canvas [data-ui]').forEach(n=>n.remove());
-  if(mode==='simple') return;
-  document.querySelectorAll('#panel h2').forEach(h=>h.classList.toggle('sel',!!sel&&h.dataset.sec===sel));
+  document.querySelectorAll('#panel .acc').forEach(a=>a.classList.toggle('sel',!!sel&&a.dataset.sec===sel));
   const info=document.getElementById('selInfo'); if(info) info.textContent='';
   const svg=svgEl(); if(!svg) return;
   const k=LAST.W/svg.getBoundingClientRect().width, W=LAST.W, H=LAST.H, gd=document.getElementById('gd').checked;
@@ -829,18 +1202,8 @@ function overlay(){
   if(info){ const [kx,ky]=ELKEYS[sel]; const bits=[ELNAME[sel]]; if(kx in G[cur]) bits.push('X '+G[cur][kx]); if(ky in G[cur]) bits.push('Y '+G[cur][ky]);
     const dx=Math.round((cxs-W/2)*10)/10; bits.push(dx===0?'centered across':'from center '+dx); info.textContent=bits.join(' · '); }
 }
-function snapSel(){
-  const svg=svgEl(); const el=svg&&svg.querySelector(`[data-el="${sel}"]`); if(!el) return;
-  const b=boxOf(el,svg), cxs=b.x+b.w/2, cys=b.y+b.h/2, k=LAST.W/svg.getBoundingClientRect().width, thr=6*k;
-  const oth=centersOf(svg,sel), [kx,ky]=ELKEYS[sel]; let ch=false;
-  const near=(c,arr)=>{ let best=null; arr.forEach(v=>{ const d=v-c; if(Math.abs(d)<thr&&(best===null||Math.abs(d)<Math.abs(best))) best=d; }); return best; };
-  const dx=near(cxs,[LAST.W/2,...Object.values(oth).map(o=>o.x)]), dy=near(cys,[LAST.H/2,...Object.values(oth).map(o=>o.y)]);
-  if(dx!==null&&kx in G[cur]){ G[cur][kx]=Math.round((G[cur][kx]+dx)*10)/10; ch=true; }
-  if(dy!==null&&ky in G[cur]){ G[cur][ky]=Math.round((G[cur][ky]+dy)*10)/10; ch=true; }
-  if(ch) render();
-}
 function pick(ev){
-  const svg=svgEl(); if(!svg||mode==='simple') return null;
+  const svg=svgEl(); if(!svg||cur==='mn') return null;
   const s=svg.getBoundingClientRect(), k=LAST.W/s.width, px=(ev.clientX-s.left)*k, py=(ev.clientY-s.top)*k, sl=6*k;
   let best=null,area=1e18;
   svg.querySelectorAll('[data-el]').forEach(el=>{
@@ -857,39 +1220,72 @@ function pick(ev){
   });
   return best;
 }
+// selecting a part opens its section in the sidebar (and closes the others)
 function selectEl(k){
-  sel=k; overlay();
-  if(k){ const h=panel.querySelector(`h2[data-sec="${k}"]`); if(h) panel.scrollTo({top:h.offsetTop-12,behavior:'smooth'}); }
+  sel=k;
+  if(k){
+    const acc=panel.querySelector(`.acc[data-sec="${k}"]`);
+    if(acc){
+      if(!OPEN[cur]) OPEN[cur]=new Set();
+      panel.querySelectorAll('.acc.open').forEach(a=>{ if(a!==acc){ a.classList.remove('open'); a.querySelector('.acc-h').setAttribute('aria-expanded',false); OPEN[cur].delete(a.dataset.sec); } });
+      acc.classList.add('open'); acc.querySelector('.acc-h').setAttribute('aria-expanded',true); OPEN[cur].add(k);
+      requestAnimationFrame(()=>acc.scrollIntoView({block:'nearest',behavior:'smooth'}));
+    }
+  }
+  overlay();
+}
+const PARTS=['oval','wm','on','sq','tag'];
+const SIZEKEY={wm:['wmScale'],on:['onScale'],sq:['sqScale'],tag:['tagSize'],oval:['rx','ry']};
+function partsHere(){ const svg=svgEl(); return svg?PARTS.filter(p=>svg.querySelector(`[data-el="${p}"]`)):[]; }
+function resizeSel(m){
+  (SIZEKEY[sel]||[]).filter(k=>k in G[cur]).forEach(k=>{
+    const sp=rangeOf(cur,k), step=sp?sp[5]:1, old=G[cur][k];
+    let v=old+m*step; if(sp) v=Math.min(sp[4],Math.max(sp[3],v)); v=Math.round(v*1000)/1000;
+    G[cur][k]=v; propagate(k,old,v);
+  });
+  render(); sync();
 }
 (function(){
-  const cv=document.getElementById('canvas'); let drag=null;
-  cv.addEventListener('pointerdown',ev=>{
-    const k=pick(ev); selectEl(k); if(!k) return;
-    const keys=ELKEYS[k].filter(x=>x in G[cur]); if(!keys.length) return;
-    const s=svgEl().getBoundingClientRect();
-    drag={k,keys,x0:ev.clientX,y0:ev.clientY,v0:keys.map(x=>G[cur][x]),sc:LAST.W/s.width,moved:false};
-    cv.classList.add('dragging'); cv.setPointerCapture(ev.pointerId); ev.preventDefault();
-  });
-  cv.addEventListener('pointermove',ev=>{
-    if(!drag) return; const dx=(ev.clientX-drag.x0)*drag.sc, dy=(ev.clientY-drag.y0)*drag.sc;
-    drag.keys.forEach((key,i)=>{ const isX=key.endsWith('X'); G[cur][key]=Math.round((drag.v0[i]+(isX?dx:dy))*10)/10; });
-    render(); if(!ev.altKey) snapSel(); sync();
-  });
-  const end=()=>{ drag=null; cv.classList.remove('dragging'); };
-  cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
+  // no dragging: clicking a part only selects it; the keyboard moves it
+  const cv=document.getElementById('canvas');
+  cv.addEventListener('pointerdown',ev=>{ selectEl(pick(ev)); ev.preventDefault(); });
   document.addEventListener('keydown',ev=>{
-    if(!sel) return; const tg=ev.target.tagName; if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA') return;
+    const tg=ev.target.tagName; if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA') return;
+    if(cur==='mn'||ev.metaKey||ev.ctrlKey) return;
+    if(ev.key==='Tab'&&sel){ const ps=partsHere(); if(!ps.length) return; ev.preventDefault();
+      const i=ps.indexOf(sel); selectEl(ps[(i+(ev.shiftKey?-1:1)+ps.length)%ps.length]); return; }
+    if(!sel) return;
     if(ev.key==='Escape'){ selectEl(null); return; }
+    if(['Equal','Minus','NumpadAdd','NumpadSubtract'].includes(ev.code)){ ev.preventDefault();
+      resizeSel(((ev.code==='Equal'||ev.code==='NumpadAdd')?1:-1)*(ev.shiftKey?10:1)); return; }
     const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[ev.key]; if(!d) return;
     const [kx,ky]=ELKEYS[sel]; const n=ev.shiftKey?10:1; let ch=false;
-    if(kx&&kx in G[cur]&&d[0]){G[cur][kx]+=d[0]*n;ch=true;} if(ky&&ky in G[cur]&&d[1]){G[cur][ky]+=d[1]*n;ch=true;}
+    const mv=(key,by)=>{ G[cur][key]=Math.round((G[cur][key]+by)*100)/100; ch=true; };
+    if(kx&&kx in G[cur]&&d[0]) mv(kx,d[0]*n); if(ky&&ky in G[cur]&&d[1]) mv(ky,d[1]*n);
     if(ch){ ev.preventDefault(); render(); sync(); }
   });
 })();
+// the controls sidebar can be made wider or narrower (drag its left edge; double-click to reset)
+(function(){
+  const g=document.getElementById('grip'), root=document.documentElement, MIN=320, DEF=420;
+  const max=()=>Math.max(MIN,Math.min(1000,window.innerWidth-380));
+  const now=()=>parseInt(getComputedStyle(root).getPropertyValue('--side'))||DEF;
+  const setW=w=>{ root.style.setProperty('--side',Math.round(Math.min(max(),Math.max(MIN,w)))+'px'); };
+  const save=()=>{ try{ localStorage.setItem('meme10_side',now()); }catch(e){} };
+  try{ const w=+localStorage.getItem('meme10_side'); if(w) setW(w); }catch(e){}
+  let drag=false;
+  g.addEventListener('pointerdown',e=>{ drag=true; g.setPointerCapture(e.pointerId); g.classList.add('on'); document.body.classList.add('resizing'); e.preventDefault(); });
+  g.addEventListener('pointermove',e=>{ if(drag){ setW(window.innerWidth-e.clientX-4); overlay(); } });
+  const end=()=>{ if(!drag) return; drag=false; g.classList.remove('on'); document.body.classList.remove('resizing'); save(); overlay(); };
+  g.addEventListener('pointerup',end); g.addEventListener('pointercancel',end);
+  g.addEventListener('dblclick',()=>{ root.style.removeProperty('--side'); try{ localStorage.removeItem('meme10_side'); }catch(e){} overlay(); });
+  g.addEventListener('keydown',e=>{ const d={ArrowLeft:20,ArrowRight:-20}[e.key]; if(!d) return; e.preventDefault(); e.stopPropagation(); setW(now()+d); save(); overlay(); });
+  window.addEventListener('resize',()=>{ if(now()>max()) setW(max()); overlay(); });
+})();
 
-function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,links:[...LINKS]})); }catch(e){} }
+function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,menuMode,links:[...LINKS]})); }catch(e){} }
 function restore(){ try{ const v=JSON.parse(localStorage.getItem('meme10_last')||'null'); if(!v) return;
-  S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; }catch(e){} }
+  S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(['text','docs','sheet','boxes'].includes(v.menuMode)) menuMode=v.menuMode; }catch(e){} }
 restore(); loadVersions();
 { const h=decodeURIComponent(location.hash.slice(1)); if(h==='menu') cur='mn'; else if(LAYOUTS[h]) cur=h; else if(h==='logo' && cur==='mn') cur='1b'; }
 buildPanel(); render();
