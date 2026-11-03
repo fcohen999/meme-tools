@@ -64,81 +64,197 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
 @media (max-width:900px){.board{grid-template-columns:1fr}.gridcol{position:static;max-height:none;overflow:visible}}
 @media (max-width:480px){.tabs{display:flex}.tabs button{flex:1;padding:10px 8px;font-size:15px}.tabs .n{display:none}.ig{gap:3px}}
 
-/* ---- Editing panel: same look and behavior as the logo editor's sidebar (editor.html v25). Keep the two in step. ---- */
-.panel{--ink:#2b2724;--muted:#6b635b;--line:#d9d1c6;--panel:#f6f2ea;--accent:#b35a3e;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px 22px 26px;color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;min-width:0}
-.panel h2{font-size:16px;margin:0;font-weight:600}
-.panel .titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.panel input,.panel select,.panel textarea{color:var(--ink);background-color:#fff}
-.panel button{font:inherit;font-size:13px;border:1px solid #b9b0a5;background:#fff;border-radius:4px;padding:8px 14px;cursor:pointer;color:var(--ink)}
-.panel button:hover{background:var(--ink);color:#f3ede1}
-.panel button.primary{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
-.panel button.primary:hover{background:var(--accent);border-color:var(--accent)}
-.panel button:disabled{opacity:.45;cursor:default}
-.panel button:focus-visible,.panel input:focus-visible,.panel select:focus-visible,.panel textarea:focus-visible{outline:2px solid #1f6fd1;outline-offset:2px}
-.panel .hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
-.panel .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
-.panel .lgroups{display:flex;flex-wrap:wrap;gap:10px 16px}
-.panel .lgl{font-size:11px;color:var(--muted);margin-bottom:5px}
-.panel .seg{display:inline-flex;flex-wrap:wrap;border:1px solid #b9b0a5;border-radius:6px;overflow:hidden;background:#fff;max-width:100%}
-.panel .seg button{border:none;border-radius:0;border-right:1px solid #e3dccf;padding:8px 12px;background:#fff}
-.panel .seg button:last-child{border-right:none}
-.panel .seg button small{font-size:10px;opacity:.6;margin-left:5px}
-.panel .seg button[aria-pressed="true"],.panel .seg button[aria-selected="true"]{background:var(--ink);color:#f3ede1}
-.panel .seg button:not([aria-pressed="true"]):not([aria-selected="true"]):hover{background:#efe9df;color:var(--ink)}
-.panel .helpbox{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--muted);margin:16px 0 6px}
-.panel .helpbox b{color:var(--ink)}
-.panel .acc{background:#fff;border:1px solid var(--line);border-radius:8px;margin:10px 0;overflow:hidden}
-.panel .acc-h{width:100%;display:flex;align-items:center;gap:10px;border:none;border-radius:0;background:none;padding:13px 14px;font-size:14px;font-weight:600;text-align:left}
-.panel .acc-h:hover{background:#faf7f1;color:var(--ink)}
-.panel .chev{width:15px;height:15px;flex:none;transition:transform .15s;color:var(--muted)}
-.panel .acc.open .chev{transform:rotate(90deg)}
-.panel .acc-t{flex:1}
-.panel .acc-badge{font-size:11px;font-weight:400;color:var(--muted)}
-.panel .acc-b{display:none;padding:6px 14px 14px;border-top:1px solid var(--line)}
-.panel .acc.open .acc-b{display:block}
-.panel .row2{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:10px;align-items:center;margin:8px 0}
-.panel .row2>label{font-size:13px;line-height:1.3}
-.panel .row2.stack{grid-template-columns:1fr;gap:5px}
-.panel select,.panel input[type=text],.panel textarea{font:inherit;font-size:13px;padding:5px 6px;border:1px solid var(--line);border-radius:3px;background:#fff;width:100%}
-.panel textarea{min-height:110px;resize:vertical;line-height:1.5;padding:8px}
-.panel .checkrow{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13px}
-.panel .sw{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
-.panel .sw button{width:30px;height:30px;padding:0;border-radius:50%;border:1px solid #b9b0a5;overflow:hidden;position:relative}
-.panel .sw button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
-.panel .swl{font-size:12px;color:var(--muted)}
+/* ---- The editing panel is styled by the shared panel-css block below (same as the logo editor).
+   These are the post maker's own pieces, and its frame on this page. ---- */
+.panel{border:1px solid var(--line);border-color:#d9d1c6;border-radius:8px;padding:20px 22px 26px}
 .panel .assets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0}
 .panel .asset{border:1px solid var(--line);border-radius:4px;background:#fff;padding:3px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.panel .asset:hover{background:#faf7f1;color:var(--ink)}
+.panel .asset:hover{background:var(--soft)}
 .panel .asset img{max-width:100%;max-height:100%;display:block}
 .panel .asset.ph img{width:100%;height:100%;object-fit:cover;max-width:none;max-height:none;border-radius:2px}
 .panel .asset[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .panel .asset span{position:absolute;inset:auto 0 0 0;background:rgba(255,255,255,.92);font-size:10px;line-height:1.2;padding:2px 3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .panel .asset.up{border-style:dashed;flex-direction:column;font-size:12px;gap:2px;text-align:center}
 .panel .asset.up b{font-weight:400;font-size:22px;line-height:1}
-.panel .preview{background:#e3ddd2;border-radius:6px;display:flex;justify-content:center;padding:14px;margin:8px 0 4px}
+.panel .preview{background:#e3ddd2;border-radius:6px;display:flex;justify-content:center;padding:14px;margin:14px 0 4px}
 .panel .preview svg{display:block;width:100%;max-width:300px;height:auto;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .panel .preview.story svg{max-width:170px}
-.panel .counts{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin:6px 0}
+.panel #editbar{margin:4px 0 0}
+.panel .counts{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin:6px 0;font-variant-numeric:tabular-nums}
 .panel .counts .over{color:var(--accent);font-weight:600}
-.panel .link{background:none;border:none;color:#1f6fd1;padding:4px 0;font-size:13px;cursor:pointer;text-decoration:underline}
-.panel button.armed,.panel button.link.armed{background:#b35a3e!important;color:#fff!important;border-color:#b35a3e!important;text-decoration:none;padding:6px 10px}
-.panel .link:hover{background:none;color:#1a58a6}
+.panel #inCaption{min-height:110px}
 .panel .tagchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .panel .chip{border-radius:999px;padding:5px 10px;font-size:12.5px}
 .panel .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#f3ede1}
+.panel .chip[aria-pressed="true"]:hover{background:#4a433d}
 .panel .chip[aria-pressed="false"]{color:var(--muted)}
 .panel .chip.custom::after{content:" ×";opacity:.7}
 .panel .addtag{display:flex;gap:6px}
 .panel .addtag input{flex:1}
 .panel .addtag button{padding:5px 12px}
-.panel .foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:10px}
-.panel .btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .panel .btns .big1{font-size:15px;padding:11px 20px}
+.panel .status{color:var(--ok)}
+@media (max-width:480px){.panel{padding:16px 14px 22px}}
+</style>
+<!-- panel-css:start -->
+<style id="panel-css">
+/* The editing panel: one look for every tool (logo and menu editor, social post maker).
+   This block is the same in editor.html and social.html. Edit it in editor.html, then run
+   python3 tools/sync-panel.py to copy it across (add --check to only compare). */
+.panel{--ink:#2b2724;--muted:#6b635b;--line:#d9d1c6;--edge:#b9b0a5;--panel:#f6f2ea;--hover:#efe9df;--soft:#faf7f1;--accent:#b35a3e;--sel:#1f6fd1;--ok:#3f6b35;--bad:#b35a3e;--ctl:164px;--radius:8px;
+  background:var(--panel);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:normal;min-width:0;color-scheme:light}
+.panel *{box-sizing:border-box}
+/* buttons and fields */
+.panel button{font:inherit;font-size:13px;border:1px solid var(--edge);background:#fff;border-radius:4px;padding:8px 14px;cursor:pointer;color:var(--ink)}
+.panel button:hover{background:var(--hover);color:var(--ink)}
+.panel button.primary{background:var(--ink);color:#f3ede1;border-color:var(--ink)}
+.panel button.primary:hover{background:var(--accent);border-color:var(--accent);color:#fff}
 .panel button.danger{color:var(--accent);border-color:#d8b4a8}
 .panel button.danger:hover{background:var(--accent);border-color:var(--accent);color:#fff}
-.panel .status{font-size:12px;color:var(--olive);min-height:1.2em;margin:0;font-weight:600}
-@media (max-width:480px){.panel{padding:16px 14px 22px}.panel .row2{grid-template-columns:1fr;gap:5px}}
+.panel button:disabled{opacity:.35;cursor:default}
+.panel button:disabled:hover{background:#fff}
+.panel button.link{background:none;border:none;color:var(--sel);padding:4px 0;font-size:13px;text-decoration:underline}
+.panel button.link:hover{background:none;color:#1a58a6}
+.panel button.armed,.panel button.link.armed{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important;text-decoration:none;padding:6px 10px}
+.panel :is(button,select,input,textarea,a,summary):focus-visible{outline:2px solid var(--sel);outline-offset:2px}
+.panel input,.panel select,.panel textarea{color:var(--ink);background-color:#fff}
+.panel :is(input,textarea)::placeholder{color:#9a9188}
+.panel select,.panel input[type=text],.panel textarea{font:inherit;font-size:13px;padding:5px 6px;border:1px solid var(--line);border-radius:3px;width:100%}
+.panel :is(select,input[type=text],input[type=number],textarea):hover{border-color:var(--edge)}
+.panel textarea{line-height:1.5;padding:8px;resize:vertical}
+.panel a{color:var(--sel)}
+.panel .hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+.panel .status{font-size:12px;font-weight:600;min-height:1.2em;margin:0}
+.panel .ok,.panel .status.ok{color:var(--ok)}.panel .bad,.panel .status.bad{color:var(--bad)}
+/* title row: name of the tool, a line under it, and (in the editor) the Simple switch */
+.panel .titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel .titlerow :is(h1,h2){font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0}
+.panel .titlerow :is(h1,h2) small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:2px;letter-spacing:0}
+.panel .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+.panel .switch input{position:absolute;opacity:0;width:1px;height:1px}
+.panel .switch .track{width:36px;height:20px;border-radius:10px;background:#c9c0b4;position:relative;transition:background .15s}
+.panel .switch .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.panel .switch input:checked+.track{background:var(--ink)}
+.panel .switch input:checked+.track .knob{left:18px}
+.panel .switch input:focus-visible+.track{outline:2px solid var(--sel);outline-offset:2px}
+/* "what are you making" picker under the title */
+.panel .kicker{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+.panel .lgroups{display:flex;flex-wrap:wrap;gap:10px 16px}
+.panel .lgl{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--muted);margin-bottom:5px}
+.panel .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--edge);border-radius:6px;overflow:hidden;background:#fff;max-width:100%}
+.panel .seg button{border:none;border-radius:0;border-right:1px solid #e3dccf;padding:8px 12px;background:#fff}
+.panel .seg button:last-child{border-right:none}
+.panel .seg button small{font-size:10px;opacity:.6;margin-left:5px}
+.panel .seg button:is(.on,[aria-pressed="true"],[aria-selected="true"]){background:var(--ink);color:#f3ede1}
+.panel .seg button:not(.on):not([aria-pressed="true"]):not([aria-selected="true"]):hover{background:var(--hover);color:var(--ink)}
+.panel .seg.small button{padding:6px 6px;font-size:12px}
+/* help box */
+.panel .helpbox{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;font-size:13px;line-height:1.55;color:var(--muted);margin:16px 0 6px}
+.panel .helpbox b{color:var(--ink)}
+.panel .helpbox p{margin:0 0 6px;color:var(--ink)}
+.panel .helpbox ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline}
+.panel .helpbox li{display:contents}
+.panel .helpbox li>span:first-child{white-space:nowrap}
+.panel kbd{display:inline-block;min-width:20px;padding:1px 5px;font:600 11px/16px ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--ink);background:var(--soft);border:1px solid #cfc6b9;border-bottom-width:2px;border-radius:4px}
+.panel .inlock{display:inline-block;width:13px;height:13px;vertical-align:-2px}.panel .inlock svg{width:13px;height:13px}
+/* sections that open and close */
+.panel .acc{background:#fff;border:1px solid var(--line);border-radius:var(--radius);margin:10px 0;overflow:hidden;transition:box-shadow .15s,border-color .15s}
+.panel .acc-h{width:100%;display:flex;align-items:center;gap:10px;border:none;border-radius:0;background:none;padding:12px 14px;min-height:46px;font-size:14px;font-weight:600;text-align:left}
+.panel .acc-h:hover{background:var(--soft);color:var(--ink)}
+.panel .chev{width:15px;height:15px;flex:none;transition:transform .15s;color:var(--muted)}
+.panel .acc.open .chev{transform:rotate(90deg)}
+.panel .acc-t{flex:1}
+.panel .acc-sum{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:400;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+.panel .acc-sum .dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.18);flex:none}
+.panel .acc-badge{display:none;font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;background:var(--sel);color:#fff;border-radius:10px;padding:2px 8px}
+.panel .acc.sel{border-color:var(--sel);box-shadow:0 0 0 1px var(--sel)}
+.panel .acc.sel .acc-badge{display:inline}
+.panel .acc.sel .acc-sum{display:none}
+.panel .acc-b{display:none;padding:4px 14px 14px;border-top:1px solid var(--line)}
+.panel .acc.open .acc-b{display:block}
+.panel .acc-b>.hint{margin:4px 0 8px;padding-left:10px;border-left:2px solid var(--line)}
+/* a small heading inside a section */
+.panel .sub{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px;display:flex;align-items:center;gap:8px}
+.panel .sub::after{content:'';flex:1;height:1px;background:var(--line)}
+.panel .acc-b>.sub:first-child{margin-top:10px}
+/* setting rows: label on the left, every control the same width on the right (a third column holds the link button) */
+.panel .row2{display:grid;grid-template-columns:minmax(0,1fr) var(--ctl) 26px;gap:10px;align-items:center;margin:6px 0;min-height:32px}
+.panel .row2.two{grid-template-columns:minmax(0,1fr) var(--ctl)}
+.panel .row2.stack{grid-template-columns:1fr;gap:6px}
+.panel .row2>label,.panel .lab label{font-size:13px;line-height:1.3}
+.panel .lab{display:flex;align-items:center;gap:4px;min-width:0}
+.panel .reset{visibility:hidden;flex:none;width:20px;height:20px;padding:0;border:none;border-radius:50%;background:none;color:var(--muted);font-size:13px;line-height:20px}
+.panel .reset.on{visibility:visible}
+.panel .reset:hover{background:var(--hover);color:var(--ink)}
+.panel .row2 select{width:var(--ctl)}
+.panel .row2.stack select{width:100%}
+.panel .row2 .seg.small{width:var(--ctl);display:flex}
+.panel .row2 .seg.small button{flex:1;white-space:nowrap}
+.panel .row2.stack .seg.small{width:100%}
+.panel .row2.off,.panel .checkrow.off{opacity:.45}
+.panel .row2 .why{grid-column:1/-1;font-size:11.5px;color:var(--muted);margin:-2px 0 2px}
+.panel .stepper{display:flex;width:var(--ctl);position:relative;border:1px solid var(--edge);border-radius:5px;overflow:hidden;background:#fff}
+.panel .stepper .sb{-webkit-tap-highlight-color:transparent;border:none;border-radius:0;padding:0;width:34px;height:30px;font-size:17px;line-height:1;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+.panel .stepper .sb:hover{background:var(--hover)}
+.panel .stepper .sb:active{background:#e3dccf}
+.panel .stepper input{flex:1;width:0;min-width:0;border:none;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font:inherit;font-size:13px;padding:0 2px;-moz-appearance:textfield;appearance:textfield;font-variant-numeric:tabular-nums}
+.panel .stepper input::-webkit-inner-spin-button,.panel .stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.panel .stepper .unit{position:absolute;right:40px;top:0;line-height:30px;font-size:11px;color:var(--muted);pointer-events:none}
+.panel .stepper.has-unit input{padding-right:16px;padding-left:2px}
+.panel .lock{width:24px;height:24px;padding:0;border-radius:4px;display:flex;align-items:center;justify-content:center;border-color:transparent;background:none;color:#a39a8f}
+.panel .lock:hover{background:#e6dfd3;color:var(--ink)}
+.panel .lock.on{background:var(--sel);border-color:var(--sel);color:#fff}
+.panel .lock svg{width:14px;height:14px}
+.panel .colorctl{width:var(--ctl);display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:5px;background:#fff;padding:3px 8px 3px 3px;cursor:pointer}
+.panel .colorctl:hover{border-color:var(--edge)}
+.panel .colorctl input[type=color]{width:34px;height:24px;border:none;padding:0;background:none;cursor:pointer;flex:none}
+.panel .colorctl input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.panel .colorctl input[type=color]::-webkit-color-swatch{border:1px solid rgba(0,0,0,.18);border-radius:3px}
+.panel .colorctl code{font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);text-transform:uppercase}
+.panel .checkrow{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13px;line-height:1.35;cursor:pointer}
+.panel .checkrow input{accent-color:var(--ink);width:16px;height:16px;flex:none;margin:0}
+/* color presets: round swatches, or labeled chips */
+.panel .swl{font-size:11px;color:var(--muted);font-weight:600;margin:10px 0 2px}
+.panel .sw{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 10px}
+.panel .sw button{width:28px;height:28px;padding:0;border-radius:50%;border:1px solid rgba(0,0,0,.2);overflow:hidden;position:relative;transition:transform .1s}
+.panel .sw button i{position:absolute;inset:0;border-radius:50%}
+.panel .sw button:hover{transform:scale(1.08)}
+.panel .chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 10px}
+.panel .chips button{display:flex;align-items:center;gap:10px;text-align:left;padding:8px 10px;font-size:13px}
+.panel .chips .dot{width:28px;height:28px;border-radius:50%;border:1px solid var(--edge);flex:none}
+.panel :is(.sw,.chips) button:is(.on,[aria-pressed="true"]){box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink);border-color:var(--ink)}
+/* pieces in order (tick to show, arrows to move) */
+.panel .order{margin:12px 0}
+.panel .order .sl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.panel .ord{display:grid;grid-template-columns:1fr auto auto;gap:4px;align-items:center;margin:5px 0;padding:4px 4px 4px 10px;background:#fff;border:1px solid var(--line);border-radius:6px}
+.panel .ord label{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;flex:1}
+.panel .ord input{accent-color:var(--ink);margin:0}
+.panel .ord .n{display:inline-block;width:16px;color:var(--muted);font-variant-numeric:tabular-nums}
+.panel .ord button{width:30px;height:28px;padding:0;border-color:transparent;background:none;color:var(--muted)}
+.panel .ord button:not(:disabled):hover{background:var(--hover);color:var(--ink)}
+.panel .ord.off{background:var(--soft)}
+.panel .ord.off label{color:var(--muted);text-decoration:line-through}
+/* a row of small buttons, and a list with buttons on each line */
+.panel .ver{display:flex;gap:6px;align-items:center;margin:6px 0}
+.panel .ver>span{flex:1}
+.panel .ver input[type=text]{flex:1}
+.panel .ver button{padding:4px 9px;font-size:12px}
+.panel .btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.panel .vlist{margin:8px 0;border:1px solid var(--line);border-radius:6px;background:#fff;overflow:hidden}
+.panel .vlist:empty{display:none}
+.panel .vrow{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 10px;border-top:1px solid var(--line)}
+.panel .vrow:first-child{border-top:none}
+.panel .vrow .vn{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panel .vrow .vn small{color:var(--muted);margin-left:6px}
+.panel .vrow button{padding:4px 10px;font-size:12px}
+/* the bottom of the panel */
+.panel .foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.panel .foot details summary{cursor:pointer}
+.panel .foot details ul{padding-left:18px;margin:8px 0}
+@media(max-width:900px){.panel .acc-sum{display:none}}
+@media(max-width:480px){.panel{--ctl:138px}.panel .acc-b{padding:4px 10px 12px}.panel .row2{gap:8px}}
 </style>
+<!-- panel-css:end -->
 </head>
 <body>
 <!-- global-nav:start -->
@@ -288,10 +404,11 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
    <p class="gridnote" id="gridnote">Newest first, like your profile. Drag tiles to change the order.</p>
   </div>
 
-  <aside class="panel" aria-labelledby="studioTitle">
-  <div class="titlerow"><h2>Make a post</h2></div>
+  <aside class="panel" aria-labelledby="studioHead">
+  <!-- (The title used to say "Make a post" with "New post" right under it; now the line under it says what you're working on.) -->
+  <div class="titlerow"><h2 id="studioHead">Post maker<small id="studioTitle">New post</small></h2></div>
 
-  <div class="kicker" id="studioTitle">New post</div>
+  <div class="kicker">Kind of post</div>
   <div class="lgroups">
    <div><div class="lgl">Size</div>
     <div class="seg" id="segFormat">
@@ -310,39 +427,40 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
   <div class="btns" id="editbar" hidden><span class="hint" style="flex:1">Changes show here. Press Save to put them on the grid.</span><button type="button" class="link" id="btnNew">Start a new one instead</button></div>
 
   <div class="acc open" id="accPic">
-   <button type="button" class="acc-h" aria-expanded="true"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t" id="assetsLegend">Picture</span></button>
+   <button type="button" class="acc-h" aria-expanded="true"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t" id="assetsLegend">Picture</span><span class="acc-sum" id="picName" aria-hidden="true"></span></button>
    <div class="acc-b">
     <div id="fAssets"><div class="assets" id="assets"></div><input type="file" id="upload" accept="image/*" hidden></div>
-    <div class="row2" id="fCrop" hidden><label for="selCrop">Photo crop</label><select id="selCrop"><option value="top">Keep the top</option><option value="middle" selected>Middle</option><option value="bottom">Keep the bottom</option></select></div>
+    <div id="fCrop" hidden><div class="sub">Crop</div><div class="row2 two"><label id="cropLbl">Part of the photo to keep</label><div class="seg small" id="segCrop" role="group" aria-labelledby="cropLbl"><button type="button" data-v="top" aria-pressed="false">Top</button><button type="button" data-v="middle" aria-pressed="true">Middle</button><button type="button" data-v="bottom" aria-pressed="false">Bottom</button></div></div></div>
     <p class="hint" id="logoNote" hidden>Logo posts use the logo by itself. Add words under “Words on it”.</p>
    </div>
   </div>
 
   <div class="acc" id="fBg">
-   <button type="button" class="acc-h" aria-expanded="false"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Colors</span><span class="acc-badge" id="bgName"></span></button>
+   <button type="button" class="acc-h" aria-expanded="false"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Colors</span><span class="acc-sum" id="bgName" aria-hidden="true"></span></button>
    <div class="acc-b">
     <div class="sw" id="swatches"></div>
+    <div class="sub" id="subInk">Finish</div>
     <label class="checkrow" id="lblInk"><input type="checkbox" id="chkInk" checked> Stamped ink look on the words and logo</label>
    </div>
   </div>
 
   <div class="acc">
-   <button type="button" class="acc-h" aria-expanded="false"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Words on it</span></button>
+   <button type="button" class="acc-h" aria-expanded="false"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Words on it</span><span class="acc-sum" id="wordsSum" aria-hidden="true"></span></button>
    <div class="acc-b">
-    <div class="row2 stack"><label for="inTitle">Big text</label><input type="text" id="inTitle" maxlength="40"></div>
-    <div class="row2 stack"><label for="inSub">Small text</label><input type="text" id="inSub" maxlength="90"></div>
+    <div class="row2 stack"><label for="inTitle">Big text <span class="hint">(up to 40 letters)</span></label><input type="text" id="inTitle" maxlength="40" placeholder="Like the drink’s name"></div>
+    <div class="row2 stack"><label for="inSub">Small text <span class="hint">(up to 90)</span></label><input type="text" id="inSub" maxlength="90" placeholder="Like what’s in it"></div>
     <label class="checkrow"><input type="checkbox" id="chkLogo" checked> Small logo at the bottom</label>
    </div>
   </div>
 
   <div class="acc open">
-   <button type="button" class="acc-h" aria-expanded="true"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Caption &amp; hashtags</span></button>
+   <button type="button" class="acc-h" aria-expanded="true"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span class="acc-t">Caption and hashtags</span><span class="acc-sum" id="capSum" aria-hidden="true"></span></button>
    <div class="acc-b">
-    <div class="row2 stack"><label for="inCaption">Caption</label>
-     <textarea id="inCaption" placeholder="Write what you'd post under it. Hashtags are suggested from what you write."></textarea></div>
+    <div class="sub"><label for="inCaption">Caption</label></div>
+    <textarea id="inCaption" placeholder="Write what you'd post under it. Hashtags are suggested from what you write."></textarea>
     <div class="counts"><span id="capCount"></span><button class="link" type="button" id="btnDraft">Write one for me</button></div>
-    <div class="row2 stack"><span style="font-size:13px">Hashtags from the caption</span>
-     <span class="hint">Click to turn on or off. Instagram allows 30; 8 to 15 that fit the post work best.</span></div>
+    <div class="sub">Hashtags</div>
+    <p class="hint">Suggested from the caption. Click one to turn it on or off. Instagram allows 30; 8 to 15 that fit the post work best.</p>
     <div class="tagchips" id="chips"></div>
     <div class="addtag"><input type="text" id="inTag" placeholder="Add your own, e.g. #brunch" aria-label="Add your own hashtag"><button type="button" id="btnTag">Add</button></div>
     <div class="counts"><span id="tagCount"></span></div>
@@ -370,7 +488,7 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
  <div class="btns">
   <button class="btn" type="button" id="lbBack">← Back</button>
   <button class="btn" type="button" id="lbNext">Next →</button>
-  <button class="btn primary" type="button" id="lbDl">Download</button>
+  <button class="btn primary" type="button" id="lbDl">Download PNG</button>
   <button class="btn" type="button" id="lbEdit">Edit</button>
   <span class="pos" id="lbPos"></span>
  </div>
@@ -728,23 +846,29 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
   function pressed(seg, v) { seg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === v); }); }
   function syncStudio() {
     var it = draft;
-    $('studioTitle').textContent = editingId ? 'Editing: ' + labelOf(it) : 'New ' + (it.format === 'story' ? 'story' : it.tpl === 'photo' ? 'photo post' : 'post');
+    syncTitle();
     $('editbar').hidden = !editingId; $('btnDel').hidden = !editingId;
     $('btnSave').textContent = editingId ? 'Save changes' : 'Add to grid';
     pressed($('segFormat'), it.format); pressed($('segTpl'), it.tpl);
     $('inTitle').value = it.title || ''; $('inSub').value = it.sub || '';
     $('chkLogo').checked = !!it.logo; $('chkInk').checked = it.inkLook !== false;
-    $('selCrop').value = it.crop || 'middle';
+    pressed($('segCrop'), it.crop || 'middle');
     $('inCaption').value = it.caption || '';
     renderAssets(); renderSwatches(); refresh();
   }
   function refresh() {
     var it = draft;
     $('fAssets').hidden = it.tpl === 'logo'; $('logoNote').hidden = it.tpl !== 'logo';
-    $('bgName').textContent = it.tpl === 'photo' ? '' : (it.bg === 'cream' && it.ink === 'navy' ? 'Cream with navy' : COLOR_NAMES[it.bg]);
+    var bgLabel = it.bg === 'cream' && it.ink === 'navy' ? 'Cream with navy' : COLOR_NAMES[it.bg];
+    $('bgName').innerHTML = it.tpl === 'photo' ? '' : '<span class="dot" style="background:' + COLORS[it.bg] + (it.ink === 'navy' ? ';box-shadow:inset 0 0 0 4px ' + COLORS.cream + ',inset 0 0 0 9px ' + COLORS.navy : '') + '"></span>' + esc(bgLabel);
+    // short summaries on the section title bars, like the logo editor
+    var pd = drink(it.drink), up = it.upload && uploads.filter(function (u) { return u.id === it.upload; })[0];
+    $('picName').textContent = it.tpl === 'logo' ? 'The logo' : up ? up.name : pd ? pd.name : '';
+    $('wordsSum').textContent = (it.title || '').trim() || (it.tpl === 'logo' && !it.sub ? 'Logo only' : '');
+    $('capSum').textContent = (it.tags || []).length + ' hashtag' + ((it.tags || []).length === 1 ? '' : 's');
     $('fBg').hidden = it.tpl === 'photo';
     $('fCrop').hidden = it.tpl !== 'photo';
-    $('lblInk').hidden = it.tpl === 'photo';
+    $('lblInk').hidden = it.tpl === 'photo'; $('subInk').hidden = it.tpl === 'photo';
     var pv = $('preview'); pv.className = 'preview' + (it.format === 'story' ? ' story' : '');
     pv.innerHTML = svgFor(it);
     var n = captionText(it).length;
@@ -772,7 +896,7 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
       var on = draft.bg === p[0] && (p[0] !== 'cream' || (draft.ink === 'navy') === (p[1] === 'navy'));
       var label = p[1] === 'navy' ? 'Cream with navy' : COLOR_NAMES[p[0]];
       var style = 'background:' + COLORS[p[0]] + (p[1] === 'navy' ? ';box-shadow:inset 0 0 0 9px ' + COLORS.cream + ',inset 0 0 0 40px ' + COLORS.navy : '');
-      html += '<button type="button" class="sw" aria-pressed="' + on + '" aria-label="' + label + '" title="' + label + '" data-bg="' + p[0] + '" data-ink="' + p[1] + '" style="' + style + '"></button>';
+      html += '<button type="button" aria-pressed="' + on + '" aria-label="' + label + '" title="' + label + '" data-bg="' + p[0] + '" data-ink="' + p[1] + '" style="' + style + '"></button>';
     });
     $('swatches').innerHTML = html;
   }
@@ -832,7 +956,7 @@ dialog.lb::backdrop{background:rgba(26,22,18,.6)}
   $('inCaption').addEventListener('input', function () { change(function () { draft.caption = $('inCaption').value; }); });
   $('chkLogo').addEventListener('change', function () { draft.logo = $('chkLogo').checked; refresh(); });
   $('chkInk').addEventListener('change', function () { draft.inkLook = $('chkInk').checked; refresh(); });
-  $('selCrop').addEventListener('change', function () { draft.crop = $('selCrop').value; refresh(); });
+  $('segCrop').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; draft.crop = b.dataset.v; pressed($('segCrop'), draft.crop); refresh(); });
   $('btnDraft').addEventListener('click', function () { change(function () { draft.caption = draftFor(draft); }); $('inCaption').value = draft.caption; });
   $('chips').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
