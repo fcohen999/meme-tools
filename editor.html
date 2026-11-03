@@ -126,7 +126,7 @@ body.resizing{cursor:col-resize;user-select:none}
 .steps a,.acc .hint a{color:#1f6fd1}
 .pastebox{width:100%;min-height:150px;font:13px ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff}
 .foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
-#menuModes.menuseg{display:flex;flex-wrap:nowrap}.menuseg button{flex:1 1 auto;padding:9px 4px;font-size:12px;white-space:nowrap}
+#menuModes.menuseg{display:grid;grid-template-columns:1fr 1fr}.menuseg button{padding:10px 6px;font-size:13px;white-space:nowrap;border-bottom:1px solid #e3dccf}.menuseg button:nth-child(2n){border-right:none}.menuseg button:nth-child(n+3){border-bottom:none}
 body.simple .row2>label,body.simple .checkrow{font-size:14px}
 body.simple .stepper .sb{width:40px;height:34px}
 </style>
@@ -662,6 +662,16 @@ function renderSheetMode(box){
     M=m; st.style.color='#3f6b35'; st.textContent=`Menu updated: ${m.length} section${m.length===1?'':'s'}, ${n} dish${n===1?'':'es'}.`; render();
   };
   ta.oninput=()=>load(ta.value);
+  ta.addEventListener('paste',e=>{
+    const cd=e.clipboardData; if(!cd) return; const plain=cd.getData('text/plain')||'';
+    if(!plain.trim()||/^\s*section\s*[\t,]/i.test(plain)) return;   // the real sheet: read it as columns
+    const m=readDocPaste(cd.getData('text/html'),plain), n=m.reduce((a,s)=>a+s.items.length,0);
+    if(!n) return;
+    e.preventDefault(); M=m; render();
+    const ns=m.filter(s=>s.title).length;
+    docsNote=`That looked like a Google Doc, not the Sheet, so it was read as a document: ${ns} section${ns===1?'':'s'}, ${n} dish${n===1?'':'es'}. The box shows how it was read; you can fix anything in it.`;
+    menuMode='docs'; buildPanel(); render();
+  });
   const alt=document.createElement('div'); alt.className='hint'; alt.style.marginTop='10px';
   alt.innerHTML='Copy not working? <a href="#" id="mCsv">Download the menu as a spreadsheet file</a> and open it in Google Sheets with File → Import. To bring a spreadsheet file back, <a href="#" id="mOpen">open it here</a> (in Sheets: File → Download → .csv).<input type="file" id="mFile" accept=".csv,.tsv,.txt" hidden>';
   box.append(ol,ta,st,alt);
@@ -678,8 +688,18 @@ function renderSheetMode(box){
 const PRICE_ONLY=/^\$?\d{1,4}(?:\.\d{1,2})?$/;
 const PRICE_END=/\s*(?:[-–—|·…:]+\s*|\.{2,}\s*)?\$?(\d{1,4}(?:\.\d{1,2})?)$/;      // on heading and dish-name lines
 const PRICE_END_SEP=/\s*(?:[-–—|·…]+|\.{2,})\s*\$?(\d{1,4}(?:\.\d{1,2})?)$|\s+\$(\d{1,4}(?:\.\d{1,2})?)$/;   // after a description: needs a dash, dots or $
-function splitPrice(t,re=PRICE_END){ const m=t.match(re); if(m&&m.index>0) return [t.slice(0,m.index).trim(),m[1]||m[2]]; return [t.trim(),'']; }
+function splitPrice(t,re=PRICE_END){ const pm=t.match(/\s*\(\$?(\d{1,4}(?:\.\d{1,2})?)\)$/); if(pm&&pm.index>0) return [t.slice(0,pm.index).trim(),pm[1]]; const m=t.match(re); if(m&&m.index>0&&!/(\badd|\bplus|\+)\s*$/i.test(t.slice(0,m.index))) return [t.slice(0,m.index).trim(),m[1]||m[2]]; return [t.trim(),'']; }
 const cleanSep=t=>t.replace(/^[\s:–—\-|·]+|[\s:–—\-|·]+$/g,'').trim();
+// one line of a document -> blocks. Tabs (or 3+ spaces) split it into columns: each column is its own dish,
+// except "Beers <tab> 10", which is a name and its price
+function lineBlocks(raw,base,out){
+  const norm=s=>s.replace(/ /g,' ').replace(/[ \t]+/g,' ').trim();
+  const cells=raw.replace(/ /g,' ').split(/\t+| {3,}/).map(norm).filter(Boolean);
+  if(!cells.length) return false;
+  if(cells.length===1||(cells.length===2&&PRICE_ONLY.test(cells[1]))){ out.push(Object.assign({},base,{text:cells.join(' ')})); return true; }
+  cells.forEach((c,i)=>out.push(Object.assign({},base,{text:c,cell:true,boldPre:base.bold>=0.6?c:'',gap:i===0&&base.gap})));
+  return true;
+}
 function docBlocks(html){
   const doc=new DOMParser().parseFromString(html,'text/html');
   const BLOCK=/^(P|H[1-6]|LI|DIV|TD|TH|BLOCKQUOTE|PRE|DT|DD)$/, BLOCKSEL='p,h1,h2,h3,h4,h5,h6,li,div,td,th,blockquote,pre,dt,dd';
@@ -690,21 +710,24 @@ function docBlocks(html){
       if(BLOCK.test(e.tagName)) break; }
     return false; };
   const sizeOf=el=>{ for(let e=el;e&&e.nodeType===1;e=e.parentElement){ const v=e.style&&e.style.fontSize; if(v){ const m=v.match(/([\d.]+)\s*(pt|px)?/); if(m) return m[2]==='px'?+m[1]*0.75:+m[1]; } } return 0; };
-  let leaves=[...doc.body.querySelectorAll(BLOCKSEL)].filter(e=>!e.querySelector(BLOCKSEL));
-  if(!leaves.length) leaves=[doc.body];
-  const blocks=[];
-  leaves.forEach(bl=>{
+  const isLeaf=e=>!e.querySelector(BLOCKSEL);
+  // leaf paragraphs and loose <br>s, in document order (Google Docs puts blank lines between paragraphs as <br>)
+  let nodes=[...doc.body.querySelectorAll(BLOCKSEL+',br')].filter(e=>e.tagName==='BR'?!(e.parentElement&&e.parentElement.closest(BLOCKSEL)&&isLeaf(e.parentElement.closest(BLOCKSEL))):isLeaf(e));
+  if(!nodes.some(e=>e.tagName!=='BR')) nodes=[doc.body];
+  const blocks=[]; let gap=false;
+  nodes.forEach(bl=>{
+    if(bl.tagName==='BR'){ gap=true; return; }
     const head=/^H[1-6]$/.test(bl.tagName)||bl.classList.contains('title');
-    let line=[];
+    let line=[], any=false;
     const flush=()=>{
-      const norm=s=>s.replace(/ /g,' ').replace(/\s+/g,' ');
-      const text=norm(line.map(s=>s.t).join('')).trim();
-      if(text){
-        const real=line.filter(s=>s.t.trim()), tot=real.reduce((a,s)=>a+s.t.trim().length,0)||1;
+      const raw=line.map(s=>s.t).join(''), real=line.filter(s=>s.t.trim());
+      if(real.length){
+        const tot=real.reduce((a,s)=>a+s.t.trim().length,0)||1;
         const bold=real.filter(s=>s.b).reduce((a,s)=>a+s.t.trim().length,0)/tot;
         let pre=''; for(const s of line){ if(s.b||!s.t.trim()) pre+=s.t; else break; }
-        blocks.push({text,head,bold,boldPre:norm(pre).trim(),size:Math.max(0,...real.map(s=>s.z))});
-      }
+        lineBlocks(raw,{head,bold,boldPre:pre.replace(/ /g,' ').replace(/\s+/g,' ').trim(),size:Math.max(0,...real.map(s=>s.z)),gap},blocks);
+        gap=false; any=true;
+      } else if(any||line.length) gap=true;   // an empty line inside a paragraph
       line=[];
     };
     const walk=n=>n.childNodes.forEach(c=>{
@@ -712,20 +735,51 @@ function docBlocks(html){
       else if(c.nodeType===1){ if(c.tagName==='BR') flush(); else if(!/^(STYLE|SCRIPT|META|TITLE)$/.test(c.tagName)) walk(c); }
     });
     walk(bl); flush();
+    if(!any) gap=true;   // an empty paragraph is a blank line
   });
   return blocks;
 }
+function plainBlocks(text){
+  const out=[]; let gap=false;
+  String(text).replace(/^﻿/,'').split(/\r?\n/).forEach(l=>{ if(lineBlocks(l,{head:false,bold:0,boldPre:'',size:0,gap},out)) gap=false; else gap=true; });
+  return out;
+}
+const looksDesc=t=>/,/.test(t)||t.length>40;
 function blocksToMenu(blocks){
   const sizes={}; blocks.forEach(b=>{ if(b.size) sizes[b.size]=(sizes[b.size]||0)+b.text.length; });
   const body=+(Object.keys(sizes).sort((a,b)=>sizes[b]-sizes[a])[0]||0);
   const caps=t=>/\p{Lu}/u.test(t)&&!/\p{Ll}/u.test(t)&&t.length<=60;
+  // skip the restaurant name / tagline / a big title at the top: they are not sections
+  const isTitle=(b,i)=>/m[ée]m[ée]\s+on\s+10/i.test(b.text)||(i<3&&/^(kitchen\s*&\s*cocktails|cocktails\s*&\s*kitchen)$/i.test(b.text))||(i===0&&b.size>=24);
+  blocks=blocks.filter((b,i)=>!isTitle(b,i));
   const lines=blocks.map(b=>{
     let kind='plain';
     if(b.head||(body&&b.size>=body+3)||/^#/.test(b.text)) kind='head';
     else if(PRICE_ONLY.test(b.text)) kind='price';
     else if(b.bold>=0.6||caps(splitPrice(b.text)[0])) kind='dish';
     else if(b.bold>0&&b.boldPre.length>=2) kind='dishdesc';
-    return {kind,text:b.text.replace(/^#+\s*/,''),boldPre:b.boldPre};
+    return {kind,text:b.text.replace(/^#+\s*/,''),boldPre:b.boldPre,gap:!!b.gap,cell:!!b.cell};
+  });
+  const hasGaps=lines.some(l=>l.gap);
+  // no real headings (a big title alone doesn't count)? then work out which lines are section names
+  const realHead=lines.some((l,i)=>l.kind==='head'&&lines.slice(i+1).some((x,j,a)=>x.kind!=='head'&&a.slice(0,j).every(y=>y.kind!=='head')));
+  if(!realHead) lines.forEach((l,i)=>{
+    if(l.text.includes(':')||l.cell) return;
+    const nx=lines[i+1], nn=lines[i+2], pv=lines[i-1];
+    if(!nx) return;
+    const priced=!!splitPrice(l.text)[1];
+    if(l.kind==='dish'){   // bold / CAPITAL
+      const starts=!pv||pv.kind==='head'||pv.kind==='plain'||pv.kind==='price';
+      if(!starts) return;
+      if(priced){ if(nx.kind==='dish'&&!splitPrice(nx.text)[1]) l.kind='head'; return; }   // "COCKTAILS 19" over dishes without prices
+      if(nx.kind==='dishdesc'||(nx.kind==='dish'&&(splitPrice(nx.text)[1]||(nn&&nn.kind==='plain')))) l.kind='head';
+      return;
+    }
+    if(l.kind==='plain'&&!lines.some(x=>x.kind==='dish'||x.kind==='dishdesc')){   // no formatting at all
+      const starts=!pv||l.gap||pv.kind==='head'||(pv.kind==='plain'&&looksDesc(pv.text));
+      const nameLike=x=>x&&(x.kind==='plain')&&!looksDesc(x.text)&&!splitPrice(x.text)[1];
+      if(starts&&!looksDesc(l.text)&&l.text.length<=30&&(nx.cell||(nameLike(nx)&&(nx.gap||(nn&&!nn.gap&&!nn.cell&&looksDesc(nn.text)))))) l.kind='head';
+    }
   });
   // group into sections; in a section that has bold/CAPITAL dish names, normal lines are descriptions
   const groups=[]; let g=null;
@@ -736,21 +790,34 @@ function blocksToMenu(blocks){
     const sec={title,price,items:[]}; out.push(sec);
     const emph=gr.lines.some(l=>l.kind==='dish'||l.kind==='dishdesc');
     let dish=null;
-    const addDish=(name,desc,pr)=>{ let [n,p]=splitPrice(cleanSep(name)); if(pr) p=pr; let d=cleanSep(desc||'');
+    const addDish=(name,desc,l,first)=>{ let [n,p]=splitPrice(cleanSep(name)); let d=cleanSep(desc||'');
       if(!p&&d){ const [d2,p2]=splitPrice(d,PRICE_END_SEP); if(p2){ d=d2; p=p2; } }
-      dish={name:n,desc:d,price:p}; sec.items.push(dish); };
+      dish={name:n,desc:d,price:p,_cell:l.cell,_start:l.gap||first}; sec.items.push(dish); };
     const nameDesc=t=>{ const i=t.indexOf(':'); if(i>0) return [t.slice(0,i),t.slice(i+1)];
-      const m=t.match(/\s[–—-]\s/); if(m) return [t.slice(0,m.index),t.slice(m.index+m[0].length)]; return [t,'']; };
-    gr.lines.forEach(l=>{
+      const m=t.match(/\s[–—]\s|\s-\s/); if(m) return [t.slice(0,m.index),t.slice(m.index+m[0].length)]; return [t,'']; };
+    const addDesc=t=>{ dish.desc=(dish.desc?dish.desc+' ':'')+t; if(!dish.price){ const [d2,p2]=splitPrice(dish.desc,PRICE_END_SEP); if(p2){ dish.desc=d2; dish.price=p2; } } };
+    gr.lines.forEach((l,i)=>{
       if(l.kind==='price'){ const p=l.text.replace('$',''); if(dish&&!dish.price) dish.price=p; else if(!sec.price) sec.price=p; return; }
-      if(l.kind==='dish'){ const [n,d]=nameDesc(l.text); addDish(n,d); return; }
-      if(l.kind==='dishdesc'){ addDish(l.boldPre,l.text.slice(l.boldPre.length)); return; }
-      if(emph&&dish){ dish.desc=(dish.desc?dish.desc+' ':'')+l.text; if(!dish.price){ const [d2,p2]=splitPrice(dish.desc,PRICE_END_SEP); if(p2){ dish.desc=d2; dish.price=p2; } } return; }
-      const [n,d]=nameDesc(l.text); addDish(n,d);
+      if(l.kind==='dish'){ const [n,d]=nameDesc(l.text); addDish(n,d,l,i===0); return; }
+      if(l.kind==='dishdesc'){ addDish(l.boldPre,l.text.slice(l.boldPre.length),l,i===0); return; }
+      if(emph&&dish&&!l.cell){ addDesc(l.text); return; }
+      if(!emph&&dish&&!dish._cell&&!l.cell&&!l.gap){   // no formatting: the line under a dish name is what's in it
+        if(!dish.desc&&(looksDesc(l.text)||(hasGaps&&dish._start))){ addDesc(l.text); return; }
+        const nxt=gr.lines[i+1], isName=!looksDesc(l.text)&&nxt&&!nxt.gap&&!nxt.cell&&looksDesc(nxt.text);   // a name with its description under it starts a new dish
+        if(dish.desc&&!isName&&(/[,;&]$/.test(dish.desc)||/^\p{Ll}/u.test(l.text))){ addDesc(l.text); return; }
+      }
+      const [n,d]=nameDesc(l.text); addDish(n,d,l,i===0);
     });
   });
+  out.forEach(s=>s.items.forEach(it=>{ delete it._cell; delete it._start; }));
   const kept=out.filter(s=>s.items.length);
   return kept.length?kept:out.filter(s=>s.title);
+}
+// whatever was pasted (a Google Doc, Word, or plain text) -> menu
+function readDocPaste(html,plain){
+  let m=html?blocksToMenu(docBlocks(html)):[];
+  if(!m.reduce((a,s)=>a+s.items.length,0)&&(plain||'').trim()) m=/^\s*#/m.test(plain)?parseMenuText(plain):blocksToMenu(plainBlocks(plain));
+  return m;
 }
 // the menu as "type like a document" text; a section with no title just lists its dishes
 function menuAsText(m){
@@ -760,10 +827,34 @@ function menuAsText(m){
     return head.concat(lines).join('\n');
   }).join('\n\n');
 }
+let docsNote='';
+function renderDocsMode(box){
+  const ol=document.createElement('ol'); ol.className='steps';
+  ol.innerHTML='<li>Open your menu in <b>Google Docs</b> (Word works too). Select everything (<b>Ctrl+A</b>, or <b>⌘A</b> on a Mac) and copy.</li>'
+    +'<li>Click in the box below and paste. The menu updates right away and replaces the one that’s there.</li>';
+  const tips=document.createElement('div'); tips.className='hint'; tips.style.margin='0 0 8px';
+  tips.innerHTML='<b>How it reads your Doc:</b> section names in a <b>Heading</b> style (or bigger text) become sections. Dish names in <b>bold</b> or CAPITALS become dishes, and the normal text under a dish is what’s in it. A number at the end of a section or dish line is its price.';
+  const ta=document.createElement('textarea'); ta.className='pastebox'; ta.placeholder='Paste from Google Docs here'; ta.rows=10; ta.spellcheck=false;
+  ta.style.fontFamily='inherit'; ta.style.fontSize='14px';
+  const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
+  const say=(good,msg)=>{ st.style.color=good?'#3f6b35':'#b35a3e'; st.textContent=msg; };
+  ta.addEventListener('paste',e=>{
+    const cd=e.clipboardData; if(!cd) return;
+    const m=readDocPaste(cd.getData('text/html'),cd.getData('text/plain'));
+    e.preventDefault();
+    const n=m.reduce((a,s)=>a+s.items.length,0);
+    if(!n){ say(false,'Nothing to read there. Copy the menu from your Google Doc first, then paste here.'); return; }
+    M=m; render(); ta.value=menuAsText(m);
+    const ns=m.filter(s=>s.title).length;
+    say(true,`Menu updated: ${ns} section${ns===1?'':'s'}, ${n} dish${n===1?'':'es'}. The box shows how your Doc was read; you can fix anything in it.`);
+  });
+  ta.oninput=()=>{ if(ta.value.trim()){ M=parseMenuText(ta.value); render(); } };
+  box.append(ol,tips,ta,st);
+  if(docsNote){ ta.value=menuAsText(M); say(true,docsNote); docsNote=''; }
+}
 function renderTextMode(box){
   const how=document.createElement('div'); how.className='hint';
-  how.innerHTML='<b>Paste straight from a Google Doc or Word:</b> headings become sections, <b>bold</b> or CAPITAL lines become dishes, and the normal text under a dish is what’s in it. A number at the end of a heading or dish is its price.'
-    +'<br><b>Or type it here:</b> one dish per line, <b>Name: what’s in it</b>. A line that starts with <b>#</b> is a heading (the number at the end is its price). To give one dish its own price, write <b>Name (26): what’s in it</b>.';
+  how.innerHTML='One dish per line, <b>Name: what’s in it</b>. A line that starts with <b>#</b> is a heading (the number at the end is its price). To give one dish its own price, write <b>Name (26): what’s in it</b>. (Copying from a Google Doc? Use <b>From Google Docs</b> above.)';
   const ta=document.createElement('textarea'); ta.value=menuToText(); ta.rows=24; ta.spellcheck=true;
   ta.style.cssText='width:100%;font:inherit;font-size:15px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-top:8px;resize:vertical';
   const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
@@ -793,6 +884,7 @@ function renderTextMode(box){
 function renderMenuEditor(){
   const box=document.getElementById('menuEditor'); if(!box) return; box.innerHTML='';
   if(menuMode==='sheet'){ renderSheetMode(box); return; }
+  if(menuMode==='docs'){ renderDocsMode(box); return; }
   if(menuMode==='text'){ renderTextMode(box); return; }
   const inp=(ph,val,on)=>{ const i=document.createElement('input'); i.type='text'; i.placeholder=ph; i.value=val||''; i.style.fontSize='14px'; i.oninput=()=>{on(i.value);render();}; return i; };
   const btn=(label,fn)=>{ const b=document.createElement('button'); b.textContent=label; b.onclick=fn; return b; };
@@ -825,9 +917,10 @@ function renderMenuEditor(){
 }
 function menuEditorBlock(){
   const d=document.createElement('div');
-  d.innerHTML='<div class="hint" style="margin-bottom:8px">The menu page updates as you type.</div><div id="menuModes" class="seg menuseg"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div>';
+  d.innerHTML='<div class="hint" style="margin-bottom:8px">The menu page updates as you type.</div><div id="menuModes" class="seg menuseg"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><button type="button" class="link" id="menuStartOver" style="margin-top:10px">Start the menu over (puts back the original menu)</button>';
+  d.querySelector('#menuStartOver').onclick=()=>{ if(!confirm('Put back the original menu? The words you have now will be replaced.')) return; M=JSON.parse(JSON.stringify(MENU_DEFAULT)); renderMenuEditor(); render(); };
   const modes=d.querySelector('#menuModes');
-  const defs=[['text','Type like a document'],['sheet','From Google Sheets'],['boxes','Edit in boxes']], bs=[];
+  const defs=[['text','Type like a document'],['docs','From Google Docs'],['sheet','From Google Sheets'],['boxes','Edit in boxes']], bs=[];
   const paint=()=>bs.forEach(([m,b])=>b.classList.toggle('on',menuMode===m));
   defs.forEach(([m,label])=>{ const b=document.createElement('button'); b.textContent=label; b.type='button';
     b.onclick=()=>{ menuMode=m; renderMenuEditor(); paint(); }; bs.push([m,b]); modes.appendChild(b); });
@@ -999,7 +1092,7 @@ function buildPanel(){
   foot.innerHTML='<button id="btnReset">Reset everything</button>';
   foot.insertAdjacentHTML('beforeend',`<details class="hint only-full" style="margin-top:14px"><summary style="cursor:pointer">Editor ${VERSION} · ${VERSION_DATE} · what changed</summary><ul style="padding-left:18px;margin:8px 0">${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`);
   panel.appendChild(foot);
-  document.getElementById('btnReset').onclick=()=>{ if(!confirm('Reset every layout back to the original logo? Saved versions are kept.')) return; S=Object.assign({},SHARED_DEFAULTS);Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();};
+  document.getElementById('btnReset').onclick=()=>{ if(!confirm('Reset every layout and the menu back to the original? Saved versions are kept.')) return; S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT));Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();};
   document.getElementById('verSave').onclick=saveVersion;
   document.getElementById('verExport').onclick=()=>{ const cur_={layout:cur,S:Object.assign({},S),G:JSON.parse(JSON.stringify(G)),M:JSON.parse(JSON.stringify(M))}; download(new Blob([JSON.stringify(Object.assign({'(current settings)':cur_},mem),null,1)],{type:'application/json'}),`meme-on-10-logo-editor-saved-versions_${new Date().toISOString().slice(0,10)}.json`); };
   document.getElementById('verImport').onclick=()=>document.getElementById('verFile').click();
@@ -1167,7 +1260,7 @@ function resizeSel(m){
 
 function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,menuMode,links:[...LINKS]})); }catch(e){} }
 function restore(){ try{ const v=JSON.parse(localStorage.getItem('meme10_last')||'null'); if(!v) return;
-  S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(['text','sheet','boxes'].includes(v.menuMode)) menuMode=v.menuMode; }catch(e){} }
+  S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(['text','docs','sheet','boxes'].includes(v.menuMode)) menuMode=v.menuMode; }catch(e){} }
 restore(); loadVersions();
 { const h=decodeURIComponent(location.hash.slice(1)); if(h==='menu') cur='mn'; else if(LAYOUTS[h]) cur=h; else if(h==='logo' && cur==='mn') cur='1b'; }
 buildPanel(); render();
