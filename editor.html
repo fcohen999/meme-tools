@@ -69,13 +69,13 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 /* ---- Menu tab: the “Your menus” bar (always visible, not a section) and the small ⋯ menus ---- */
-.panel .mbar{display:flex;align-items:center;gap:8px;margin:16px 0 6px;padding:10px 10px 10px 14px;background:var(--ink);color:#f3ede1;border-radius:var(--radius)}
-.panel .mbar .mbl{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.7;flex:none}
-.panel .mbar select{flex:1;min-width:0;height:34px;font-size:14px;font-weight:600;border:none;border-radius:6px;background:#fff;color:var(--ink);padding:0 8px}
-.panel .mbar .msave{flex:none;height:34px;border:none;border-radius:6px;background:#f3ede1;color:var(--ink);font-weight:600;padding:0 12px;white-space:nowrap}
-.panel .mbar .msave:hover{background:#fff}
-.panel .mbar .dots{flex:none;width:34px;height:34px;padding:0;border:1px solid rgba(243,237,225,.35);border-radius:6px;background:none;color:#f3ede1;font-size:18px;line-height:1}
-.panel .mbar .dots:hover{background:rgba(243,237,225,.12)}
+.panel .mbar{display:flex;align-items:center;gap:8px;margin:16px 0 6px;padding:8px 8px 8px 12px;background:var(--hover);border:1px solid var(--line);border-radius:var(--radius)}
+.panel .mbar .mbl{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);flex:none}
+.panel .mbar select{flex:1;min-width:0;height:34px;font-size:14px;font-weight:600;border:1px solid var(--edge);border-radius:6px;background:#fff;color:var(--ink);padding:0 8px}
+.panel .mbar .msave{flex:none;height:34px;border:none;border-radius:6px;background:var(--ink);color:#f3ede1;font-weight:600;padding:0 12px;white-space:nowrap}
+.panel .mbar .msave:hover{background:#000}
+.panel .mbar .dots{flex:none;width:34px;height:34px;padding:0;border:1px solid var(--edge);border-radius:6px;background:#fff;color:var(--ink);font-size:18px;line-height:1}
+.panel .mbar .dots:hover{background:var(--soft)}
 .panel .mbar-sub{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:12px;color:var(--muted);margin:0 2px 14px}
 .panel .mbar-sub details{display:inline}.panel .mbar-sub summary{cursor:pointer;text-decoration:underline;display:inline}
 .panel .mbar-sub details[open]{display:block;flex-basis:100%}.panel .mbar-sub details p{margin:6px 0 0;line-height:1.5}
@@ -544,7 +544,8 @@ const OPTNAME={onCase:{lowercase:'lowercase',caps:'CAPS'},squiggle:{A:'Style 1',
   onWeight:{400:'400 Regular',500:'500 Medium',600:'600 Semibold',700:'700 Bold'},
   headAlign:{'spread across':'Spread out','together on the left':'Left','together in the center':'Center'},
   headColors:{menu:'Menu colors',header:'Header tab colors'},
-  headSrc:{menu:'This page (one line)',mine:'The Header tab'}};
+  headSrc:{menu:'This page (one line)',mine:'The Header tab'},
+  pricePos:{edge:'At the right edge',name:'Next to the name'}};
 // point sizes read “10.5 pt”
 ['headPt','namePt','descPt'].forEach(k=>{ OPTNAME[k]={}; [7,7.5,8,8.5,8.64,9,9.5,10,10.08,10.44,10.5,11,11.5,12,13,14,15,16,18].forEach(v=>OPTNAME[k][v]=(Math.round(v*10)/10)+' pt'); });
 const optName=(k,o)=>(OPTNAME[k]&&OPTNAME[k][o]!==undefined)?OPTNAME[k][o]:String(o);
@@ -579,7 +580,8 @@ function menuLayout(S,G,M,top,m){
   const ln=(G.lineSpace||100)/100, big=Math.max(1,Math.max(ns,ds_)/(14.5*sc));
   const step=19*sc*big*ln, toDesc=21*sc*big*ln, itemGap=34*sc*big*(G.dishSpace||100)/100*m, secGap=48*sc*big*(G.secSpace||100)/100*m;
   const wrap=(t,w,fam,wt,sz,ls)=>{ const words=String(t||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean); const lines=[]; let c=''; words.forEach(wd=>{ const tr=c?c+' '+wd:wd; if(c&&measure(tr,fam,wt,sz,ls)>w){lines.push(c);c=wd;} else c=tr; }); if(c) lines.push(c); return lines; };
-  let y=top, out='', end=top, first=true;
+  const nextTo=G.pricePos==='name', priceIn=G.priceIn||0, gapP=G.priceGap??14;
+  let y=top, out='', end=top, first=true, room=Infinity;   // room: how far a price can move before it reaches a name (or the edge)
   M.forEach(sec=>{
     const items=(sec.items||[]).filter(it=>(it.name||'').trim()||(it.desc||'').trim());
     const title=(sec.title||'').trim(), price=(sec.price||'').trim().replace(/^\$/,'');
@@ -593,7 +595,11 @@ function menuLayout(S,G,M,top,m){
     const nls=1.7*ns/14.5;
     const dishes=items.map(it=>{
       const pr=(it.price||'').trim().replace(/^\$/,'');
-      const nm=wrap((it.name||'').trim().toUpperCase(),pr?colW-70*sc:colW,dFam,500,ns,nls);
+      // a dish's own price sits at the right edge (moved in by priceIn), or right after the name (priceGap after it)
+      const pw=pr?measure(pr,'Bodoni Moda',400,ps,0):0;
+      const nmW=!pr?colW:nextTo?colW-pw-gapP:colW-priceIn-70*sc;
+      const nm=wrap((it.name||'').trim().toUpperCase(),Math.max(40,nmW),dFam,500,ns,nls);
+      if(pr&&nm.length) room=Math.min(room,colW-measure(nm[0],dFam,500,ns,nls)-pw);
       const ds=wrap(it.desc,colW,'Bodoni Moda',400,ds_,0);
       const lastOff=Math.max(0,nm.length-1)*step+(ds.length?(nm.length?toDesc:0)+(ds.length-1)*step:0);
       return {nm,ds,pr,lastOff,h:lastOff+itemGap};
@@ -610,14 +616,16 @@ function menuLayout(S,G,M,top,m){
       let yy=y0;
       grp.forEach(d=>{
         d.nm.forEach((L2,i)=>{ out+=`<text x="${xs[gi]}" y="${f(yy+i*step)}" font-family='${tagFam}' font-size="${f(ns)}" font-weight="500" letter-spacing="${f(nls)}" fill="${ink}">${esc(L2)}</text>`; });
-        if(d.pr&&d.nm.length) out+=`<text x="${rights[gi]}" y="${f(yy)}" text-anchor="end" font-family='"Bodoni Moda", serif' font-size="${f(ps)}" font-weight="400" fill="${brand}">${esc(d.pr)}</text>`;
+        if(d.pr&&d.nm.length) out+=nextTo
+          ?`<text data-pr="1" x="${f(xs[gi]+measure(d.nm[0],dFam,500,ns,nls)+gapP)}" y="${f(yy)}" font-family='"Bodoni Moda", serif' font-size="${f(ps)}" font-weight="400" fill="${brand}">${esc(d.pr)}</text>`
+          :`<text data-pr="1" x="${f(rights[gi]-priceIn)}" y="${f(yy)}" text-anchor="end" font-family='"Bodoni Moda", serif' font-size="${f(ps)}" font-weight="400" fill="${brand}">${esc(d.pr)}</text>`;
         const d0=yy+(d.nm.length?(d.nm.length-1)*step+toDesc:0);
         d.ds.forEach((L2,i)=>{ out+=`<text x="${xs[gi]}" y="${f(d0+i*step)}" font-family='"Bodoni Moda", serif' font-size="${f(ds_)}" font-weight="400" fill="${ink}" fill-opacity="0.9">${esc(L2)}</text>`; });
         end=Math.max(end,yy+d.lastOff); yy+=d.h;
       });
     });
   });
-  return {svg:out,end};
+  return {svg:out,end,room};
 }
 // the menu text; with “Spread out” on, the gaps between dishes and sections grow (up to MAXSPREAD times) so the menu reaches the bottom margin
 const MAXSPREAD=2.2;
@@ -827,12 +835,12 @@ const LAYOUTS = {
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],
+    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','pricePos','A dish’s own price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',4,200,1,'',''],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],
       ['h','Margins and spacing'],['srange','topSpace','Top',0,200,2,'less','more'],['srange','headGap','Under the header',-40,300,2,'higher','lower'],['srange','side','Left and right',20,200,2,'less','more'],['srange','bottom','Bottom',20,200,2,'less','more'],['srange','lineSpace','Lines',70,200,5,'tighter','looser'],['srange','dishSpace','Dishes',50,300,5,'less','more'],['srange','secSpace','Sections',50,300,5,'less','more'],['scheck','fill','Spread out to fill the page'],
       ['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
     geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headSrc:'menu', headColors:'menu', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2',
-          headPt:8.64, namePt:10.44, descPt:10.08, topSpace:null, headGap:null, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:false },
+          headPt:8.64, namePt:10.44, descPt:10.08, topSpace:null, headGap:null, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:false, pricePos:'edge', priceIn:0, priceGap:14 },
     // a getter, so the header settings change with “Header comes from”
     get panel(){ return [
       ['h','Menu words','words'],['menuedit'],
@@ -843,6 +851,10 @@ const LAYOUTS = {
       ['pick','descPt','What’s in it',PTSIZES],
       ['range','menuScale','All text',70,130,1],
       ['hint','Sizes are in points, like in Word. “All text” makes everything bigger or smaller at once.'],
+      ['sub','Prices'],
+      ['pick','pricePos','A dish’s own price',['edge','name']],
+      G.mn.pricePos==='name'?['range','priceGap','Space after the name',4,200,1]:['range','priceIn','In from the right edge',0,300,1],
+      ['hint','Or drag a price left or right on the page. All the prices move together.'],
       ['sub','Layout'],
       ['pick','columns','Columns',[2,1]],
       ['pick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],
@@ -932,9 +944,10 @@ const LAYOUTS = {
       if(gapM==null) gapM=oldBase-cap-hBot;
       const bodyTop=hBot+gapM, top=bodyTop+cap;
       const mt=menuSVG(S,G,M,top);
+      const priceRoom=mt.room;
       const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs><rect width="850" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}</svg>`;
       return {W:816,H:1056,svg,over:mt.end>1100-(G.bottom??64)+8,fit:G.headSrc==='mine'?(wide?'The header’s pieces don’t fit across it, so some get cut off. On the Header tab, make the header wider, or the logo or tagline smaller.':''):fit?`The logo can’t get bigger than ${fit}% with the other pieces beside it, so it stops there. To go bigger, hide the tagline or squiggle, or make the side margins smaller.`:'',
-        guides:{hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
+        priceRoom,guides:{hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
     }
   },
 };
@@ -1471,10 +1484,11 @@ function headSrcBlock(){
 /* ============ YOUR MENUS: each menu keeps its own words, text sizes, margins, spacing and colors.
    The header and the logo are shared by every menu. Kept in this browser; “Save this menu to my computer”
    writes a plain text file a person can read (and open again). ============ */
-const MENU_LOOK=['menuScale','headPt','namePt','descPt','columns','menuInk','menuBrand','menuBg','topSpace','headGap','side','bottom','lineSpace','fill','dishSpace','secSpace'];
+const MENU_LOOK=['pricePos','priceIn','priceGap','menuScale','headPt','namePt','descPt','columns','menuInk','menuBrand','menuBg','topSpace','headGap','side','bottom','lineSpace','fill','dishSpace','secSpace'];
 // the settings part of a saved menu file: [setting, words in the file, kind]
 const LOOKFILE=[['headPt','Section names size','pt'],['namePt','Dish names size','pt'],['descPt','What’s in it size','pt'],['menuScale','Everything bigger or smaller','%'],
   ['columns','Columns',''],['topSpace','Top margin',''],['headGap','Menu text starts below the header',''],['side','Left and right margins',''],['bottom','Bottom margin',''],
+  ['pricePos','Dish prices','price'],['priceIn','Dish prices in from the right edge',''],['priceGap','Space between a dish name and its price',''],
   ['lineSpace','Space between lines','%'],['fill','Spread out to fill the page','yes'],['dishSpace','Space between dishes','%'],['secSpace','Space between sections','%'],
   ['menuBrand','Color of the logo, headings and prices','color'],['menuInk','Color of the dish names','color'],['menuBg','Page color','color']];
 const LOOK_LINE='----- How the page looks (you can leave this part alone) -----';
@@ -1497,7 +1511,7 @@ function useMenu(n,redraw=true){
 function addMenu(n,words,look){ storeMenu(); n=uniqueName(n); MENUS.list[n]={M:clone(words),look:clone(look)}; useMenu(n); return n; }
 // the plain text file: the words (same as “Type like a document”), then the look as “Name: value” lines
 function menuFileText(){
-  const g=G.mn, val=(k,kind)=>kind==='pt'?g[k]+' pt':kind==='%'?g[k]+'%':kind==='yes'?(g[k]===false?'no':'yes'):String(g[k]);
+  const g=G.mn, val=(k,kind)=>kind==='price'?(g[k]==='name'?'next to the name':'at the right edge'):kind==='pt'?g[k]+' pt':kind==='%'?g[k]+'%':kind==='yes'?(g[k]===false?'no':'yes'):String(g[k]);
   return menuToText()+'\n\n\n'+LOOK_LINE+'\nMenu name: '+MENUS.current+'\n'+LOOKFILE.map(([k,lab,kind])=>lab+': '+val(k,kind)).join('\n')+'\n';
 }
 function readMenuFile(text,fileName){
@@ -1509,6 +1523,7 @@ function readMenuFile(text,fileName){
     if(lab==='menu name'){ name=v; return; }
     const e=LOOKFILE.find(x=>x[1].toLowerCase()===lab); if(!e) return; const [k,,kind]=e;
     if(kind==='yes') look[k]=!/^(no|off|false)$/i.test(v);
+    else if(kind==='price') look[k]=/name/i.test(v)?'name':'edge';
     else if(kind==='color'){ if(/^#[0-9a-f]{6}$/i.test(v)) look[k]=v; }
     else { const n=parseFloat(v); if(isFinite(n)) look[k]=n; }
   });
@@ -1897,6 +1912,23 @@ function overlay(){
   if(info){ const [kx,ky]=ELKEYS[sel]; const bits=[ELNAME[sel]]; if(kx in G[cur]) bits.push('X '+G[cur][kx]); if(ky in G[cur]) bits.push('Y '+G[cur][ky]);
     const dx=Math.round((cxs-W/2)*10)/10; bits.push(dx===0?'centered across':'from center '+dx); info.textContent=bits.join(' · '); }
 }
+/* Dragging a dish price left or right moves every dish price. At the right edge it moves in from the edge;
+   pulled up to the names it snaps to sit right after each name; pulled back out past the edge it goes back there. */
+function dragPrice(ev,cv,k){
+  const x0=ev.clientX, g=G.mn; let base=g.pricePos==='name'?(g.priceGap??14):(g.priceIn||0), mode=g.pricePos==='name'?'name':'edge', from=x0;
+  mnDrag='price'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
+  const move=e=>{
+    const dx=(e.clientX-from)*k, room=LAST.priceRoom??Infinity;
+    if(mode==='edge'){ let v=Math.max(0,Math.round(base-dx));
+      if(isFinite(room)&&v>room-6){ mode='name'; g.pricePos='name'; g.priceGap=14; base=14; from=e.clientX; buildPanel(); render(); return; }
+      if(v!==g.priceIn){ g.priceIn=v; render(); sync(); } }
+    else { let v=Math.max(4,Math.round(base+dx));
+      if(isFinite(room)&&v>room){ mode='edge'; g.pricePos='edge'; g.priceIn=0; base=0; from=e.clientX; buildPanel(); render(); return; }
+      if(v!==g.priceGap){ g.priceGap=v; render(); sync(); } }
+  };
+  const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); };
+  cv.addEventListener('pointermove',move); cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); overlay();
+}
 /* Menu page: margin lines (like the ruler in Google Docs) show while the pointer is over the page,
    and dragging moves the menu text (below the header) or the header (top margin) up and down. */
 let mnHover=false, mnDrag=null;
@@ -1908,7 +1940,7 @@ function menuGuides(svg){
   line(svg,0,g.hTop,850,g.hTop,BL,(mnDrag==='head'?2:1)*k,d,mnDrag==='head'?1:.5);
   line(svg,0,g.bodyTop,850,g.bodyTop,BL,(mnDrag==='body'?2:1.4)*k,mnDrag==='body'?null:d,mnDrag==='body'?1:.75);
   const info=document.getElementById('selInfo');
-  if(info) info.textContent=mnDrag==='head'?`Top margin: ${G.mn.topSpace}`:mnDrag==='body'?`Menu text starts ${G.mn.headGap} below the header`:'Drag the menu text or the header up or down to move it.';
+  if(info) info.textContent=mnDrag==='price'?(G.mn.pricePos==='name'?`Prices: ${G.mn.priceGap} after the name`:`Prices: ${G.mn.priceIn} in from the right edge`):mnDrag==='head'?`Top margin: ${G.mn.topSpace}`:mnDrag==='body'?`Menu text starts ${G.mn.headGap} below the header`:'Drag the menu text or the header up or down to move it, or a price left or right.';
 }
 function pick(ev){
   const svg=svgEl(); if(!svg||cur==='mn') return null;
@@ -1959,6 +1991,7 @@ function resizeSel(m){
   cv.addEventListener('pointerdown',ev=>{
     if(cur==='mn'){ const svg=svgEl(), g=LAST.guides; if(!svg||!g||ev.button!==0) return;
       const r=svg.getBoundingClientRect(), k=850/r.width, y0=(ev.clientY-r.top)*k; if(y0<0||y0>1100) return;
+      if(ev.target.closest&&ev.target.closest('[data-pr]')){ dragPrice(ev,cv,k); return; }
       const key=y0<g.hBot+(g.bodyTop-g.hBot)/2?'topSpace':'headGap', start=G.mn[key], [,,,mn,mx]=rangeOf('mn',key);
       mnDrag=key==='topSpace'?'head':'body'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
       const move=e=>{ const v=Math.min(mx,Math.max(mn,Math.round((start+((e.clientY-r.top)*k-y0))/2)*2)); if(v!==G.mn[key]){ G.mn[key]=v; render(); sync(); } };
@@ -1968,7 +2001,7 @@ function resizeSel(m){
   cv.addEventListener('pointerenter',()=>{ mnHover=true; if(cur==='mn') overlay(); });
   cv.addEventListener('pointerleave',()=>{ mnHover=false; if(cur==='mn'&&!mnDrag) overlay(); });
   cv.addEventListener('pointermove',ev=>{ if(cur!=='mn'){ cv.style.cursor=''; return; } if(mnDrag) return; const svg=svgEl(), g=LAST.guides; if(!svg||!g) return;
-    const r=svg.getBoundingClientRect(), y=(ev.clientY-r.top)*850/r.width; cv.style.cursor=(y>=0&&y<=1100)?'ns-resize':''; });
+    const r=svg.getBoundingClientRect(), y=(ev.clientY-r.top)*850/r.width; cv.style.cursor=ev.target.closest&&ev.target.closest('[data-pr]')?'ew-resize':(y>=0&&y<=1100)?'ns-resize':''; });
   document.addEventListener('keydown',ev=>{
     const tg=ev.target.tagName; if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA') return;
     if(cur==='mn'||ev.metaKey||ev.ctrlKey) return;
