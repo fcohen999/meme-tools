@@ -51,9 +51,8 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 /* editor-only bits inside the panel */
 .panel .steps{padding-left:20px;margin:12px 0 10px;line-height:1.7;font-size:14px}.panel .steps li{margin:6px 0}.panel .steps button{padding:4px 10px}
 .panel .pastebox{width:100%;min-height:150px;font:13px ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff}
-.panel #menuModes.menuseg{display:grid;grid-template-columns:1fr 1fr}
-.panel .menuseg button{padding:10px 6px;font-size:13px;white-space:nowrap;border-bottom:1px solid #e3dccf}
-.panel .menuseg button:nth-child(2n){border-right:none}.panel .menuseg button:nth-child(n+3){border-bottom:none}
+.panel #menuModes.menuseg{display:grid;grid-template-columns:repeat(4,1fr);width:100%}
+.panel .menuseg button{padding:8px 4px;font-size:12.5px;line-height:1.25}
 .panel .mcard{border:1px solid var(--line);background:#fff;border-radius:var(--radius);padding:12px;margin:12px 0}
 .panel .mcard .mk{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 .panel .mgrid{display:grid;grid-template-columns:1fr 76px;gap:8px}
@@ -69,6 +68,29 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
   .canvas svg{max-width:none;max-height:none}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+/* ---- Menu tab: the “Your menus” bar (always visible, not a section) and the small ⋯ menus ---- */
+.panel .mbar{display:flex;align-items:center;gap:8px;margin:16px 0 6px;padding:10px 10px 10px 14px;background:var(--ink);color:#f3ede1;border-radius:var(--radius)}
+.panel .mbar .mbl{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.7;flex:none}
+.panel .mbar select{flex:1;min-width:0;height:34px;font-size:14px;font-weight:600;border:none;border-radius:6px;background:#fff;color:var(--ink);padding:0 8px}
+.panel .mbar .msave{flex:none;height:34px;border:none;border-radius:6px;background:#f3ede1;color:var(--ink);font-weight:600;padding:0 12px;white-space:nowrap}
+.panel .mbar .msave:hover{background:#fff}
+.panel .mbar .dots{flex:none;width:34px;height:34px;padding:0;border:1px solid rgba(243,237,225,.35);border-radius:6px;background:none;color:#f3ede1;font-size:18px;line-height:1}
+.panel .mbar .dots:hover{background:rgba(243,237,225,.12)}
+.panel .mbar-sub{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:12px;color:var(--muted);margin:0 2px 14px}
+.panel .mbar-sub details{display:inline}.panel .mbar-sub summary{cursor:pointer;text-decoration:underline;display:inline}
+.panel .mbar-sub details[open]{display:block;flex-basis:100%}.panel .mbar-sub details p{margin:6px 0 0;line-height:1.5}
+.panel .mbar-sub .mst{color:var(--ok);font-weight:600;transition:opacity .6s}
+.panel .mform{display:flex;gap:6px;margin:-2px 0 12px}.panel .mform input{flex:1;min-width:0}
+.panel .mcard .dots,.panel .mdish .dots{flex:none;width:30px;height:30px;padding:0;font-size:17px;line-height:1;color:var(--muted)}
+.panel .mcard .mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.panel .mcard .mhead .mk{margin:0}
+.panel .mdish .mrow{display:grid;grid-template-columns:1fr 76px 30px;gap:8px;align-items:center}
+.panel .madd{margin-top:10px}
+.popmenu{position:fixed;z-index:100;list-style:none;margin:0;padding:4px;background:#fff;border:1px solid #d9d1c6;border-radius:8px;box-shadow:0 8px 24px rgba(43,39,36,.16);min-width:210px;font:14px "Helvetica Neue",Helvetica,Arial,sans-serif}
+.popmenu button{display:block;width:100%;text-align:left;border:none;border-radius:5px;background:none;padding:8px 10px;font:inherit;color:#2b2724;cursor:pointer}
+.popmenu button:hover,.popmenu button:focus-visible{background:#efe9df;outline:none}
+.popmenu button:disabled{color:#b9b0a5;cursor:default;background:none}
+.popmenu .danger{color:#b35a3e}.popmenu .danger.armed{background:#b35a3e;color:#fff}
+.popmenu hr{border:none;border-top:1px solid #e3dccf;margin:4px 2px}
 </style>
 <!-- panel-css:start -->
 <style id="panel-css">
@@ -314,8 +336,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=18;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=19;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 19','Tidier Menu panel: your menus are a bar at the top (pick a menu or make a new one, Save to my computer, and ⋯ for the rest); the four ways to change the words sit in one row; Edit in boxes has one ⋯ per dish and per section instead of rows of buttons; shorter labels and help. The menu header can no longer overlap: the logo stops at the biggest size that fits beside the tagline, and says so. The Header tab warns when its pieces are wider than the header.'],
  ['v26 · 18','Menu page: margins like the Google Docs ruler (top, where the menu text starts, left and right, bottom), and you can drag the menu text or the header up and down on the page; a bigger logo now pushes the text down instead of crowding it; space between lines, dishes and sections; “Spread out to fill the page” so there is no big blank space at the bottom; menus made before this look exactly the same until you change something; text sizes in points for section names, dish names and what’s in them. “Your menus”: make a new menu (for example Desserts) without losing the others, and save a menu to your computer as a text file you can read, then open it again. The page header now says where it comes from (this page, or the Header tab), with a small picture of each, and the Header tab says when your menus use it.'],
  ['v26 · 15','Menu page header: choose “My Header” to put the header you made on the Header tab at the top of the menu (in the menu’s colors or the Header tab’s own), and “Edit the header on the Header tab” jumps there, with a button to come back.'],
  ['v26 · 13','Tidier sidebar: settings grouped under small headings, every control lines up, plainer names (for example “Hairline detail”, “CAPS”, “Style 1 / 2”), a ↺ button to put any one setting back, the colors in use shown on the Colors bar, and settings that do nothing right now are dimmed with the reason. The Background color is called “Inside the oval” on the oval logo and “Awning” on the awning. The links that repeated the top nav are gone. The export buttons always fit on screen. The Social post maker now uses this same panel.'],
@@ -768,7 +791,7 @@ const LAYOUTS = {
     panel:[
       ['h','Logo and pieces','order'],['logopick','Which logo'],['order','Left to right'],['hint','Tick a piece to show it, untick to hide it. With the oval logo you may want to hide the squiggle and tagline, since the oval already has them. “mémé” size and position also move the logo.'],
       ['h','Header','header'],
-      ['range','W','Width',600,3000,1],['range','H','Height',80,400,1],
+      ['range','W','Width',600,3000,1],['range','H','Height',80,400,1],['fitnote'],
       ['sub','Placement'],
       ['pick','align','Logo position',['left','center','right']],
       ['range','padX','Side margin',0,300,1],
@@ -798,13 +821,14 @@ const LAYOUTS = {
         tag:()=>`<text data-el="tag" x="${f(xs.tag+G.tagX)}" y="${f(cy+58+G.tagY)}" text-anchor="start" font-family='${P.tagFam}' font-size="${G.tagSize}" letter-spacing="${G.tagSpace}" fill="${S.ink}">${tagInner(S,P)}</text>`};
       const body=PIECES.filter(k=>seq.includes(k)).map(k=>draw[k]()).join('')
         +(G.rule?`<rect x="0" y="${f(H-G.ruleW)}" width="${W}" height="${G.ruleW}" fill="${S.accent}"/>`:'');
-      return {W,H,svg:shell(S,W,H,body)};
+      const tooWide=s0<-0.5||s0+total>W+0.5;
+      return {W,H,svg:shell(S,W,H,body),tooWide,fit:tooWide?'The pieces are wider than the header, so some get cut off. Make the header wider, or the logo or tagline smaller.':''};
     }
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','Everything bigger or smaller',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],
-      ['h','Margins and spacing'],['srange','topSpace','Top margin (above the logo)',0,200,2,'less','more'],['srange','headGap','Menu text starts (below the header)',0,300,2,'higher','lower'],['srange','side','Left and right margins',20,200,2,'less','more'],['srange','bottom','Bottom margin',20,200,2,'less','more'],['srange','lineSpace','Space between lines',70,200,5,'tighter','looser'],['scheck','fill','Spread out to fill the page'],['srange','dishSpace','Space between dishes',50,300,5,'less','more'],['srange','secSpace','Space between sections',50,300,5,'less','more'],
+    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],
+      ['h','Margins and spacing'],['srange','topSpace','Top',0,200,2,'less','more'],['srange','headGap','Under the header',-40,300,2,'higher','lower'],['srange','side','Left and right',20,200,2,'less','more'],['srange','bottom','Bottom',20,200,2,'less','more'],['srange','lineSpace','Lines',70,200,5,'tighter','looser'],['srange','dishSpace','Dishes',50,300,5,'less','more'],['srange','secSpace','Sections',50,300,5,'less','more'],['scheck','fill','Spread out to fill the page'],
       ['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
     geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headSrc:'menu', headColors:'menu', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2',
@@ -813,40 +837,40 @@ const LAYOUTS = {
     get panel(){ return [
       ['h','Menu words','words'],['menuedit'],
       ['h','Look','look'],
-      ['hint','Follows the brand guidelines: US Letter page, one-line header without the squiggle, no divider lines.'],
       ['sub','Text size'],
       ['pick','headPt','Section names',PTSIZES],
       ['pick','namePt','Dish names',PTSIZES],
       ['pick','descPt','What’s in it',PTSIZES],
-      ['range','menuScale','Everything bigger or smaller',70,130,1],
-      ['hint','Sizes are in points, like in Word. “Everything bigger or smaller” changes them all at once (at 100% they print at exactly these sizes).'],
+      ['range','menuScale','All text',70,130,1],
+      ['hint','Sizes are in points, like in Word. “All text” makes everything bigger or smaller at once.'],
       ['sub','Layout'],
       ['pick','columns','Columns',[2,1]],
-      ['pick','order','Tagline word order',['Kitchen & Cocktails','Cocktails & Kitchen']],
-      ['hint','Same setting as Tagline → Word order on the logo layouts: changing it here changes it there too.'],
+      ['pick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],
+      ['hint','Also changes the tagline on the logos.'],
       ['h','Margins and spacing','spacing'],
-      ['hint','Like the ruler in Google Docs. You can also drag on the page: drag the menu text up or down to move it, or drag the header to move the header.'],
-      ['range','topSpace','Top margin (above the logo)',0,200,2],
-      ['range','headGap','Menu text starts (below the header)',-40,300,2],
-      ['range','side','Left and right margins',20,200,2],
-      ['range','bottom','Bottom margin',20,200,2],
-      ['sub','Spacing'],
-      ['range','lineSpace','Space between lines',70,200,5],
+      ['hint','Like the ruler in Google Docs. You can also drag the menu text or the header up and down on the page.'],
+      ['sub','Margins'],
+      ['range','topSpace','Top',0,200,2],
+      ['range','headGap','Under the header',-40,300,2],
+      ['range','side','Left and right',20,200,2],
+      ['range','bottom','Bottom',20,200,2],
+      ['sub','Space between'],
+      ['range','lineSpace','Lines',70,200,5],
+      ['range','dishSpace','Dishes',50,300,5],
+      ['range','secSpace','Sections',50,300,5],
       ['check','fill','Spread out to fill the page'],
-      ['hint','When this is on, the gaps between dishes and sections grow so the menu reaches the bottom of the page, with no big blank space. The two settings below are then the smallest gap.'],
-      ['range','dishSpace','Space between dishes',50,300,5],
-      ['range','secSpace','Space between sections',50,300,5],
+      ['hint','Grows the space between dishes and sections so there’s no blank space at the bottom.'],
       ['h','Page header','order'],['headsrc'],
       // the menu's own header settings; with the Header tab's header, that tab's settings are used instead
       ...(G.mn.headSrc==='mine'?[
         ['pick','headColors','Header colors',['menu','header']],
-        ['hint','“Menu colors” draws the header in the menu’s logo color on the menu page. “Header tab colors” keeps the colors and background you set on the Header tab.'],
+        ['hint','Menu colors: the header in the menu’s logo color. Header tab colors: as set on the Header tab, with its background.'],['fitnote'],
       ]:[
         ['logopick','Which logo'],['order','Left to right'],
         ['hint','Tick a piece to show it, untick to hide it.'],
         ['sub','Placement'],
         ['pick','headAlign','Pieces sit',['spread across','together on the left','together in the center']],
-        ['range','menuLogo','Logo size',60,160,1],
+        ['range','menuLogo','Logo size',60,160,1],['fitnote'],
       ]),
       ['h','Colors','colors'],
       ['color','menuBrand','Logo, headings, prices'],['color','menuInk','Dish names and tagline'],['color','menuBg','Page'],
@@ -856,11 +880,18 @@ const LAYOUTS = {
       const S2=Object.assign({},S,{ink:brand,accent:brand,sqColor:brand,bg:G.menuBg,transparent:false});
       const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
       // header row: pieces between the left and right margins, centered on the logo's middle line
-      const HL=G.side??64, HR=850-HL, YC=99.5, k=(G.menuLogo||100)/100, LB=logoBuild(G.logo,S2), lh=110*k;
-      const tagStr=S.order.toUpperCase(), sqW=124*k, sqH=39*k;
-      const lineW=203+measure('on 10','Bodoni Moda',500,43,0);
-      const seq=shownSeq(G), wd={name:LB?lh*LB.W/LB.H:lineW*k, sq:sqW, tag:measure(tagStr,dFam,400,24,5.6)};
-      const sum=seq.reduce((t,p)=>t+wd[p],0), n=seq.length, spread=String(G.headAlign||'').startsWith('spread');
+      const HL=G.side??64, HR=850-HL, YC=99.5, LB=logoBuild(G.logo,S2);
+      const tagStr=S.order.toUpperCase(), lineW=203+measure('on 10','Bodoni Moda',500,43,0), tagW=measure(tagStr,dFam,400,24,5.6);
+      const seq=shownSeq(G), n=seq.length, spread=String(G.headAlign||'').startsWith('spread');
+      // the logo and squiggle grow with “Logo size”; the tagline does not. If they would run into each other,
+      // the logo stops at the biggest size that still leaves a gap (and the panel says so)
+      const perK={name:LB?110*LB.W/LB.H:lineW, sq:124, tag:0}, fixed={name:0,sq:0,tag:tagW};
+      const minGap=spread?32:40, room=HR-HL-minGap*Math.max(0,n-1)-seq.reduce((t,p)=>t+fixed[p],0), grow=seq.reduce((t,p)=>t+perK[p],0);
+      const want=(G.menuLogo||100)/100, kFit=grow>0?room/grow:Infinity, k=Math.max(0.3,Math.min(want,kFit)), lh=110*k;
+      const fit=want>kFit+1e-6?Math.floor(kFit*100):0;
+      const sqW=124*k, sqH=39*k;
+      const wd={name:perK.name*k, sq:sqW, tag:tagW};
+      const sum=seq.reduce((t,p)=>t+wd[p],0);
       const gap=spread?(n>1?(HR-HL-sum)/(n-1):0):40, tot=sum+gap*Math.max(0,n-1);
       const xs=rowX(seq,wd,String(G.headAlign||'').endsWith('center')?(HL+HR-tot)/2:HL,gap);
       const draw={
@@ -872,13 +903,13 @@ const LAYOUTS = {
           ?`<text x="${HR}" y="141" text-anchor="end" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`
           :`<text x="${f(xs.tag)}" y="141" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`};
       // topSpace / headGap not set yet (a menu made before these settings): use where the old fixed layout put things
-      let topM=G.topSpace, gapM=G.headGap, oldBase=200;
+      let topM=G.topSpace, gapM=G.headGap, oldBase=200, wide=false;
       let head='', hTop=0, hBot=0;
       if(G.headSrc==='mine'){
         // the header made on the Header tab, across the full width of the page. Its logo and pieces start at the top margin;
         // with its own colored band, the band reaches the top of the page and has the same space below the pieces.
         const band=G.headColors==='header'&&!S.transparent, hg=headerGeo();
-        const hb=LAYOUTS.hd.build(G.headColors==='header'?S:Object.assign({},S2,{transparent:true}),hg);
+        const hb=LAYOUTS.hd.build(G.headColors==='header'?S:Object.assign({},S2,{transparent:true}),hg); wide=hb.tooWide;
         const u=850/hb.W, hh=hb.H*u, ext=headerExtent(S,hg);
         if(topM==null) topM=ext[0]*u; oldBase=Math.max(200,hh+70);
         const y=topM-ext[0]*u, cH=(ext[1]-ext[0])*u;
@@ -902,7 +933,8 @@ const LAYOUTS = {
       const bodyTop=hBot+gapM, top=bodyTop+cap;
       const mt=menuSVG(S,G,M,top);
       const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs><rect width="850" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}</svg>`;
-      return {W:816,H:1056,svg,over:mt.end>1100-(G.bottom??64)+8,guides:{hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
+      return {W:816,H:1056,svg,over:mt.end>1100-(G.bottom??64)+8,fit:G.headSrc==='mine'?(wide?'The header’s pieces don’t fit across it, so some get cut off. On the Header tab, make the header wider, or the logo or tagline smaller.':''):fit?`The logo can’t get bigger than ${fit}% with the other pieces beside it, so it stops there. To go bigger, hide the tagline or squiggle, or make the side margins smaller.`:'',
+        guides:{hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
     }
   },
 };
@@ -1245,7 +1277,7 @@ function renderDocsMode(box){
 }
 function renderTextMode(box){
   const how=document.createElement('div'); how.className='hint';
-  how.innerHTML='One dish per line, <b>Name: what’s in it</b>. A line that starts with <b>#</b> is a heading (the number at the end is its price). To give one dish its own price, write <b>Name (26): what’s in it</b>. (Copying from a Google Doc? Use <b>From Google Docs</b> above.)';
+  how.innerHTML='One dish per line: <b>Name: what’s in it</b>. Headings start with <b>#</b>, price at the end: <b># Cocktails 19</b>. A dish with its own price: <b>Name (26): what’s in it</b>.';
   const ta=document.createElement('textarea'); ta.value=menuToText(); ta.rows=24; ta.spellcheck=true;
   ta.style.cssText='width:100%;font:inherit;font-size:15px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-top:8px;resize:vertical';
   const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
@@ -1262,7 +1294,8 @@ function renderTextMode(box){
     st.style.color='#3f6b35'; st.textContent=`Pasted from your document: ${m.filter(s=>s.title).length} section${m.filter(s=>s.title).length===1?'':'s'}, ${n} dish${n===1?'':'es'}. Check the menu page; if something landed in the wrong place, fix it in the box.`;
   });
   const files=document.createElement('div'); files.className='hint'; files.style.marginTop='10px';
-  files.innerHTML='To save this menu as a file, or open one, use <b>Save this menu to my computer</b> at the top of this panel. <span class="only-full"><a href="#" data-a="dl">Download just the words</a> · <a href="#" data-a="open">Put the words from a text file in this menu</a></span><input type="file" accept=".txt,text/plain" hidden>';
+  files.className='hint only-full';
+  files.innerHTML='<a href="#" data-a="dl">Download just the words</a> · <a href="#" data-a="open">Put the words from a text file in this menu</a><input type="file" accept=".txt,text/plain" hidden>';
   const fi=files.querySelector('input');
   files.querySelector('[data-a="dl"]').onclick=e=>{ e.preventDefault(); download(new Blob([menuToText()+'\n'],{type:'text/plain;charset=utf-8'}),`meme-on-10-menu_${new Date().toISOString().slice(0,10)}.txt`); };
   files.querySelector('[data-a="open"]').onclick=e=>{ e.preventDefault(); fi.click(); };
@@ -1293,45 +1326,78 @@ function renderMenuEditor(){
   const mv=(arr,i,d)=>{ const j=i+d; if(j<0||j>=arr.length) return; [arr[i],arr[j]]=[arr[j],arr[i]]; redo(); };
   M.forEach((sec,si)=>{
     const card=document.createElement('div'); card.className='mcard';
-    const mk=document.createElement('div'); mk.className='mk'; mk.textContent=`Section ${si+1} of ${M.length}`; card.appendChild(mk);
+    const top_=document.createElement('div'); top_.className='mhead';
+    const mk=document.createElement('div'); mk.className='mk'; mk.textContent=M.length>1?`Section ${si+1} of ${M.length}`:'Section';
+    top_.append(mk,dotsButton('Section options',[
+      ['Move this section up',()=>mv(M,si,-1),{disabled:si===0}],
+      ['Move this section down',()=>mv(M,si,1),{disabled:si===M.length-1}],
+      '-',
+      ['Delete this section',()=>{ M.splice(si,1); redo(); },{danger:true,ask:'Click again to delete the whole section'}]]));
+    card.appendChild(top_);
     const hd=document.createElement('div'); hd.className='mgrid';
-    hd.append(fl('Section name'),fl('Price for all'),inp('Like Cocktails',sec.title,v=>{sec.title=v;},'Section name'), inp('—',sec.price,v=>{sec.price=v;},'Price for the whole section'));
+    hd.style.gridTemplateColumns='1fr 76px 30px';   // lines up with the dish rows below (name · price · ⋯)
+    hd.append(fl('Section name'),fl('Price for all'),document.createElement('span'),inp('Like Cocktails',sec.title,v=>{sec.title=v;},'Section name'), inp('—',sec.price,v=>{sec.price=v;},'Price for the whole section'),document.createElement('span'));
     card.appendChild(hd);
     sec.items=sec.items||[];
     sec.items.forEach((it,ii)=>{
       const row=document.createElement('div'); row.className='mdish';
       const nm=inp('Dish or drink name',it.name,v=>{it.name=v;},`Dish ${ii+1} name`); nm.style.fontWeight='600';
-      const pr=inp(sec.price?'—':'Price',it.price,v=>{it.price=v;},`Dish ${ii+1} price (only if it differs from the section)`); const top=document.createElement('div'); top.className='mgrid'; top.append(nm,pr);
+      const pr=inp(sec.price?'—':'Price',it.price,v=>{it.price=v;},`Dish ${ii+1} price (only if it differs from the section)`);
+      const top=document.createElement('div'); top.className='mrow';
+      top.append(nm,pr,dotsButton(`Options for dish ${ii+1}`,[
+        ['Move up',()=>mv(sec.items,ii,-1),{disabled:ii===0}],
+        ['Move down',()=>mv(sec.items,ii,1),{disabled:ii===sec.items.length-1}],
+        '-',
+        ['Delete this dish',()=>{ sec.items.splice(ii,1); redo(); },{danger:true}]]));
       const ds=document.createElement('textarea'); ds.rows=2; ds.placeholder='What’s in it (leave empty for a simple list)'; ds.value=it.desc||''; ds.setAttribute('aria-label',`Dish ${ii+1}: what’s in it`);
       ds.oninput=()=>{it.desc=ds.value;render();};
-      const up=btn('↑',()=>mv(sec.items,ii,-1),'Move this dish up'), dn=btn('↓',()=>mv(sec.items,ii,1),'Move this dish down');
-      if(ii===0) up.disabled=true; if(ii===sec.items.length-1) dn.disabled=true;
-      const ctl=document.createElement('div'); ctl.className='ver'; ctl.append(document.createElement('span'), up, dn,
-        twoStep(btn('Delete',()=>{}),'Click again to delete',()=>{ sec.items.splice(ii,1); redo(); }));
-      row.append(top,ds,ctl); card.appendChild(row);
+      row.append(top,ds); card.appendChild(row);
     });
-    const su=btn('Section ↑',()=>mv(M,si,-1),'Move this section up'), sd=btn('Section ↓',()=>mv(M,si,1),'Move this section down');
-    if(si===0) su.disabled=true; if(si===M.length-1) sd.disabled=true;
-    const foot=document.createElement('div'); foot.className='ver'; foot.style.marginTop='10px'; foot.append(
-      btn('+ Add a drink or beer',()=>{ sec.items.push({name:'',desc:''}); redo(); }), document.createElement('span'),
-      su, sd,
-      twoStep(btn('Delete section',()=>{}),'Click again to delete the whole section',()=>{ M.splice(si,1); redo(); }));
-    card.appendChild(foot); box.appendChild(card);
+    const add=btn('+ Add a dish',()=>{ sec.items.push({name:'',desc:''}); redo(); }); add.className='madd';
+    card.appendChild(add); box.appendChild(card);
   });
   box.appendChild(btn('+ Add a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); redo(); }));
 }
 function menuEditorBlock(){
   const d=document.createElement('div');
-  d.innerHTML='<div class="hint" style="margin-bottom:8px">How do you want to change the words? The menu page updates as you type.</div><div id="menuModes" class="seg menuseg" role="group" aria-label="How to change the words"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><button type="button" class="link" id="menuStartOver" style="margin-top:10px">Clear all the words</button> <button type="button" class="link only-full" id="menuSample" style="margin-top:10px">Put back the sample menu</button>';
-  twoStep(d.querySelector('#menuStartOver'),'Click again to clear the words of this menu',()=>{ M=BLANK_MENU(); renderMenuEditor(); render(); });
-  twoStep(d.querySelector('#menuSample'),'Click again to replace the words with the sample menu',()=>{ M=JSON.parse(JSON.stringify(MENU_DEFAULT)); renderMenuEditor(); render(); });
+  d.innerHTML='<div class="sl" style="font-size:13px;margin:4px 0 6px">Change the words by</div><div id="menuModes" class="seg menuseg" role="group" aria-label="Change the words by"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div>';
   const modes=d.querySelector('#menuModes');
-  const defs=[['text','Type like a document'],['docs','From Google Docs'],['sheet','From Google Sheets'],['boxes','Edit in boxes']], bs=[];
-  const paint=()=>bs.forEach(([m,b])=>b.classList.toggle('on',menuMode===m));
-  defs.forEach(([m,label])=>{ const b=document.createElement('button'); b.textContent=label; b.type='button';
-    b.onclick=()=>{ menuMode=m; renderMenuEditor(); paint(); }; bs.push([m,b]); modes.appendChild(b); });
+  const defs=[['text','Typing','Type like a document'],['docs','Google Docs','Paste from Google Docs'],['sheet','Google Sheets','Copy to and from Google Sheets'],['boxes','Boxes','Edit each dish in its own box']], bs=[];
+  const paint=()=>bs.forEach(([m,b])=>{ b.classList.toggle('on',menuMode===m); b.setAttribute('aria-pressed',menuMode===m); });
+  defs.forEach(([m,label,tip])=>{ const b=document.createElement('button'); b.textContent=label; b.title=tip; b.type='button';
+    b.onclick=()=>{ menuMode=m; renderMenuEditor(); paint(); autosave(); }; bs.push([m,b]); modes.appendChild(b); });
   paint();
   return d;
+}
+
+/* a small menu that opens from a ⋯ button: items are [label, action, {danger, disabled}] or '-' for a line.
+   A “danger” item asks “Click again to …” before it acts. */
+function dotsButton(label,items){
+  const b=document.createElement('button'); b.type='button'; b.className='dots'; b.textContent='⋯'; b.title=b.ariaLabel=label;
+  b.setAttribute('aria-haspopup','menu'); b.onclick=e=>{ e.stopPropagation(); openPop(b,typeof items==='function'?items():items); };
+  return b;
+}
+let POP=null;
+function closePop(){ if(POP){ POP.el.remove(); POP.btn.setAttribute('aria-expanded',false); document.removeEventListener('pointerdown',POP.out,true); window.removeEventListener('resize',closePop); panel.removeEventListener('scroll',closePop); POP=null; } }
+function openPop(btn,items){
+  const again=POP&&POP.btn===btn; closePop(); if(again) return;
+  const ul=document.createElement('div'); ul.className='popmenu'; ul.setAttribute('role','menu');
+  items.forEach(it=>{
+    if(it==='-'){ ul.appendChild(document.createElement('hr')); return; }
+    const [label,fn,o={}]=it, x=document.createElement('button'); x.type='button'; x.setAttribute('role','menuitem'); x.textContent=label;
+    if(o.disabled) x.disabled=true; if(o.danger) x.classList.add('danger');
+    x.onclick=()=>{ if(o.danger&&!x.classList.contains('armed')){ x.classList.add('armed'); x.textContent=o.ask||('Click again to '+label.toLowerCase()); return; } closePop(); fn(); };
+    ul.appendChild(x);
+  });
+  document.body.appendChild(ul);
+  const r=btn.getBoundingClientRect(), w=ul.offsetWidth, h=ul.offsetHeight;
+  ul.style.left=Math.max(8,Math.min(window.innerWidth-w-8,r.right-w))+'px';
+  ul.style.top=(r.bottom+4+h>window.innerHeight-8?Math.max(8,r.top-4-h):r.bottom+4)+'px';
+  const out=e=>{ if(!ul.contains(e.target)&&e.target!==btn) closePop(); };
+  POP={el:ul,btn,out}; btn.setAttribute('aria-expanded',true);
+  document.addEventListener('pointerdown',out,true); window.addEventListener('resize',closePop); panel.addEventListener('scroll',closePop);
+  ul.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closePop(); btn.focus(); } });
+  const first=ul.querySelector('button:not(:disabled)'); if(first) first.focus();
 }
 
 /* ============ ORDER + LOGO PICKERS (simple and full views) ============ */
@@ -1390,8 +1456,8 @@ function headSrcBlock(){
   d.appendChild(r);
   const h=document.createElement('div'); h.className='hint'; h.style.margin='4px 0 8px';
   h.textContent=G.mn.headSrc==='mine'
-    ?'Made on the Header tab. Change it there and it changes here, on every menu.'
-    :'Set up right here, below. Changes here only affect the menu page. To use the header you designed on the Header tab, choose “The Header tab”.';
+    ?'Made on the Header tab, and shared by all your menus.'
+    :'Set up below. To use the header you designed, choose “The Header tab”.';
   d.appendChild(h);
   if(G.mn.headSrc==='mine'){
     const b=document.createElement('div'); b.className='btns';
@@ -1449,42 +1515,49 @@ function readMenuFile(text,fileName){
   if(!name) name=String(fileName||'').replace(/\.txt$/i,'').replace(/\s*-\s*meme on 10 menu.*$/i,'').trim();
   return {name,words,look};
 }
+// the bar at the top of the Menu panel: which menu, save it to the computer, and ⋯ for the rest.
+// It is always shown (not a section that opens and closes), so it looks different from the sections below it.
 function menusBlock(){
-  const d=document.createElement('div'); d.className='helpbox'; d.style.cssText='margin:16px 0 14px;color:var(--ink)';
-  d.innerHTML=`<div class="row2 stack" style="margin:0"><label for="menuPick" style="font-weight:600">Your menus</label>
-    <div class="ver" style="margin:0"><select id="menuPick" style="flex:1"></select></div></div>
-    <div class="btns" style="margin-top:8px"><button type="button" data-a="new">+ New menu</button><button type="button" data-a="copy">Make a copy</button><button type="button" data-a="ren">Rename</button><button type="button" data-a="del">Delete</button></div>
-    <div class="ver" data-f style="margin-top:8px;display:none"><input type="text" aria-label="Menu name" placeholder="Name, e.g. Desserts" style="flex:1"><button type="button" class="primary">OK</button><button type="button">Cancel</button></div>
-    <div class="btns" style="margin-top:12px"><button type="button" class="primary" data-a="save">Save this menu to my computer</button><button type="button" data-a="open">Open a menu from my computer</button><input type="file" accept=".txt,text/plain" hidden></div>
-    <p class="hint" style="margin:8px 0 0"><b>Where is it saved?</b> Every change is kept as you go, in this browser on this computer. For a copy you can see, or to use it on another computer, press <b>Save this menu to my computer</b>: a text file you can read goes to your Downloads folder. A new menu starts with empty words and this menu’s look. All your menus share one header.</p>
-    <p class="hint" data-st aria-live="polite" style="margin:6px 0 0;font-weight:600"></p>`;
-  const sel_=d.querySelector('#menuPick'), st=d.querySelector('[data-st]'), form=d.querySelector('[data-f]'), nameIn=form.querySelector('input'), fi=d.querySelector('input[type=file]');
-  Object.keys(MENUS.list).forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel_.appendChild(o); });
-  sel_.value=MENUS.current;
-  sel_.onchange=()=>{ storeMenu(); useMenu(sel_.value); };
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`<div class="mbar"><span class="mbl">Menu</span><select aria-label="Which menu"></select><button type="button" class="msave" title="Saves a text file you can read to your Downloads folder">Save to my computer</button></div>
+    <div class="mform" style="display:none"><input type="text" aria-label="Menu name"><button type="button" class="primary">OK</button><button type="button">Cancel</button></div>
+    <div class="mbar-sub"><span>Kept automatically in this browser.</span><details><summary>Where is it saved?</summary><p>Every change is kept as you go, but only in this browser on this computer. Clearing the browser’s history, or using another computer, loses it. For a copy you can keep, press <b>Save to my computer</b>: a text file you can read goes to your Downloads folder, and <b>⋯ → Open a menu from my computer</b> brings it back. All your menus share one header.</p></details><span class="mst" aria-live="polite"></span></div>
+    <input type="file" accept=".txt,text/plain" hidden>`;
+  const bar=wrap.querySelector('.mbar'), sel_=bar.querySelector('select'), form=wrap.querySelector('.mform'), nameIn=form.querySelector('input'),
+        st=wrap.querySelector('.mst'), fi=wrap.querySelector('input[type=file]');
+  let stT=null;
+  const say=(t,bad)=>{ clearTimeout(stT); st.style.color=bad?'var(--bad)':''; st.style.opacity=1; st.textContent=t; stT=setTimeout(()=>{ st.style.opacity=0; },5000); };
+  const fill=()=>{ sel_.innerHTML=''; Object.keys(MENUS.list).forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel_.appendChild(o); });
+    const o=document.createElement('option'); o.value='\u0000new'; o.textContent='+ New menu…'; sel_.appendChild(o); sel_.value=MENUS.current; };
+  fill();
+  // asking for a name happens right under the bar
   let after=null;
-  const show=on=>{ form.style.display=on?'flex':'none'; };
-  const ask=(ph,val,fn)=>{ show(true); nameIn.placeholder=ph; nameIn.value=val||''; after=fn; nameIn.focus(); nameIn.select(); };
-  const ok=()=>{ const v=nameIn.value.trim(); if(!v){ nameIn.focus(); return; } show(false); const fn=after; after=null; if(fn) fn(v); };
-  form.querySelector('.primary').onclick=ok; form.querySelectorAll('button')[1].onclick=()=>{ show(false); after=null; };
-  nameIn.onkeydown=e=>{ if(e.key==='Enter') ok(); if(e.key==='Escape'){ show(false); after=null; } };
-  const act=a=>d.querySelector(`[data-a="${a}"]`);
-  act('new').onclick=()=>ask('Name for the new menu, e.g. Desserts','',n=>addMenu(n,BLANK_MENU(),lookOf(G.mn)));
-  act('copy').onclick=()=>ask('Name for the copy',MENUS.current+' copy',n=>addMenu(n,M,lookOf(G.mn)));
-  act('ren').onclick=()=>ask('New name',MENUS.current,n=>{ if(n===MENUS.current) return; storeMenu(); n=uniqueName(n); MENUS.list[n]=MENUS.list[MENUS.current]; delete MENUS.list[MENUS.current]; MENUS.current=n; storeMenu(); buildPanel(); render(); });
-  const del=act('del');
-  if(Object.keys(MENUS.list).length<2){ del.disabled=true; del.title='You need at least one menu'; }
-  else twoStep(del,`Click again to delete “${MENUS.current}”`,()=>{ delete MENUS.list[MENUS.current]; MENUS.current=''; useMenu(Object.keys(MENUS.list)[0]); });
-  act('save').onclick=()=>{ const n=MENUS.current.replace(/[\\/:*?"<>|]+/g,' ').trim()||'menu';
+  const show=on=>{ form.style.display=on?'flex':'none'; if(!on){ after=null; sel_.value=MENUS.current; } };
+  const ask=(ph,val,fn)=>{ nameIn.placeholder=ph; nameIn.value=val||''; show(true); after=fn; nameIn.focus(); nameIn.select(); };
+  const ok=()=>{ const v=nameIn.value.trim(); if(!v){ nameIn.focus(); return; } const fn=after; show(false); if(fn) fn(v); };
+  form.querySelector('.primary').onclick=ok; form.querySelectorAll('button')[1].onclick=()=>show(false);
+  nameIn.onkeydown=e=>{ if(e.key==='Enter') ok(); if(e.key==='Escape') show(false); };
+  const newMenu=()=>ask('Name for the new menu, e.g. Desserts','',n=>addMenu(n,BLANK_MENU(),lookOf(G.mn)));
+  sel_.onchange=()=>{ if(sel_.value==='\u0000new'){ newMenu(); return; } storeMenu(); useMenu(sel_.value); };
+  bar.querySelector('.msave').onclick=()=>{ const n=MENUS.current.replace(/[\\/:*?"<>|]+/g,' ').trim()||'menu';
     download(new Blob([menuFileText()],{type:'text/plain;charset=utf-8'}),`${n} - meme on 10 menu.txt`);
-    st.style.color='#3f6b35'; st.textContent=`Saved “${n} - meme on 10 menu.txt” to your Downloads folder.`; };
-  act('open').onclick=()=>fi.click();
+    say(`Saved “${n} - meme on 10 menu.txt” to your Downloads folder.`); };
+  const many=Object.keys(MENUS.list).length>1;
+  bar.appendChild(dotsButton('More: new menu, copy, rename, open, delete',()=>[
+    ['New menu…',newMenu],
+    ['Make a copy…',()=>ask('Name for the copy',MENUS.current+' copy',n=>addMenu(n,M,lookOf(G.mn)))],
+    ['Rename…',()=>ask('New name',MENUS.current,n=>{ if(n===MENUS.current) return; storeMenu(); n=uniqueName(n); MENUS.list[n]=MENUS.list[MENUS.current]; delete MENUS.list[MENUS.current]; MENUS.current=n; storeMenu(); buildPanel(); render(); })],
+    ['Open a menu from my computer…',()=>fi.click()],
+    '-',
+    ['Clear all the words',()=>{ M=BLANK_MENU(); renderMenuEditor(); render(); },{danger:true,ask:'Click again to clear the words of this menu'}],
+    ...(mode==='simple'?[]:[['Put back the sample menu',()=>{ M=clone(MENU_DEFAULT); renderMenuEditor(); render(); },{danger:true,ask:'Click again to replace the words with the sample'}]]),
+    ['Delete this menu',()=>{ delete MENUS.list[MENUS.current]; MENUS.current=''; useMenu(Object.keys(MENUS.list)[0]); },{danger:true,disabled:!many,ask:`Click again to delete “${MENUS.current}”`}]]));
   fi.onchange=()=>{ const fl=fi.files[0]; fi.value=''; if(!fl) return; fl.text().then(t=>{
     const r=readMenuFile(t,fl.name), n=r.words.reduce((a,s_)=>a+s_.items.length,0);
-    if(!n&&!Object.keys(r.look).length){ st.style.color='#b35a3e'; st.textContent='That file has no dishes in it.'; return; }
+    if(!n&&!Object.keys(r.look).length){ say('That file has no dishes in it.',true); return; }
     const nm=addMenu(r.name||'Opened menu',r.words.length?r.words:BLANK_MENU(),Object.assign(lookOf(G.mn),r.look));
-    const s2=panel.querySelector('[data-st]'); if(s2){ s2.style.color='#3f6b35'; s2.textContent=`Opened “${fl.name}” as the menu “${nm}”: ${n} dish${n===1?'':'es'}.`; } }); };
-  return d;
+    const s2=panel.querySelector('.mst'); if(s2){ s2.textContent=`Opened “${fl.name}” as “${nm}”: ${n} dish${n===1?'':'es'}.`; setTimeout(()=>{ s2.style.opacity=0; },6000); } }); };
+  return wrap;
 }
 
 /* ============ PANEL ============ */
@@ -1547,7 +1620,7 @@ function labCell(k,label,inputId,onReset){
     const b=document.createElement('button'); b.type='button'; b.className='reset'; b.textContent='↺';
     b.title=b.ariaLabel='Put “'+label+'” back to how it started';
     b.onclick=()=>{ onReset(); sync(); };
-    refs.push(()=>{ const dv=defOf(k); b.classList.toggle('on',dv!==undefined&&String(get(k))!==String(dv)); });
+    refs.push(()=>{ const dv=defOf(k); b.classList.toggle('on',dv!=null&&String(get(k))!==String(dv)); });
     d.appendChild(b);
   }
   return d;
@@ -1569,8 +1642,10 @@ function stepperRow(k,label,min,max,step){
   const commit=(v,clamp)=>{ v=+v; if(clamp) v=Math.min(max,Math.max(min,v)); v=Math.round(v*1000)/1000;
     const old=get(k); if(v===old) return; put(k,v); propagate(k,old,v); afterSet(k,v); render(); };
   nb.addEventListener('input',()=>{ if(nb.value===''||isNaN(nb.value)) return; commit(nb.value,false); });
-  nb.addEventListener('change',()=>{ if(nb.value!==''&&!isNaN(nb.value)) commit(nb.value,true); nb.value=get(k); sync(); });
-  const bump=m=>{ commit(get(k)+m*step,true); nb.value=get(k); };
+  nb.addEventListener('change',()=>{ if(nb.value!==''&&!isNaN(nb.value)) commit(nb.value,true); nb.value=shown(get(k)); sync(); });
+  // margins worked out from the old layout can have decimals: show them as whole numbers, keep the exact value
+  const shown=v=>(k==='topSpace'||k==='headGap')&&v!=null?Math.round(v):v;
+  const bump=m=>{ commit(get(k)+m*step,true); nb.value=shown(get(k)); };
   const hold=(btn,dir)=>{   // hold the button to keep going; it speeds up after a moment. Shift = steps of 10
     let t1=null,t2=null,n=0;
     const stop=()=>{ if(t1===null&&t2===null) return; clearTimeout(t1); clearInterval(t2); t1=t2=null; sync(); };
@@ -1580,7 +1655,7 @@ function stepperRow(k,label,min,max,step){
     btn.addEventListener('click',e=>{ if(e.detail===0){ bump(dir*(e.shiftKey?10:1)); sync(); } });   // Enter / Space
   };
   hold(minus,-1); hold(plus,1);
-  refs.push(()=>{ if(document.activeElement!==nb) nb.value=get(k); });
+  refs.push(()=>{ if(document.activeElement!==nb) nb.value=shown(get(k)); });
   needs(r,k);
   return r;
 }
@@ -1675,10 +1750,11 @@ function buildPanel(){
     const label=simple&&B[k]?dropPart(B[k],acc&&acc.dataset.sec):item[2];
     if(t==='hint'){ if(lastShown&&(!simple||cur==='mn')){ const d=document.createElement('div'); d.className='hint'; d.textContent=item[1]; body.appendChild(d); } return; }
     if(skip.includes(k)){ lastShown=false; return; }
-    const visible=!simple||basic||['menuedit','headsrc','versions','swatches','color','order','logopick'].includes(t)||k==='transparent';
+    const visible=!simple||basic||['menuedit','headsrc','versions','swatches','color','order','logopick','fitnote'].includes(t)||k==='transparent';
     if(!visible){ lastShown=false; return; }
     if(t==='menuedit'){ add(menuEditorBlock()); renderMenuEditor(); return; }
     if(t==='headsrc'){ add(headSrcBlock()); return; }
+    if(t==='fitnote'){ const d=document.createElement('div'); d.className='hint fitnote'; d.setAttribute('aria-live','polite'); d.style.cssText='color:var(--bad);font-weight:600;margin:4px 0'; d.textContent=LAST.fit||''; add(d); return; }
     if(t==='order'){ add(orderBlock(item[1])); return; }
     if(t==='logopick'){ add(logoPickBlock(item[1])); return; }
     if(t==='range'){ const [,,,min,max,step]=item; add(stepperRow(k,label,min,max,step)); return; }
@@ -1772,6 +1848,7 @@ function render(){
   LAST=LAYOUTS[cur].build(S,G[cur]);
   if(cur==='mn'&&LAST.guides&&(G.mn.topSpace==null||G.mn.headGap==null)){ G.mn.topSpace=LAST.guides.topSpace; G.mn.headGap=LAST.guides.headGap; LAST=LAYOUTS.mn.build(S,G.mn); setTimeout(sync); }
   document.getElementById('canvas').innerHTML=LAST.svg; autosave(); overlay();
+  document.querySelectorAll('#panel .fitnote').forEach(n=>n.textContent=LAST.fit||'');
   const mw=document.getElementById('menuWarn'); if(mw) mw.textContent=LAST.over?'The menu is longer than the page. Make the text smaller, use 2 columns, or make the margins and spacing smaller.':'';
   document.getElementById('pageStyle').textContent=`@page{size:${f(LAST.W)}px ${f(LAST.H)}px;margin:0}@media print{html,body{margin:0;height:auto}.app,.stage,.canvas{height:${f(LAST.H)}px!important;overflow:hidden}.canvas svg{width:${f(LAST.W)}px!important;height:${f(LAST.H)}px!important}}`;
 }
