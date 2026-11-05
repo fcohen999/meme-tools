@@ -316,7 +316,7 @@ const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n
 const NS='http://www.w3.org/2000/svg';
 const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=18;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
- ['v26 · 18','Menu page: margins like the Google Docs ruler (top, where the menu text starts, left and right, bottom), and you can drag the menu text or the header up and down on the page; a bigger logo now pushes the text down instead of crowding it; space between lines, dishes and sections; “Spread out to fill the page” (on to start) so there is no big blank space at the bottom; text sizes in points for section names, dish names and what’s in them. “Your menus”: make a new menu (for example Desserts) without losing the others, and save a menu to your computer as a text file you can read, then open it again. The page header now says where it comes from (this page, or the Header tab), with a small picture of each, and the Header tab says when your menus use it.'],
+ ['v26 · 18','Menu page: margins like the Google Docs ruler (top, where the menu text starts, left and right, bottom), and you can drag the menu text or the header up and down on the page; a bigger logo now pushes the text down instead of crowding it; space between lines, dishes and sections; “Spread out to fill the page” so there is no big blank space at the bottom; menus made before this look exactly the same until you change something; text sizes in points for section names, dish names and what’s in them. “Your menus”: make a new menu (for example Desserts) without losing the others, and save a menu to your computer as a text file you can read, then open it again. The page header now says where it comes from (this page, or the Header tab), with a small picture of each, and the Header tab says when your menus use it.'],
  ['v26 · 15','Menu page header: choose “My Header” to put the header you made on the Header tab at the top of the menu (in the menu’s colors or the Header tab’s own), and “Edit the header on the Header tab” jumps there, with a button to come back.'],
  ['v26 · 13','Tidier sidebar: settings grouped under small headings, every control lines up, plainer names (for example “Hairline detail”, “CAPS”, “Style 1 / 2”), a ↺ button to put any one setting back, the colors in use shown on the Colors bar, and settings that do nothing right now are dimmed with the reason. The Background color is called “Inside the oval” on the oval logo and “Awning” on the awning. The links that repeated the top nav are gone. The export buttons always fit on screen. The Social post maker now uses this same panel.'],
  ['v26','Change the order of the pieces on every layout (for example the tagline above “mémé on 10”, or the squiggle first in a header), and hide pieces you don’t want. The header, awning and menu page can use any version of the logo: one line, the oval logo, the logo without the oval, or a saved version.'],
@@ -523,7 +523,7 @@ const OPTNAME={onCase:{lowercase:'lowercase',caps:'CAPS'},squiggle:{A:'Style 1',
   headColors:{menu:'Menu colors',header:'Header tab colors'},
   headSrc:{menu:'This page (one line)',mine:'The Header tab'}};
 // point sizes read “10.5 pt”
-['headPt','namePt','descPt'].forEach(k=>{ OPTNAME[k]={}; [7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,13,14,15,16,18].forEach(v=>OPTNAME[k][v]=v+' pt'); });
+['headPt','namePt','descPt'].forEach(k=>{ OPTNAME[k]={}; [7,7.5,8,8.5,8.64,9,9.5,10,10.08,10.44,10.5,11,11.5,12,13,14,15,16,18].forEach(v=>OPTNAME[k][v]=(Math.round(v*10)/10)+' pt'); });
 const optName=(k,o)=>(OPTNAME[k]&&OPTNAME[k][o]!==undefined)?OPTNAME[k][o]:String(o);
 // What some color settings are called on each layout (they color different things)
 function colorLabel(k,lab){
@@ -543,7 +543,8 @@ const SKIP={'1d':['accent'],'1c':['transparent']};
 const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 // Point sizes for the menu text (a US Letter page is 850 wide = 8.5 in, so 1 pt = 100/72 units)
 const PT=100/72;
-const PTSIZES=[7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,13,14,15,16,18];
+// the starting sizes (8.64, 10.08, 10.44 pt) are the menu's original sizes, so existing menus look exactly the same
+const PTSIZES=[7,7.5,8,8.5,8.64,9,9.5,10,10.08,10.44,10.5,11,11.5,12,13,14,15,16,18];
 // lay the dishes out from `top`; dish and section gaps are multiplied by m (used by “Spread out to fill the page”)
 function menuLayout(S,G,M,top,m){
   const sc=G.menuScale/100, ink=G.menuInk, brand=G.menuBrand;
@@ -551,8 +552,8 @@ function menuLayout(S,G,M,top,m){
   const colW=cols===2?(R-L-GAP)/2:(R-L);
   const xs=cols===2?[L,L+colW+GAP]:[L], rights=xs.map(x=>x+colW);
   const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
-  const hs=(G.headPt||8.5)*PT*sc, ns=(G.namePt||10.5)*PT*sc, ds_=(G.descPt||10)*PT*sc, ps=ns*1.1;
-  const ln=(G.lineSpace||100)/100, big=Math.max(ns,ds_)/14.5;
+  const hs=(G.headPt||8.64)*PT*sc, ns=(G.namePt||10.44)*PT*sc, ds_=(G.descPt||10.08)*PT*sc, ps=ns*16/14.5;
+  const ln=(G.lineSpace||100)/100, big=Math.max(1,Math.max(ns,ds_)/(14.5*sc));
   const step=19*sc*big*ln, toDesc=21*sc*big*ln, itemGap=34*sc*big*(G.dishSpace||100)/100*m, secGap=48*sc*big*(G.secSpace||100)/100*m;
   const wrap=(t,w,fam,wt,sz,ls)=>{ const words=String(t||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean); const lines=[]; let c=''; words.forEach(wd=>{ const tr=c?c+' '+wd:wd; if(c&&measure(tr,fam,wt,sz,ls)>w){lines.push(c);c=wd;} else c=tr; }); if(c) lines.push(c); return lines; };
   let y=top, out='', end=top, first=true;
@@ -807,7 +808,7 @@ const LAYOUTS = {
       ['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
     geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headSrc:'menu', headColors:'menu', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2',
-          headPt:8.5, namePt:10.5, descPt:10, topSpace:64, headGap:44, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:true },
+          headPt:8.64, namePt:10.44, descPt:10.08, topSpace:null, headGap:null, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:false },
     // a getter, so the header settings change with “Header comes from”
     get panel(){ return [
       ['h','Menu words','words'],['menuedit'],
@@ -826,7 +827,7 @@ const LAYOUTS = {
       ['h','Margins and spacing','spacing'],
       ['hint','Like the ruler in Google Docs. You can also drag on the page: drag the menu text up or down to move it, or drag the header to move the header.'],
       ['range','topSpace','Top margin (above the logo)',0,200,2],
-      ['range','headGap','Menu text starts (below the header)',0,300,2],
+      ['range','headGap','Menu text starts (below the header)',-40,300,2],
       ['range','side','Left and right margins',20,200,2],
       ['range','bottom','Bottom margin',20,200,2],
       ['sub','Spacing'],
@@ -870,31 +871,38 @@ const LAYOUTS = {
         tag:()=>(spread&&n>1&&seq[n-1]==='tag')
           ?`<text x="${HR}" y="141" text-anchor="end" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`
           :`<text x="${f(xs.tag)}" y="141" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`};
-      const topM=G.topSpace??64;
-      let head='', hTop=topM, hBot=topM;
+      // topSpace / headGap not set yet (a menu made before these settings): use where the old fixed layout put things
+      let topM=G.topSpace, gapM=G.headGap, oldBase=200;
+      let head='', hTop=0, hBot=0;
       if(G.headSrc==='mine'){
         // the header made on the Header tab, across the full width of the page. Its logo and pieces start at the top margin;
         // with its own colored band, the band reaches the top of the page and has the same space below the pieces.
         const band=G.headColors==='header'&&!S.transparent, hg=headerGeo();
         const hb=LAYOUTS.hd.build(G.headColors==='header'?S:Object.assign({},S2,{transparent:true}),hg);
         const u=850/hb.W, hh=hb.H*u, ext=headerExtent(S,hg);
+        if(topM==null) topM=ext[0]*u; oldBase=Math.max(200,hh+70);
         const y=topM-ext[0]*u, cH=(ext[1]-ext[0])*u;
         hTop=topM; hBot=topM+cH;
         const inner=hb.svg.replace(/^\s*<svg[^>]*>/,`<svg x="0" y="${f(y)}" width="850" height="${f(hh)}" viewBox="0 0 ${f(hb.W)} ${f(hb.H)}">`).replace(/ data-el="[^"]*"/g,'');
-        if(band){ hBot=topM*2+cH; head=`<rect width="850" height="${f(hBot)}" fill="${S.bg}"/><svg x="0" y="0" width="850" height="${f(hBot)}" overflow="hidden">${inner}</svg>`; }
+        // a header with its own colored band: the band keeps its height and reaches up to the top of the page
+        if(band){ hBot=y+hh; head=(y>0?`<rect width="850" height="${f(y+1)}" fill="${S.bg}"/>`:'')+inner; }
         else head=inner;
       } else if(seq.length){
         // how far the drawn pieces reach above and below the middle line, so a bigger logo pushes the menu down
         const ex={name:LB?[YC-lh/2,YC+lh/2]:[YC-(YC-56)*k,YC+(149-YC)*k], sq:[YC-sqH/2,YC+sqH/2], tag:[141-18,143]};
-        const t0=Math.min(...seq.map(p=>ex[p][0])), b0=Math.max(...seq.map(p=>ex[p][1])), dy=topM-t0;
+        const t0=Math.min(...seq.map(p=>ex[p][0])), b0=Math.max(...seq.map(p=>ex[p][1]));
+        if(topM==null) topM=t0; const dy=topM-t0;
         hTop=topM; hBot=b0+dy;
         head=`<g transform="translate(0 ${f(dy)})">${PIECES.filter(p=>seq.includes(p)).map(p=>draw[p]()).join('').replace(/ data-el="[^"]*"/g,'')}</g>`;
       }
+      if(topM==null){ topM=64; hTop=hBot=topM; }
       // the first section name sits its cap height below the start line
-      const bodyTop=hBot+(G.headGap??44), top=bodyTop+(G.headPt||8.5)*PT*G.menuScale/100*0.72;
+      const cap=(G.headPt||8.64)*PT*G.menuScale/100*0.72;
+      if(gapM==null) gapM=oldBase-cap-hBot;
+      const bodyTop=hBot+gapM, top=bodyTop+cap;
       const mt=menuSVG(S,G,M,top);
       const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs><rect width="850" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}</svg>`;
-      return {W:816,H:1056,svg,over:mt.end>1100-(G.bottom??64)+8,guides:{hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64)}};
+      return {W:816,H:1056,svg,over:mt.end>1100-(G.bottom??64)+8,guides:{hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
     }
   },
 };
@@ -1762,6 +1770,7 @@ function renderVersions(){
 let LAST={W:649,H:289,svg:''};
 function render(){
   LAST=LAYOUTS[cur].build(S,G[cur]);
+  if(cur==='mn'&&LAST.guides&&(G.mn.topSpace==null||G.mn.headGap==null)){ G.mn.topSpace=LAST.guides.topSpace; G.mn.headGap=LAST.guides.headGap; LAST=LAYOUTS.mn.build(S,G.mn); setTimeout(sync); }
   document.getElementById('canvas').innerHTML=LAST.svg; autosave(); overlay();
   const mw=document.getElementById('menuWarn'); if(mw) mw.textContent=LAST.over?'The menu is longer than the page. Make the text smaller, use 2 columns, or make the margins and spacing smaller.':'';
   document.getElementById('pageStyle').textContent=`@page{size:${f(LAST.W)}px ${f(LAST.H)}px;margin:0}@media print{html,body{margin:0;height:auto}.app,.stage,.canvas{height:${f(LAST.H)}px!important;overflow:hidden}.canvas svg{width:${f(LAST.W)}px!important;height:${f(LAST.H)}px!important}}`;
