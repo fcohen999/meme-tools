@@ -336,8 +336,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=19;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=20;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 20','Menu page: drag a dish price left or right on the page (all prices move together); pull it up to the names and it sits right after each name. “A dish’s own price” in Look does the same. With the Header tab’s header and its colored band, drag the bottom edge of the band (or use Header height) to make it taller or shorter. The menus bar is lighter.'],
  ['v26 · 19','Tidier Menu panel: your menus are a bar at the top (pick a menu or make a new one, Save to my computer, and ⋯ for the rest); the four ways to change the words sit in one row; Edit in boxes has one ⋯ per dish and per section instead of rows of buttons; shorter labels and help. The menu header can no longer overlap: the logo stops at the biggest size that fits beside the tagline, and says so. The Header tab warns when its pieces are wider than the header.'],
  ['v26 · 18','Menu page: margins like the Google Docs ruler (top, where the menu text starts, left and right, bottom), and you can drag the menu text or the header up and down on the page; a bigger logo now pushes the text down instead of crowding it; space between lines, dishes and sections; “Spread out to fill the page” so there is no big blank space at the bottom; menus made before this look exactly the same until you change something; text sizes in points for section names, dish names and what’s in them. “Your menus”: make a new menu (for example Desserts) without losing the others, and save a menu to your computer as a text file you can read, then open it again. The page header now says where it comes from (this page, or the Header tab), with a small picture of each, and the Header tab says when your menus use it.'],
  ['v26 · 15','Menu page header: choose “My Header” to put the header you made on the Header tab at the top of the menu (in the menu’s colors or the Header tab’s own), and “Edit the header on the Header tab” jumps there, with a button to come back.'],
@@ -835,7 +836,7 @@ const LAYOUTS = {
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','pricePos','A dish’s own price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',4,200,1,'',''],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],
+    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','pricePos','A dish’s own price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',8,200,1,'',''],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['srange','hdH','Header height',80,400,1,'',''],
       ['h','Margins and spacing'],['srange','topSpace','Top',0,200,2,'less','more'],['srange','headGap','Under the header',-40,300,2,'higher','lower'],['srange','side','Left and right',20,200,2,'less','more'],['srange','bottom','Bottom',20,200,2,'less','more'],['srange','lineSpace','Lines',70,200,5,'tighter','looser'],['srange','dishSpace','Dishes',50,300,5,'less','more'],['srange','secSpace','Sections',50,300,5,'less','more'],['scheck','fill','Spread out to fill the page'],
       ['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
@@ -853,7 +854,7 @@ const LAYOUTS = {
       ['hint','Sizes are in points, like in Word. “All text” makes everything bigger or smaller at once.'],
       ['sub','Prices'],
       ['pick','pricePos','A dish’s own price',['edge','name']],
-      G.mn.pricePos==='name'?['range','priceGap','Space after the name',4,200,1]:['range','priceIn','In from the right edge',0,300,1],
+      G.mn.pricePos==='name'?['range','priceGap','Space after the name',8,200,1]:['range','priceIn','In from the right edge',0,300,1],
       ['hint','Or drag a price left or right on the page. All the prices move together.'],
       ['sub','Layout'],
       ['pick','columns','Columns',[2,1]],
@@ -876,7 +877,9 @@ const LAYOUTS = {
       // the menu's own header settings; with the Header tab's header, that tab's settings are used instead
       ...(G.mn.headSrc==='mine'?[
         ['pick','headColors','Header colors',['menu','header']],
-        ['hint','Menu colors: the header in the menu’s logo color. Header tab colors: as set on the Header tab, with its background.'],['fitnote'],
+        ['hint','Menu colors: the header in the menu’s logo color. Header tab colors: as set on the Header tab, with its background.'],
+        ...(G.mn.headColors==='header'&&!S.transparent?[['range','hdH','Header height',80,400,1],['hint','Where the bottom of the band is. You can also drag the bottom edge of the band on the page. Same as Height on the Header tab, so it changes on every menu.']]:[]),
+        ['fitnote'],
       ]:[
         ['logopick','Which logo'],['order','Left to right'],
         ['hint','Tick a piece to show it, untick to hide it.'],
@@ -915,7 +918,7 @@ const LAYOUTS = {
           ?`<text x="${HR}" y="141" text-anchor="end" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`
           :`<text x="${f(xs.tag)}" y="141" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`};
       // topSpace / headGap not set yet (a menu made before these settings): use where the old fixed layout put things
-      let topM=G.topSpace, gapM=G.headGap, oldBase=200, wide=false;
+      let topM=G.topSpace, gapM=G.headGap, oldBase=200, wide=false, bandU=0;
       let head='', hTop=0, hBot=0;
       if(G.headSrc==='mine'){
         // the header made on the Header tab, across the full width of the page. Its logo and pieces start at the top margin;
@@ -928,7 +931,7 @@ const LAYOUTS = {
         hTop=topM; hBot=topM+cH;
         const inner=hb.svg.replace(/^\s*<svg[^>]*>/,`<svg x="0" y="${f(y)}" width="850" height="${f(hh)}" viewBox="0 0 ${f(hb.W)} ${f(hb.H)}">`).replace(/ data-el="[^"]*"/g,'');
         // a header with its own colored band: the band keeps its height and reaches up to the top of the page
-        if(band){ hBot=y+hh; head=(y>0?`<rect width="850" height="${f(y+1)}" fill="${S.bg}"/>`:'')+inner; }
+        if(band){ hBot=y+hh; bandU=u; head=(y>0?`<rect width="850" height="${f(y+1)}" fill="${S.bg}"/>`:'')+inner; }
         else head=inner;
       } else if(seq.length){
         // how far the drawn pieces reach above and below the middle line, so a bigger logo pushes the menu down
@@ -947,7 +950,7 @@ const LAYOUTS = {
       const priceRoom=mt.room;
       const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs><rect width="850" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}</svg>`;
       return {W:816,H:1056,svg,over:mt.end>1100-(G.bottom??64)+8,fit:G.headSrc==='mine'?(wide?'The header’s pieces don’t fit across it, so some get cut off. On the Header tab, make the header wider, or the logo or tagline smaller.':''):fit?`The logo can’t get bigger than ${fit}% with the other pieces beside it, so it stops there. To go bigger, hide the tagline or squiggle, or make the side margins smaller.`:'',
-        priceRoom,guides:{hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
+        priceRoom,guides:{bandU,hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
     }
   },
 };
@@ -996,8 +999,9 @@ const G={}; Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo
 const headerGeo=()=>G.hd;   // the Header tab's settings (the menu page can use that header)
 let backToMenu=false;       // came to the Header tab from the menu page: show a way back
 const isGeo=k=>k in G[cur];
-const get=k=>isGeo(k)?G[cur][k]:S[k];
-const put=(k,v)=>{ if(isGeo(k)) G[cur][k]=v; else S[k]=v; };
+// hdH is the Header tab's height, so the menu page can change where the bottom of that header's band is
+const get=k=>k==='hdH'?G.hd.H:isGeo(k)?G[cur][k]:S[k];
+const put=(k,v)=>{ if(k==='hdH') G.hd.H=v; else if(isGeo(k)) G[cur][k]=v; else S[k]=v; };
 
 /* ============ MENU TEXT AS A DOCUMENT ============ */
 let menuMode='text';
@@ -1626,7 +1630,7 @@ function afterSet(k,v){ if(k==='thickD'&&G[cur].sqFollow) G[cur].sqThick=Math.ro
 const UNIT={wmScale:'%',onScale:'%',sqScale:'%',menuScale:'%',menuLogo:'%',lineSpace:'%',dishSpace:'%',secSpace:'%'};
 let uid=0;
 // the value a setting starts with on this layout
-const defOf=k=>k in LAYOUTS[cur].geo?LAYOUTS[cur].geo[k]:SHARED_DEFAULTS[k];
+const defOf=k=>k==='hdH'?LAYOUTS.hd.geo.H:k in LAYOUTS[cur].geo?LAYOUTS[cur].geo[k]:SHARED_DEFAULTS[k];
 // label on the left, with a ↺ button that shows when the setting has been changed
 function labCell(k,label,inputId,onReset){
   const d=document.createElement('div'); d.className='lab';
@@ -1922,8 +1926,8 @@ function dragPrice(ev,cv,k){
     if(mode==='edge'){ let v=Math.max(0,Math.round(base-dx));
       if(isFinite(room)&&v>room-6){ mode='name'; g.pricePos='name'; g.priceGap=14; base=14; from=e.clientX; buildPanel(); render(); return; }
       if(v!==g.priceIn){ g.priceIn=v; render(); sync(); } }
-    else { let v=Math.max(4,Math.round(base+dx));
-      if(isFinite(room)&&v>room){ mode='edge'; g.pricePos='edge'; g.priceIn=0; base=0; from=e.clientX; buildPanel(); render(); return; }
+    else { let v=Math.max(8,Math.round(base+dx));
+      if(isFinite(room)&&v>room){ mode='edge'; g.pricePos='edge'; g.priceIn=0; g.priceGap=14; base=0; from=e.clientX; buildPanel(); render(); return; }
       if(v!==g.priceGap){ g.priceGap=v; render(); sync(); } }
   };
   const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); };
@@ -1931,16 +1935,17 @@ function dragPrice(ev,cv,k){
 }
 /* Menu page: margin lines (like the ruler in Google Docs) show while the pointer is over the page,
    and dragging moves the menu text (below the header) or the header (top margin) up and down. */
-let mnHover=false, mnDrag=null;
+let mnHover=false, mnDrag=null, mnNearBand=false;
 function menuGuides(svg){
   const g=LAST.guides; if(!g||!(mnHover||mnDrag||document.getElementById('gd').checked)) return;
   const k=850/svg.getBoundingClientRect().width, BL='#1f6fd1', d=`${5*k} ${4*k}`;
   line(svg,g.side,0,g.side,1100,BL,1*k,d,.5); line(svg,850-g.side,0,850-g.side,1100,BL,1*k,d,.5);
   line(svg,0,g.bottom,850,g.bottom,BL,1*k,d,.5);
   line(svg,0,g.hTop,850,g.hTop,BL,(mnDrag==='head'?2:1)*k,d,mnDrag==='head'?1:.5);
+  if(g.bandU) line(svg,0,g.hBot,850,g.hBot,BL,(mnDrag==='band'||mnNearBand?3:1.4)*k,mnDrag==='band'||mnNearBand?null:d,mnDrag==='band'||mnNearBand?1:.75);
   line(svg,0,g.bodyTop,850,g.bodyTop,BL,(mnDrag==='body'?2:1.4)*k,mnDrag==='body'?null:d,mnDrag==='body'?1:.75);
   const info=document.getElementById('selInfo');
-  if(info) info.textContent=mnDrag==='price'?(G.mn.pricePos==='name'?`Prices: ${G.mn.priceGap} after the name`:`Prices: ${G.mn.priceIn} in from the right edge`):mnDrag==='head'?`Top margin: ${G.mn.topSpace}`:mnDrag==='body'?`Menu text starts ${G.mn.headGap} below the header`:'Drag the menu text or the header up or down to move it, or a price left or right.';
+  if(info) info.textContent=mnDrag==='band'||mnNearBand?`Header height: ${G.hd.H} (drag the bottom edge up or down)`:mnDrag==='price'?(G.mn.pricePos==='name'?`Prices: ${G.mn.priceGap} after the name`:`Prices: ${G.mn.priceIn} in from the right edge`):mnDrag==='head'?`Top margin: ${G.mn.topSpace}`:mnDrag==='body'?`Menu text starts ${G.mn.headGap} below the header`:'Drag the menu text or the header up or down to move it, or a price left or right.';
 }
 function pick(ev){
   const svg=svgEl(); if(!svg||cur==='mn') return null;
@@ -1992,6 +1997,12 @@ function resizeSel(m){
     if(cur==='mn'){ const svg=svgEl(), g=LAST.guides; if(!svg||!g||ev.button!==0) return;
       const r=svg.getBoundingClientRect(), k=850/r.width, y0=(ev.clientY-r.top)*k; if(y0<0||y0>1100) return;
       if(ev.target.closest&&ev.target.closest('[data-pr]')){ dragPrice(ev,cv,k); return; }
+      if(g.bandU&&Math.abs(y0-g.hBot)<14){   // the bottom edge of the header's band: its height (the Header tab's Height)
+        const H0=G.hd.H, [,,,mn_,mx_]=rangeOf('mn','hdH')||[0,0,0,80,400]; mnDrag='band'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
+        // the logo stays put (it starts at the top margin), so the band grows by half of the new height below it
+        const move=e=>{ const v=Math.min(mx_,Math.max(mn_,Math.round(H0+2*((e.clientY-r.top)*k-y0)/g.bandU))); if(v!==G.hd.H){ G.hd.H=v; render(); sync(); } };
+        const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); };
+        cv.addEventListener('pointermove',move); cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); overlay(); return; }
       const key=y0<g.hBot+(g.bodyTop-g.hBot)/2?'topSpace':'headGap', start=G.mn[key], [,,,mn,mx]=rangeOf('mn',key);
       mnDrag=key==='topSpace'?'head':'body'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
       const move=e=>{ const v=Math.min(mx,Math.max(mn,Math.round((start+((e.clientY-r.top)*k-y0))/2)*2)); if(v!==G.mn[key]){ G.mn[key]=v; render(); sync(); } };
@@ -2001,7 +2012,8 @@ function resizeSel(m){
   cv.addEventListener('pointerenter',()=>{ mnHover=true; if(cur==='mn') overlay(); });
   cv.addEventListener('pointerleave',()=>{ mnHover=false; if(cur==='mn'&&!mnDrag) overlay(); });
   cv.addEventListener('pointermove',ev=>{ if(cur!=='mn'){ cv.style.cursor=''; return; } if(mnDrag) return; const svg=svgEl(), g=LAST.guides; if(!svg||!g) return;
-    const r=svg.getBoundingClientRect(), y=(ev.clientY-r.top)*850/r.width; cv.style.cursor=ev.target.closest&&ev.target.closest('[data-pr]')?'ew-resize':(y>=0&&y<=1100)?'ns-resize':''; });
+    const r=svg.getBoundingClientRect(), y=(ev.clientY-r.top)*850/r.width; cv.style.cursor=ev.target.closest&&ev.target.closest('[data-pr]')?'ew-resize':(y>=0&&y<=1100)?'ns-resize':'';
+    const near=g.bandU&&Math.abs(y-g.hBot)<14; if(near!==mnNearBand){ mnNearBand=near; overlay(); } });
   document.addEventListener('keydown',ev=>{
     const tg=ev.target.tagName; if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA') return;
     if(cur==='mn'||ev.metaKey||ev.ctrlKey) return;
