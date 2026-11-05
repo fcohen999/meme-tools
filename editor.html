@@ -340,8 +340,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=21;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=22;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 22','Menu page: when you point at, drag or select a line, the note under the page also says where the same setting is in the panel (for example “also in Margins and spacing → Bottom”).'],
  ['v26 · 21','Menu page: every blue line can be dragged, including the left and right margins and the bottom margin. Click a line to select it: its setting lights up in the panel, and the arrow keys move it (Shift for 10). The line under the page says what you are moving and by how much, in Simple too.'],
  ['v26 · 20','Menu page: drag a dish price left or right on the page (all prices move together); pull it up to the names and it sits right after each name. “A dish’s own price” in Look does the same. With the Header tab’s header and its colored band, drag the bottom edge of the band (or use Header height) to make it taller or shorter. The menus bar is lighter.'],
  ['v26 · 19','Tidier Menu panel: your menus are a bar at the top (pick a menu or make a new one, Save to my computer, and ⋯ for the rest); the four ways to change the words sit in one row; Edit in boxes has one ⋯ per dish and per section instead of rows of buttons; shorter labels and help. The menu header can no longer overlap: the logo stops at the biggest size that fits beside the tagline, and says so. The Header tab warns when its pieces are wider than the header.'],
@@ -1982,7 +1983,9 @@ function menuGuides(svg){
   const info=document.getElementById('selInfo'); if(!info) return;
   const h=mnDrag||mnSel||mnHot, H=h&&MN_H[h];
   const val=h==='price'?(G.mn.pricePos==='name'?`${G.mn.priceGap} after the name`:`${G.mn.priceIn} in from the right edge`):H?Math.round(get(H.key)):'';
-  info.textContent=H?`${H.name}: ${val}`+(mnSel===h&&!mnDrag?` · arrow keys move it (Shift for 10), Esc to let go`:` · drag to move it, or click to select it`)
+  // say where the same setting is in the panel, so it is clear the two are one and the same
+  const where=H?` · also in ${{spacing:'Margins and spacing',look:'Look',order:'Page header'}[H.sec]} → ${H.row}`:'';
+  info.textContent=H?`${H.name}: ${val}${where}`+(mnDrag?'':mnSel===h?` · arrow keys move it (Shift for 10), Esc to let go`:` · drag it or click to select it`)
     :'Drag any blue line to move it: the margins, the top of the header, or where the menu text starts. Or drag a price left or right.';
 }
 // open the panel section that holds a line's setting and point at its row
