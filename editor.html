@@ -63,7 +63,7 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .mcard .ver button{padding:4px 9px;font-size:12px}
 @media print{
   body{background:none;display:block;height:auto;overflow:visible}
-  .app{display:block;min-height:0}.panel,.bar,.hint,.grip,.gnav{display:none!important}
+  .app{display:block;min-height:0}.panel,.bar,.hint,.grip,.gnav,#canvas [data-ui]{display:none!important}
   .stage{position:static;height:auto;padding:0}
   .canvas{background:none;padding:0;border-radius:0;display:block}
   .canvas svg{max-width:none;max-height:none}
@@ -314,8 +314,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-03', UPDATE=17;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=18;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 18','Menu page: margins like the Google Docs ruler (top, where the menu text starts, left and right, bottom), and you can drag the menu text or the header up and down on the page; a bigger logo now pushes the text down instead of crowding it; space between lines, dishes and sections; “Spread out to fill the page” (on to start) so there is no big blank space at the bottom; text sizes in points for section names, dish names and what’s in them. “Your menus”: make a new menu (for example Desserts) without losing the others, and save a menu to your computer as a text file you can read, then open it again. The page header now says where it comes from (this page, or the Header tab), with a small picture of each, and the Header tab says when your menus use it.'],
  ['v26 · 15','Menu page header: choose “My Header” to put the header you made on the Header tab at the top of the menu (in the menu’s colors or the Header tab’s own), and “Edit the header on the Header tab” jumps there, with a button to come back.'],
  ['v26 · 13','Tidier sidebar: settings grouped under small headings, every control lines up, plainer names (for example “Hairline detail”, “CAPS”, “Style 1 / 2”), a ↺ button to put any one setting back, the colors in use shown on the Colors bar, and settings that do nothing right now are dimmed with the reason. The Background color is called “Inside the oval” on the oval logo and “Awning” on the awning. The links that repeated the top nav are gone. The export buttons always fit on screen. The Social post maker now uses this same panel.'],
  ['v26','Change the order of the pieces on every layout (for example the tagline above “mémé on 10”, or the squiggle first in a header), and hide pieces you don’t want. The header, awning and menu page can use any version of the logo: one line, the oval logo, the logo without the oval, or a saved version.'],
@@ -519,7 +520,10 @@ const OPTNAME={onCase:{lowercase:'lowercase',caps:'CAPS'},squiggle:{A:'Style 1',
   oval:{'hand-drawn':'Hand-drawn',clean:'Clean line'},align:{left:'Left',center:'Center',right:'Right'},columns:{1:'1 column',2:'2 columns'},
   onWeight:{400:'400 Regular',500:'500 Medium',600:'600 Semibold',700:'700 Bold'},
   headAlign:{'spread across':'Spread out','together on the left':'Left','together in the center':'Center'},
-  headColors:{menu:'Menu colors',header:'Header tab colors'}};
+  headColors:{menu:'Menu colors',header:'Header tab colors'},
+  headSrc:{menu:'This page (one line)',mine:'The Header tab'}};
+// point sizes read “10.5 pt”
+['headPt','namePt','descPt'].forEach(k=>{ OPTNAME[k]={}; [7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,13,14,15,16,18].forEach(v=>OPTNAME[k][v]=v+' pt'); });
 const optName=(k,o)=>(OPTNAME[k]&&OPTNAME[k][o]!==undefined)?OPTNAME[k][o]:String(o);
 // What some color settings are called on each layout (they color different things)
 function colorLabel(k,lab){
@@ -537,13 +541,19 @@ const SKIP={'1d':['accent'],'1c':['transparent']};
 
 /* ============ MENU TEXT (Menu tab) — follows the brand guidelines, section 08 ============ */
 const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-function menuSVG(S,G,M,top=200){
+// Point sizes for the menu text (a US Letter page is 850 wide = 8.5 in, so 1 pt = 100/72 units)
+const PT=100/72;
+const PTSIZES=[7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,13,14,15,16,18];
+// lay the dishes out from `top`; dish and section gaps are multiplied by m (used by “Spread out to fill the page”)
+function menuLayout(S,G,M,top,m){
   const sc=G.menuScale/100, ink=G.menuInk, brand=G.menuBrand;
-  const cols=+G.columns===2?2:1, L=64, R=786, GAP=48;
+  const side=G.side??64, cols=+G.columns===2?2:1, L=side, R=850-side, GAP=48;
   const colW=cols===2?(R-L-GAP)/2:(R-L);
   const xs=cols===2?[L,L+colW+GAP]:[L], rights=xs.map(x=>x+colW);
   const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
-  const step=19*sc, toDesc=21*sc, itemGap=34*sc, secGap=48*sc;
+  const hs=(G.headPt||8.5)*PT*sc, ns=(G.namePt||10.5)*PT*sc, ds_=(G.descPt||10)*PT*sc, ps=ns*1.1;
+  const ln=(G.lineSpace||100)/100, big=Math.max(ns,ds_)/14.5;
+  const step=19*sc*big*ln, toDesc=21*sc*big*ln, itemGap=34*sc*big*(G.dishSpace||100)/100*m, secGap=48*sc*big*(G.secSpace||100)/100*m;
   const wrap=(t,w,fam,wt,sz,ls)=>{ const words=String(t||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean); const lines=[]; let c=''; words.forEach(wd=>{ const tr=c?c+' '+wd:wd; if(c&&measure(tr,fam,wt,sz,ls)>w){lines.push(c);c=wd;} else c=tr; }); if(c) lines.push(c); return lines; };
   let y=top, out='', end=top, first=true;
   M.forEach(sec=>{
@@ -551,15 +561,16 @@ function menuSVG(S,G,M,top=200){
     const title=(sec.title||'').trim(), price=(sec.price||'').trim().replace(/^\$/,'');
     if(!title&&!price&&!items.length) return;
     if(!first) y=end+secGap; first=false;
+    const hls=3.4*sc*hs/(12*sc);
     if(title||price){
-      const hs=12*sc, hls=3.4*sc;
       out+=`<text x="${L}" y="${f(y)}" font-family='${tagFam}' font-size="${f(hs)}" font-weight="500" letter-spacing="${f(hls)}" fill="${brand}">${esc(title.toUpperCase())}</text>`;
-      if(price){ const px=L+(title?measure(title.toUpperCase(),dFam,500,hs,hls)+hls+16*sc:0); out+=`<text x="${f(px)}" y="${f(y)}" font-family='"Bodoni Moda", serif' font-size="${f(16*sc)}" font-weight="400" fill="${brand}">${esc(price)}</text>`; }
+      if(price){ const px=L+(title?measure(title.toUpperCase(),dFam,500,hs,hls)+hls+16*sc:0); out+=`<text x="${f(px)}" y="${f(y)}" font-family='"Bodoni Moda", serif' font-size="${f(hs*4/3)}" font-weight="400" fill="${brand}">${esc(price)}</text>`; }
     }
+    const nls=1.7*ns/14.5;
     const dishes=items.map(it=>{
       const pr=(it.price||'').trim().replace(/^\$/,'');
-      const nm=wrap((it.name||'').trim().toUpperCase(),pr?colW-70*sc:colW,dFam,500,14.5*sc,1.7*sc);
-      const ds=wrap(it.desc,colW,'Bodoni Moda',400,14*sc,0);
+      const nm=wrap((it.name||'').trim().toUpperCase(),pr?colW-70*sc:colW,dFam,500,ns,nls);
+      const ds=wrap(it.desc,colW,'Bodoni Moda',400,ds_,0);
       const lastOff=Math.max(0,nm.length-1)*step+(ds.length?(nm.length?toDesc:0)+(ds.length-1)*step:0);
       return {nm,ds,pr,lastOff,h:lastOff+itemGap};
     });
@@ -569,19 +580,42 @@ function menuSVG(S,G,M,top=200){
       for(let k=1;k<dishes.length;k++){ const a=dishes.slice(0,k).reduce((t,d)=>t+d.h,0), b=dishes.slice(k).reduce((t,d)=>t+d.h,0); const v=Math.max(a,b); if(v<bestV){bestV=v;best=k;} }
       groups=[dishes.slice(0,best),dishes.slice(best)];
     }
-    const y0=(title||price)?y+itemGap:y; end=y;
+    // the first dish sits under the section name by the usual gap (not stretched)
+    const y0=(title||price)?y+34*sc*big:y; end=y;
     groups.forEach((grp,gi)=>{
       let yy=y0;
       grp.forEach(d=>{
-        d.nm.forEach((L2,i)=>{ out+=`<text x="${xs[gi]}" y="${f(yy+i*step)}" font-family='${tagFam}' font-size="${f(14.5*sc)}" font-weight="500" letter-spacing="${f(1.7*sc)}" fill="${ink}">${esc(L2)}</text>`; });
-        if(d.pr&&d.nm.length) out+=`<text x="${rights[gi]}" y="${f(yy)}" text-anchor="end" font-family='"Bodoni Moda", serif' font-size="${f(16*sc)}" font-weight="400" fill="${brand}">${esc(d.pr)}</text>`;
+        d.nm.forEach((L2,i)=>{ out+=`<text x="${xs[gi]}" y="${f(yy+i*step)}" font-family='${tagFam}' font-size="${f(ns)}" font-weight="500" letter-spacing="${f(nls)}" fill="${ink}">${esc(L2)}</text>`; });
+        if(d.pr&&d.nm.length) out+=`<text x="${rights[gi]}" y="${f(yy)}" text-anchor="end" font-family='"Bodoni Moda", serif' font-size="${f(ps)}" font-weight="400" fill="${brand}">${esc(d.pr)}</text>`;
         const d0=yy+(d.nm.length?(d.nm.length-1)*step+toDesc:0);
-        d.ds.forEach((L2,i)=>{ out+=`<text x="${xs[gi]}" y="${f(d0+i*step)}" font-family='"Bodoni Moda", serif' font-size="${f(14*sc)}" font-weight="400" fill="${ink}" fill-opacity="0.9">${esc(L2)}</text>`; });
+        d.ds.forEach((L2,i)=>{ out+=`<text x="${xs[gi]}" y="${f(d0+i*step)}" font-family='"Bodoni Moda", serif' font-size="${f(ds_)}" font-weight="400" fill="${ink}" fill-opacity="0.9">${esc(L2)}</text>`; });
         end=Math.max(end,yy+d.lastOff); yy+=d.h;
       });
     });
   });
   return {svg:out,end};
+}
+// the menu text; with “Spread out” on, the gaps between dishes and sections grow (up to MAXSPREAD times) so the menu reaches the bottom margin
+const MAXSPREAD=2.2;
+function menuSVG(S,G,M,top=200){
+  const MENU_BOTTOM=1100-(G.bottom??64), r=menuLayout(S,G,M,top,1);
+  if(G.fill===false||r.end>=MENU_BOTTOM) return r;
+  if(menuLayout(S,G,M,top,MAXSPREAD).end<=MENU_BOTTOM) return menuLayout(S,G,M,top,MAXSPREAD);
+  let lo=1,hi=MAXSPREAD;
+  for(let i=0;i<16;i++){ const mid=(lo+hi)/2; if(menuLayout(S,G,M,top,mid).end<=MENU_BOTTOM) lo=mid; else hi=mid; }
+  return menuLayout(S,G,M,top,lo);
+}
+
+// How far the Header tab's logo and pieces reach, top and bottom (in that header's own units). Mirrors LAYOUTS.hd.build.
+function headerExtent(S,G){
+  const cy=G.H/2, seq=shownSeq(G); if(!seq.length) return [cy,cy];
+  const s=G.wmScale/100, LB=logoBuild(G.logo,S), lh=120*s, sqH=50*G.sqScale/100;
+  const P=prep(S,{base:60,scale:G.onScale});
+  const ex={
+    name:LB?[cy-1-lh/2+G.wmY,cy-1+lh/2+G.wmY]:[Math.min(cy-61+G.wmY-120*(s-1)/2,cy+58+G.onY-P.onSize*0.75),Math.max(cy-61+G.wmY+120*(s+1)/2,cy+58+G.onY+P.onSize*0.05)],
+    sq:[cy-11+G.sqY,cy-11+G.sqY+sqH],
+    tag:[cy+58+G.tagY-G.tagSize*0.75,cy+58+G.tagY+G.tagSize*0.1]};
+  return [Math.max(0,Math.min(...seq.map(p=>ex[p][0]))),Math.min(G.H,Math.max(...seq.map(p=>ex[p][1])))];
 }
 
 /* ============ LAYOUTS — add a new one here and it appears as a tab ============ */
@@ -768,23 +802,44 @@ const LAYOUTS = {
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','Menu text size',70,130,1,'smaller','bigger'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
+    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','Everything bigger or smaller',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],
+      ['h','Margins and spacing'],['srange','topSpace','Top margin (above the logo)',0,200,2,'less','more'],['srange','headGap','Menu text starts (below the header)',0,300,2,'higher','lower'],['srange','side','Left and right margins',20,200,2,'less','more'],['srange','bottom','Bottom margin',20,200,2,'less','more'],['srange','lineSpace','Space between lines',70,200,5,'tighter','looser'],['scheck','fill','Spread out to fill the page'],['srange','dishSpace','Space between dishes',50,300,5,'less','more'],['srange','secSpace','Space between sections',50,300,5,'less','more'],
+      ['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
-    geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headSrc:'menu', headColors:'menu', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2' },
-    // a getter, so the header settings change with “Which header”
+    geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headSrc:'menu', headColors:'menu', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2',
+          headPt:8.5, namePt:10.5, descPt:10, topSpace:64, headGap:44, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:true },
+    // a getter, so the header settings change with “Header comes from”
     get panel(){ return [
       ['h','Menu words','words'],['menuedit'],
       ['h','Look','look'],
       ['hint','Follows the brand guidelines: US Letter page, one-line header without the squiggle, no divider lines.'],
-      ['range','menuScale','Menu text size',70,130,1],
+      ['sub','Text size'],
+      ['pick','headPt','Section names',PTSIZES],
+      ['pick','namePt','Dish names',PTSIZES],
+      ['pick','descPt','What’s in it',PTSIZES],
+      ['range','menuScale','Everything bigger or smaller',70,130,1],
+      ['hint','Sizes are in points, like in Word. “Everything bigger or smaller” changes them all at once (at 100% they print at exactly these sizes).'],
+      ['sub','Layout'],
       ['pick','columns','Columns',[2,1]],
       ['pick','order','Tagline word order',['Kitchen & Cocktails','Cocktails & Kitchen']],
       ['hint','Same setting as Tagline → Word order on the logo layouts: changing it here changes it there too.'],
+      ['h','Margins and spacing','spacing'],
+      ['hint','Like the ruler in Google Docs. You can also drag on the page: drag the menu text up or down to move it, or drag the header to move the header.'],
+      ['range','topSpace','Top margin (above the logo)',0,200,2],
+      ['range','headGap','Menu text starts (below the header)',0,300,2],
+      ['range','side','Left and right margins',20,200,2],
+      ['range','bottom','Bottom margin',20,200,2],
+      ['sub','Spacing'],
+      ['range','lineSpace','Space between lines',70,200,5],
+      ['check','fill','Spread out to fill the page'],
+      ['hint','When this is on, the gaps between dishes and sections grow so the menu reaches the bottom of the page, with no big blank space. The two settings below are then the smallest gap.'],
+      ['range','dishSpace','Space between dishes',50,300,5],
+      ['range','secSpace','Space between sections',50,300,5],
       ['h','Page header','order'],['headsrc'],
-      // the menu's own header settings; with “My Header” the Header tab's settings are used instead
+      // the menu's own header settings; with the Header tab's header, that tab's settings are used instead
       ...(G.mn.headSrc==='mine'?[
         ['pick','headColors','Header colors',['menu','header']],
-        ['hint','“Menu colors” draws your header in the menu’s logo color on the menu page. “Header tab colors” keeps the colors and background you set on the Header tab.'],
+        ['hint','“Menu colors” draws the header in the menu’s logo color on the menu page. “Header tab colors” keeps the colors and background you set on the Header tab.'],
       ]:[
         ['logopick','Which logo'],['order','Left to right'],
         ['hint','Tick a piece to show it, untick to hide it.'],
@@ -799,8 +854,8 @@ const LAYOUTS = {
       const brand=G.menuBrand, ink=G.menuInk;
       const S2=Object.assign({},S,{ink:brand,accent:brand,sqColor:brand,bg:G.menuBg,transparent:false});
       const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
-      // header row: pieces between the left (64) and right (786) margins, centered on the logo's middle line
-      const HL=64, HR=786, YC=99.5, k=(G.menuLogo||100)/100, LB=logoBuild(G.logo,S2), lh=110*k;
+      // header row: pieces between the left and right margins, centered on the logo's middle line
+      const HL=G.side??64, HR=850-HL, YC=99.5, k=(G.menuLogo||100)/100, LB=logoBuild(G.logo,S2), lh=110*k;
       const tagStr=S.order.toUpperCase(), sqW=124*k, sqH=39*k;
       const lineW=203+measure('on 10','Bodoni Moda',500,43,0);
       const seq=shownSeq(G), wd={name:LB?lh*LB.W/LB.H:lineW*k, sq:sqW, tag:measure(tagStr,dFam,400,24,5.6)};
@@ -810,21 +865,36 @@ const LAYOUTS = {
       const draw={
         name:()=>{ if(LB) return nestLogo(LB,xs.name,YC-lh/2,lh);
           const g=wmBox(S2,64,56,190,87,100)+`<text x="267" y="141" font-family='"Bodoni Moda", serif' font-weight="500" style="font-variation-settings:'opsz' 6" font-size="43" fill="${brand}">on 10</text>`;
-          return (k===1&&Math.abs(xs.name-HL)<0.01)?g:`<g transform="translate(${f(xs.name)} ${YC}) scale(${k}) translate(${-HL} ${-YC})">${g}</g>`; },
+          return (k===1&&Math.abs(xs.name-64)<0.01)?g:`<g transform="translate(${f(xs.name)} ${YC}) scale(${k}) translate(-64 ${-YC})">${g}</g>`; },
         sq:()=>sqEl(S2,xs.sq,YC-sqH/2,sqW,sqH,0),
         tag:()=>(spread&&n>1&&seq[n-1]==='tag')
           ?`<text x="${HR}" y="141" text-anchor="end" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`
           :`<text x="${f(xs.tag)}" y="141" font-family='${tagFam}' font-size="24" letter-spacing="5.6" fill="${ink}">${esc(tagStr)}</text>`};
-      let head, top=200;
+      const topM=G.topSpace??64;
+      let head='', hTop=topM, hBot=topM;
       if(G.headSrc==='mine'){
-        // the header made on the Header tab, across the full width of the page; the menu starts below it
-        const hb=LAYOUTS.hd.build(G.headColors==='header'?S:Object.assign({},S2,{transparent:true}),headerGeo());
-        const hh=850*hb.H/hb.W; top=Math.max(200,hh+70);
-        head=hb.svg.replace(/^\s*<svg[^>]*>/,`<svg x="0" y="0" width="850" height="${f(hh)}" viewBox="0 0 ${f(hb.W)} ${f(hb.H)}">`).replace(/ data-el="[^"]*"/g,'');
-      } else head=PIECES.filter(p=>seq.includes(p)).map(p=>draw[p]()).join('').replace(/ data-el="[^"]*"/g,'');
+        // the header made on the Header tab, across the full width of the page. Its logo and pieces start at the top margin;
+        // with its own colored band, the band reaches the top of the page and has the same space below the pieces.
+        const band=G.headColors==='header'&&!S.transparent, hg=headerGeo();
+        const hb=LAYOUTS.hd.build(G.headColors==='header'?S:Object.assign({},S2,{transparent:true}),hg);
+        const u=850/hb.W, hh=hb.H*u, ext=headerExtent(S,hg);
+        const y=topM-ext[0]*u, cH=(ext[1]-ext[0])*u;
+        hTop=topM; hBot=topM+cH;
+        const inner=hb.svg.replace(/^\s*<svg[^>]*>/,`<svg x="0" y="${f(y)}" width="850" height="${f(hh)}" viewBox="0 0 ${f(hb.W)} ${f(hb.H)}">`).replace(/ data-el="[^"]*"/g,'');
+        if(band){ hBot=topM*2+cH; head=`<rect width="850" height="${f(hBot)}" fill="${S.bg}"/><svg x="0" y="0" width="850" height="${f(hBot)}" overflow="hidden">${inner}</svg>`; }
+        else head=inner;
+      } else if(seq.length){
+        // how far the drawn pieces reach above and below the middle line, so a bigger logo pushes the menu down
+        const ex={name:LB?[YC-lh/2,YC+lh/2]:[YC-(YC-56)*k,YC+(149-YC)*k], sq:[YC-sqH/2,YC+sqH/2], tag:[141-18,143]};
+        const t0=Math.min(...seq.map(p=>ex[p][0])), b0=Math.max(...seq.map(p=>ex[p][1])), dy=topM-t0;
+        hTop=topM; hBot=b0+dy;
+        head=`<g transform="translate(0 ${f(dy)})">${PIECES.filter(p=>seq.includes(p)).map(p=>draw[p]()).join('').replace(/ data-el="[^"]*"/g,'')}</g>`;
+      }
+      // the first section name sits its cap height below the start line
+      const bodyTop=hBot+(G.headGap??44), top=bodyTop+(G.headPt||8.5)*PT*G.menuScale/100*0.72;
       const mt=menuSVG(S,G,M,top);
       const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs><rect width="850" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}</svg>`;
-      return {W:816,H:1056,svg,over:mt.end>1100-56};
+      return {W:816,H:1056,svg,over:mt.end>1100-(G.bottom??64)+8,guides:{hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64)}};
     }
   },
 };
@@ -1184,7 +1254,7 @@ function renderTextMode(box){
     st.style.color='#3f6b35'; st.textContent=`Pasted from your document: ${m.filter(s=>s.title).length} section${m.filter(s=>s.title).length===1?'':'s'}, ${n} dish${n===1?'':'es'}. Check the menu page; if something landed in the wrong place, fix it in the box.`;
   });
   const files=document.createElement('div'); files.className='hint'; files.style.marginTop='10px';
-  files.innerHTML='<a href="#" data-a="dl">Download the menu as a text file</a> · <a href="#" data-a="open">Open a text file</a><input type="file" accept=".txt,text/plain" hidden>';
+  files.innerHTML='To save this menu as a file, or open one, use <b>Save this menu to my computer</b> at the top of this panel. <span class="only-full"><a href="#" data-a="dl">Download just the words</a> · <a href="#" data-a="open">Put the words from a text file in this menu</a></span><input type="file" accept=".txt,text/plain" hidden>';
   const fi=files.querySelector('input');
   files.querySelector('[data-a="dl"]').onclick=e=>{ e.preventDefault(); download(new Blob([menuToText()+'\n'],{type:'text/plain;charset=utf-8'}),`meme-on-10-menu_${new Date().toISOString().slice(0,10)}.txt`); };
   files.querySelector('[data-a="open"]').onclick=e=>{ e.preventDefault(); fi.click(); };
@@ -1244,8 +1314,9 @@ function renderMenuEditor(){
 }
 function menuEditorBlock(){
   const d=document.createElement('div');
-  d.innerHTML='<div class="hint" style="margin-bottom:8px">How do you want to change the words? The menu page updates as you type.</div><div id="menuModes" class="seg menuseg" role="group" aria-label="How to change the words"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><button type="button" class="link" id="menuStartOver" style="margin-top:10px">Start the menu over (puts back the original menu)</button>';
-  twoStep(d.querySelector('#menuStartOver'),'Click again to replace your menu with the original',()=>{ M=JSON.parse(JSON.stringify(MENU_DEFAULT)); renderMenuEditor(); render(); });
+  d.innerHTML='<div class="hint" style="margin-bottom:8px">How do you want to change the words? The menu page updates as you type.</div><div id="menuModes" class="seg menuseg" role="group" aria-label="How to change the words"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><button type="button" class="link" id="menuStartOver" style="margin-top:10px">Clear all the words</button> <button type="button" class="link only-full" id="menuSample" style="margin-top:10px">Put back the sample menu</button>';
+  twoStep(d.querySelector('#menuStartOver'),'Click again to clear the words of this menu',()=>{ M=BLANK_MENU(); renderMenuEditor(); render(); });
+  twoStep(d.querySelector('#menuSample'),'Click again to replace the words with the sample menu',()=>{ M=JSON.parse(JSON.stringify(MENU_DEFAULT)); renderMenuEditor(); render(); });
   const modes=d.querySelector('#menuModes');
   const defs=[['text','Type like a document'],['docs','From Google Docs'],['sheet','From Google Sheets'],['boxes','Edit in boxes']], bs=[];
   const paint=()=>bs.forEach(([m,b])=>b.classList.toggle('on',menuMode===m));
@@ -1290,26 +1361,121 @@ function logoPickBlock(label){
 
 // Menu page: which header sits at the top (the menu's own one-line header, or the one made on the Header tab)
 function goLayout(k){ cur=k; sel=null; history.replaceState(null,'','#'+(k==='mn'?'menu':k)); window.dispatchEvent(new HashChangeEvent('hashchange')); buildPanel(); render(); autosave(); }
+// a small picture of the menu page's header, as it would be drawn with each choice
+function headerThumb(src){
+  const keep=M; M=[];
+  let r; try{ r=LAYOUTS.mn.build(S,Object.assign({},G.mn,{headSrc:src})); } finally { M=keep; }
+  const g=r.guides, y0=Math.max(0,g.hTop-24), h=Math.max(40,g.hBot-y0+24);
+  return r.svg.replace(/^<svg[^>]*>/,`<svg xmlns="${NS}" viewBox="0 ${f(y0)} 850 ${f(h)}" width="100%" style="display:block;border:1px solid var(--line);border-radius:4px;margin-top:6px" aria-hidden="true">`);
+}
 function headSrcBlock(){
   const d=document.createElement('div');
   const r=document.createElement('div'); r.className='row2 stack';
-  r.innerHTML='<label>Which header</label><div class="seg small" role="group" aria-label="Which header"></div>';
+  r.innerHTML='<label>Header comes from</label><div class="seg small" role="group" aria-label="Header comes from" style="align-items:stretch"></div>';
   const sg=r.querySelector('.seg');
-  const bs=[['menu','Menu header'],['mine','My Header']].map(([v,t])=>{
-    const b=document.createElement('button'); b.type='button'; b.textContent=t;
+  const bs=[['menu','This page (one line)'],['mine','The Header tab']].map(([v,t])=>{
+    const b=document.createElement('button'); b.type='button'; b.style.cssText='display:flex;flex-direction:column;align-items:stretch;padding:8px;height:auto';
+    b.innerHTML='<span></span>'+headerThumb(v); b.firstChild.textContent=t;
     b.onclick=()=>{ if(G.mn.headSrc===v) return; G.mn.headSrc=v; OPEN.mn.add('order'); buildPanel(); render(); };
     sg.appendChild(b); return [v,b]; });
   refs.push(()=>bs.forEach(([v,b])=>{ const on=(G.mn.headSrc||'menu')===v; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); }));
   d.appendChild(r);
   const h=document.createElement('div'); h.className='hint'; h.style.margin='4px 0 8px';
   h.textContent=G.mn.headSrc==='mine'
-    ?'Uses the header you made on the Header tab (its logo, pieces, sizes and width), across the top of the page. Changes you make there show here.'
-    :'The menu’s own one-line header. To use a header you designed instead, choose “My Header”.';
+    ?'Made on the Header tab. Change it there and it changes here, on every menu.'
+    :'Set up right here, below. Changes here only affect the menu page. To use the header you designed on the Header tab, choose “The Header tab”.';
   d.appendChild(h);
-  const b=document.createElement('div'); b.className='btns';
-  b.innerHTML='<button type="button">Edit the header on the Header tab →</button>';
-  b.firstChild.onclick=()=>{ G.mn.headSrc='mine'; backToMenu=true; goLayout('hd'); };
-  d.appendChild(b);
+  if(G.mn.headSrc==='mine'){
+    const b=document.createElement('div'); b.className='btns';
+    b.innerHTML='<button type="button" class="primary">Open the Header tab to change it →</button>';
+    b.firstChild.onclick=()=>{ backToMenu=true; goLayout('hd'); };
+    d.appendChild(b);
+  }
+  return d;
+}
+
+/* ============ YOUR MENUS: each menu keeps its own words, text sizes, margins, spacing and colors.
+   The header and the logo are shared by every menu. Kept in this browser; “Save this menu to my computer”
+   writes a plain text file a person can read (and open again). ============ */
+const MENU_LOOK=['menuScale','headPt','namePt','descPt','columns','menuInk','menuBrand','menuBg','topSpace','headGap','side','bottom','lineSpace','fill','dishSpace','secSpace'];
+// the settings part of a saved menu file: [setting, words in the file, kind]
+const LOOKFILE=[['headPt','Section names size','pt'],['namePt','Dish names size','pt'],['descPt','What’s in it size','pt'],['menuScale','Everything bigger or smaller','%'],
+  ['columns','Columns',''],['topSpace','Top margin',''],['headGap','Menu text starts below the header',''],['side','Left and right margins',''],['bottom','Bottom margin',''],
+  ['lineSpace','Space between lines','%'],['fill','Spread out to fill the page','yes'],['dishSpace','Space between dishes','%'],['secSpace','Space between sections','%'],
+  ['menuBrand','Color of the logo, headings and prices','color'],['menuInk','Color of the dish names','color'],['menuBg','Page color','color']];
+const LOOK_LINE='----- How the page looks (you can leave this part alone) -----';
+let MENUS={current:'',list:{}};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const lookOf=g=>{ const o={}; MENU_LOOK.forEach(k=>{ if(g&&k in g) o[k]=g[k]; }); return o; };
+const BLANK_MENU=()=>[{title:'',price:'',items:[{name:'',desc:''}]}];
+function storeMenu(){ if(!MENUS.current) return; MENUS.list[MENUS.current]={M:clone(M),look:lookOf(G.mn)}; try{ localStorage.setItem('meme10_menus',JSON.stringify(MENUS)); }catch(e){} }
+function loadMenus(){
+  try{ const v=JSON.parse(localStorage.getItem('meme10_menus')||'null'); if(v&&v.list&&Object.keys(v.list).length) MENUS=v; }catch(e){}
+  if(!MENUS.current||!MENUS.list[MENUS.current]){ const n=Object.keys(MENUS.list)[0]; if(n) MENUS.current=n; else { MENUS.current='Cocktails'; MENUS.list.Cocktails={M:clone(M),look:lookOf(G.mn)}; } }
+  useMenu(MENUS.current,false);
+}
+function uniqueName(n){ n=String(n||'').trim()||'New menu'; if(!MENUS.list[n]) return n; let i=2; while(MENUS.list[n+' '+i]) i++; return n+' '+i; }
+function useMenu(n,redraw=true){
+  const v=MENUS.list[n]; if(!v) return;
+  MENUS.current=n; M=clone(v.M||BLANK_MENU()); Object.assign(G.mn,LAYOUTS.mn.geo&&lookOf(LAYOUTS.mn.geo),v.look||{});
+  if(redraw){ storeMenu(); buildPanel(); render(); }
+}
+function addMenu(n,words,look){ storeMenu(); n=uniqueName(n); MENUS.list[n]={M:clone(words),look:clone(look)}; useMenu(n); return n; }
+// the plain text file: the words (same as “Type like a document”), then the look as “Name: value” lines
+function menuFileText(){
+  const g=G.mn, val=(k,kind)=>kind==='pt'?g[k]+' pt':kind==='%'?g[k]+'%':kind==='yes'?(g[k]===false?'no':'yes'):String(g[k]);
+  return menuToText()+'\n\n\n'+LOOK_LINE+'\nMenu name: '+MENUS.current+'\n'+LOOKFILE.map(([k,lab,kind])=>lab+': '+val(k,kind)).join('\n')+'\n';
+}
+function readMenuFile(text,fileName){
+  text=String(text).replace(/^﻿/,'').replace(/\r\n?/g,'\n');
+  const i=text.search(/^-{3,}\s*How the page looks/im);
+  const words=parseMenuText(i>=0?text.slice(0,i):text), look={}; let name='';
+  if(i>=0) text.slice(i).split('\n').slice(1).forEach(l=>{
+    const j=l.indexOf(':'); if(j<0) return; const lab=l.slice(0,j).trim().toLowerCase(), v=l.slice(j+1).trim();
+    if(lab==='menu name'){ name=v; return; }
+    const e=LOOKFILE.find(x=>x[1].toLowerCase()===lab); if(!e) return; const [k,,kind]=e;
+    if(kind==='yes') look[k]=!/^(no|off|false)$/i.test(v);
+    else if(kind==='color'){ if(/^#[0-9a-f]{6}$/i.test(v)) look[k]=v; }
+    else { const n=parseFloat(v); if(isFinite(n)) look[k]=n; }
+  });
+  if(!name) name=String(fileName||'').replace(/\.txt$/i,'').replace(/\s*-\s*meme on 10 menu.*$/i,'').trim();
+  return {name,words,look};
+}
+function menusBlock(){
+  const d=document.createElement('div'); d.className='helpbox'; d.style.cssText='margin:16px 0 14px;color:var(--ink)';
+  d.innerHTML=`<div class="row2 stack" style="margin:0"><label for="menuPick" style="font-weight:600">Your menus</label>
+    <div class="ver" style="margin:0"><select id="menuPick" style="flex:1"></select></div></div>
+    <div class="btns" style="margin-top:8px"><button type="button" data-a="new">+ New menu</button><button type="button" data-a="copy">Make a copy</button><button type="button" data-a="ren">Rename</button><button type="button" data-a="del">Delete</button></div>
+    <div class="ver" data-f style="margin-top:8px;display:none"><input type="text" aria-label="Menu name" placeholder="Name, e.g. Desserts" style="flex:1"><button type="button" class="primary">OK</button><button type="button">Cancel</button></div>
+    <div class="btns" style="margin-top:12px"><button type="button" class="primary" data-a="save">Save this menu to my computer</button><button type="button" data-a="open">Open a menu from my computer</button><input type="file" accept=".txt,text/plain" hidden></div>
+    <p class="hint" style="margin:8px 0 0"><b>Where is it saved?</b> Every change is kept as you go, in this browser on this computer. For a copy you can see, or to use it on another computer, press <b>Save this menu to my computer</b>: a text file you can read goes to your Downloads folder. A new menu starts with empty words and this menu’s look. All your menus share one header.</p>
+    <p class="hint" data-st aria-live="polite" style="margin:6px 0 0;font-weight:600"></p>`;
+  const sel_=d.querySelector('#menuPick'), st=d.querySelector('[data-st]'), form=d.querySelector('[data-f]'), nameIn=form.querySelector('input'), fi=d.querySelector('input[type=file]');
+  Object.keys(MENUS.list).forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel_.appendChild(o); });
+  sel_.value=MENUS.current;
+  sel_.onchange=()=>{ storeMenu(); useMenu(sel_.value); };
+  let after=null;
+  const show=on=>{ form.style.display=on?'flex':'none'; };
+  const ask=(ph,val,fn)=>{ show(true); nameIn.placeholder=ph; nameIn.value=val||''; after=fn; nameIn.focus(); nameIn.select(); };
+  const ok=()=>{ const v=nameIn.value.trim(); if(!v){ nameIn.focus(); return; } show(false); const fn=after; after=null; if(fn) fn(v); };
+  form.querySelector('.primary').onclick=ok; form.querySelectorAll('button')[1].onclick=()=>{ show(false); after=null; };
+  nameIn.onkeydown=e=>{ if(e.key==='Enter') ok(); if(e.key==='Escape'){ show(false); after=null; } };
+  const act=a=>d.querySelector(`[data-a="${a}"]`);
+  act('new').onclick=()=>ask('Name for the new menu, e.g. Desserts','',n=>addMenu(n,BLANK_MENU(),lookOf(G.mn)));
+  act('copy').onclick=()=>ask('Name for the copy',MENUS.current+' copy',n=>addMenu(n,M,lookOf(G.mn)));
+  act('ren').onclick=()=>ask('New name',MENUS.current,n=>{ if(n===MENUS.current) return; storeMenu(); n=uniqueName(n); MENUS.list[n]=MENUS.list[MENUS.current]; delete MENUS.list[MENUS.current]; MENUS.current=n; storeMenu(); buildPanel(); render(); });
+  const del=act('del');
+  if(Object.keys(MENUS.list).length<2){ del.disabled=true; del.title='You need at least one menu'; }
+  else twoStep(del,`Click again to delete “${MENUS.current}”`,()=>{ delete MENUS.list[MENUS.current]; MENUS.current=''; useMenu(Object.keys(MENUS.list)[0]); });
+  act('save').onclick=()=>{ const n=MENUS.current.replace(/[\\/:*?"<>|]+/g,' ').trim()||'menu';
+    download(new Blob([menuFileText()],{type:'text/plain;charset=utf-8'}),`${n} - meme on 10 menu.txt`);
+    st.style.color='#3f6b35'; st.textContent=`Saved “${n} - meme on 10 menu.txt” to your Downloads folder.`; };
+  act('open').onclick=()=>fi.click();
+  fi.onchange=()=>{ const fl=fi.files[0]; fi.value=''; if(!fl) return; fl.text().then(t=>{
+    const r=readMenuFile(t,fl.name), n=r.words.reduce((a,s_)=>a+s_.items.length,0);
+    if(!n&&!Object.keys(r.look).length){ st.style.color='#b35a3e'; st.textContent='That file has no dishes in it.'; return; }
+    const nm=addMenu(r.name||'Opened menu',r.words.length?r.words:BLANK_MENU(),Object.assign(lookOf(G.mn),r.look));
+    const s2=panel.querySelector('[data-st]'); if(s2){ s2.style.color='#3f6b35'; s2.textContent=`Opened “${fl.name}” as the menu “${nm}”: ${n} dish${n===1?'':'es'}.`; } }); };
   return d;
 }
 
@@ -1361,7 +1527,7 @@ function lockBtn(k){
 }
 function afterSet(k,v){ if(k==='thickD'&&G[cur].sqFollow) G[cur].sqThick=Math.round(v*5)/10; }  // squiggle line follows the oval line at half the amount
 /* ---- shared bits of a setting row ---- */
-const UNIT={wmScale:'%',onScale:'%',sqScale:'%',menuScale:'%',menuLogo:'%'};
+const UNIT={wmScale:'%',onScale:'%',sqScale:'%',menuScale:'%',menuLogo:'%',lineSpace:'%',dishSpace:'%',secSpace:'%'};
 let uid=0;
 // the value a setting starts with on this layout
 const defOf=k=>k in LAYOUTS[cur].geo?LAYOUTS[cur].geo[k]:SHARED_DEFAULTS[k];
@@ -1441,7 +1607,7 @@ function accSummary(id,el){
   if(id==='colors') refs.push(()=>{
     const cs=LAYOUTS[cur].ownColors?[G[cur].menuBrand,G[cur].menuInk,G[cur].menuBg]:[S.accent,sqCol(S),S.ink,...(S.transparent?[]:[S.bg])];
     el.innerHTML=cs.map(c=>`<span class="dot" style="background:${c}"></span>`).join(''); });
-  if(id==='order') refs.push(()=>{ const g=G[cur]; if(cur==='mn'&&g.headSrc==='mine'){ el.textContent='My Header'; return; } el.textContent=shownSeq(g).map(k=>pieceName(k,g).replace(/[“”]/g,'')).join(' · ')||'nothing shown'; });
+  if(id==='order') refs.push(()=>{ const g=G[cur]; if(cur==='mn'&&g.headSrc==='mine'){ el.textContent='From the Header tab'; return; } if(cur==='mn'){ el.textContent='This page · '+(shownSeq(g).map(k=>pieceName(k,g).replace(/[“”]/g,'')).join(' · ')||'nothing shown'); return; } el.textContent=shownSeq(g).map(k=>pieceName(k,g).replace(/[“”]/g,'')).join(' · ')||'nothing shown'; });
 }
 function buildPanel(){
   applyMode();
@@ -1453,12 +1619,16 @@ function buildPanel(){
   panel.appendChild(top);
   const sw=top.querySelector('#simpleSw'); sw.checked=simple;
   sw.onchange=()=>{ mode=sw.checked?'simple':'full'; buildPanel(); render(); };
-  if(cur==='hd'&&backToMenu){
-    const b=document.createElement('div'); b.className='btns'; b.style.marginTop='14px';
-    b.innerHTML='<button type="button" class="primary">← Back to the menu page</button><span class="hint">The menu page uses this header.</span>';
-    b.firstChild.onclick=()=>{ backToMenu=false; goLayout('mn'); };
+  if(cur==='hd'){
+    // say plainly whether the menu page uses this header, with a way back to it
+    const uses=G.mn.headSrc==='mine', b=document.createElement('div'); b.className='helpbox'; b.style.marginTop='14px';
+    b.innerHTML=uses
+      ?'<p style="margin:0 0 8px"><b>Your menus use this header.</b> What you change here shows at the top of every menu.</p><button type="button" class="primary">← Back to the menu</button>'
+      :'<p style="margin:0 0 8px">The menu page uses its own one-line header, not this one. To put this header on your menus, on the Menu tab choose <b>Header comes from: The Header tab</b>.</p><button type="button">Go to the menu</button>';
+    b.querySelector('button').onclick=()=>{ backToMenu=false; goLayout('mn'); };
     panel.appendChild(b);
   }
+  if(cur==='mn') panel.appendChild(menusBlock());
   if(cur!=='mn'){
     const kick=document.createElement('div'); kick.className='kicker'; kick.textContent='Layout'; panel.appendChild(kick);
     panel.appendChild(layoutPicker());
@@ -1471,7 +1641,7 @@ function buildPanel(){
       +'<li><span>↺</span><span>put one setting back to how it started</span></li></ul>';
     panel.appendChild(help);
   }
-  const items=LAYOUTS[cur].panel.concat(LAYOUTS[cur].ownColors?[]:secColors,[['h','Saved versions'],['versions']]);
+  const items=LAYOUTS[cur].panel.concat(LAYOUTS[cur].ownColors?[]:secColors,cur==='mn'?[]:[['h','Saved versions'],['versions']]);
   if(!OPEN[cur]) OPEN[cur]=new Set();
   let acc=null, body=panel, shown=0, lastShown=true, sub=null;
   const finish=()=>{ if(acc&&!shown) acc.remove(); };
@@ -1552,11 +1722,13 @@ function buildPanel(){
     +`<details class="hint"><summary>Editor ${VERSION} · update ${UPDATE} · ${VERSION_DATE}</summary><ul>${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`;
   panel.appendChild(foot);
   twoStep(document.getElementById('btnReset'),'Click again to reset every layout and the menu (saved versions are kept)',()=>{ S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT));Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();});
+  if(document.getElementById('verSave')){
   document.getElementById('verSave').onclick=saveVersion;
   document.getElementById('verName').onkeydown=e=>{ if(e.key==='Enter') saveVersion(); };
   document.getElementById('verExport').onclick=()=>{ const cur_={layout:cur,S:Object.assign({},S),G:JSON.parse(JSON.stringify(G)),M:JSON.parse(JSON.stringify(M))}; download(new Blob([JSON.stringify(Object.assign({'(current settings)':cur_},mem),null,1)],{type:'application/json'}),`meme-on-10-logo-editor-saved-versions_${new Date().toISOString().slice(0,10)}.json`); };
   document.getElementById('verImport').onclick=()=>document.getElementById('verFile').click();
   document.getElementById('verFile').onchange=e=>{ const fl=e.target.files[0]; if(!fl) return; fl.text().then(tx=>{ try{ const o=JSON.parse(tx); delete o['(current settings)']; Object.assign(mem,o); persist(); renderVersions(); }catch(err){ document.getElementById('verNote').textContent='That file could not be read.'; } }); };
+  }
   renderVersions(); sync();
 }
 function sync(){ refs.forEach(f=>f()); }
@@ -1580,7 +1752,7 @@ function renderVersions(){
     r.querySelector('.vn span').textContent=n; r.querySelector('.vn small').textContent=(LNAME[mem[n].layout]||[(LAYOUTS[mem[n].layout]||{}).tab||''])[0];
     r.children[1].onclick=()=>{ const v=mem[n]; S=Object.assign({},SHARED_DEFAULTS,v.S);
       Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k]));
-      if(v.M) M=JSON.parse(JSON.stringify(v.M)); cur=LAYOUTS[v.layout]?v.layout:'1b'; LINKS=new Set(v.links||[]); sel=null; buildPanel(); render(); };
+      if(v.M){ const nm=uniqueName(n); MENUS.list[nm]={M:clone(v.M),look:lookOf((v.G||{}).mn)}; MENUS.current=nm; M=clone(v.M); } cur=LAYOUTS[v.layout]?v.layout:'1b'; LINKS=new Set(v.links||[]); sel=null; buildPanel(); render(); };
     twoStep(r.children[2],'Delete?',()=>{delete mem[n];persist();renderVersions();sync();render();});
     l.appendChild(r);
   });
@@ -1591,10 +1763,10 @@ let LAST={W:649,H:289,svg:''};
 function render(){
   LAST=LAYOUTS[cur].build(S,G[cur]);
   document.getElementById('canvas').innerHTML=LAST.svg; autosave(); overlay();
-  const mw=document.getElementById('menuWarn'); if(mw) mw.textContent=LAST.over?'The menu is longer than the page. Make the text smaller or use 2 columns.':'';
+  const mw=document.getElementById('menuWarn'); if(mw) mw.textContent=LAST.over?'The menu is longer than the page. Make the text smaller, use 2 columns, or make the margins and spacing smaller.':'';
   document.getElementById('pageStyle').textContent=`@page{size:${f(LAST.W)}px ${f(LAST.H)}px;margin:0}@media print{html,body{margin:0;height:auto}.app,.stage,.canvas{height:${f(LAST.H)}px!important;overflow:hidden}.canvas svg{width:${f(LAST.W)}px!important;height:${f(LAST.H)}px!important}}`;
 }
-const fileBase=()=>'meme-on-10-'+LAYOUTS[cur].file+'-logo_'+VERSION_DATE;
+const fileBase=()=>cur==='mn'?'meme-on-10-menu-'+slug(MENUS.current||'menu').replace(/^-|-$/g,'')+'_'+new Date().toISOString().slice(0,10):'meme-on-10-'+LAYOUTS[cur].file+'-logo_'+VERSION_DATE;
 function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
 document.getElementById('gd').onchange=overlay;
 document.getElementById('btnSvg').onclick=()=>download(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+LAST.svg],{type:'image/svg+xml'}),fileBase()+'.svg');
@@ -1621,6 +1793,7 @@ function overlay(){
   const svg=svgEl(); if(!svg) return;
   const k=LAST.W/svg.getBoundingClientRect().width, W=LAST.W, H=LAST.H, gd=document.getElementById('gd').checked;
   const MAG='#e0409a';
+  if(cur==='mn'){ menuGuides(svg); return; }
   if(gd){ line(svg,W/2,0,W/2,H,MAG,1*k,`${6*k} ${5*k}`,.55); line(svg,0,H/2,W,H/2,MAG,1*k,`${6*k} ${5*k}`,.55); }
   if(!sel) return;
   const el=svg.querySelector(`[data-el="${sel}"]`); if(!el) return;
@@ -1637,6 +1810,19 @@ function overlay(){
   }
   if(info){ const [kx,ky]=ELKEYS[sel]; const bits=[ELNAME[sel]]; if(kx in G[cur]) bits.push('X '+G[cur][kx]); if(ky in G[cur]) bits.push('Y '+G[cur][ky]);
     const dx=Math.round((cxs-W/2)*10)/10; bits.push(dx===0?'centered across':'from center '+dx); info.textContent=bits.join(' · '); }
+}
+/* Menu page: margin lines (like the ruler in Google Docs) show while the pointer is over the page,
+   and dragging moves the menu text (below the header) or the header (top margin) up and down. */
+let mnHover=false, mnDrag=null;
+function menuGuides(svg){
+  const g=LAST.guides; if(!g||!(mnHover||mnDrag||document.getElementById('gd').checked)) return;
+  const k=850/svg.getBoundingClientRect().width, BL='#1f6fd1', d=`${5*k} ${4*k}`;
+  line(svg,g.side,0,g.side,1100,BL,1*k,d,.5); line(svg,850-g.side,0,850-g.side,1100,BL,1*k,d,.5);
+  line(svg,0,g.bottom,850,g.bottom,BL,1*k,d,.5);
+  line(svg,0,g.hTop,850,g.hTop,BL,(mnDrag==='head'?2:1)*k,d,mnDrag==='head'?1:.5);
+  line(svg,0,g.bodyTop,850,g.bodyTop,BL,(mnDrag==='body'?2:1.4)*k,mnDrag==='body'?null:d,mnDrag==='body'?1:.75);
+  const info=document.getElementById('selInfo');
+  if(info) info.textContent=mnDrag==='head'?`Top margin: ${G.mn.topSpace}`:mnDrag==='body'?`Menu text starts ${G.mn.headGap} below the header`:'Drag the menu text or the header up or down to move it.';
 }
 function pick(ev){
   const svg=svgEl(); if(!svg||cur==='mn') return null;
@@ -1684,7 +1870,19 @@ function resizeSel(m){
 (function(){
   // no dragging: clicking a part only selects it; the keyboard moves it
   const cv=document.getElementById('canvas');
-  cv.addEventListener('pointerdown',ev=>{ selectEl(pick(ev)); ev.preventDefault(); });
+  cv.addEventListener('pointerdown',ev=>{
+    if(cur==='mn'){ const svg=svgEl(), g=LAST.guides; if(!svg||!g||ev.button!==0) return;
+      const r=svg.getBoundingClientRect(), k=850/r.width, y0=(ev.clientY-r.top)*k; if(y0<0||y0>1100) return;
+      const key=y0<g.hBot+(g.bodyTop-g.hBot)/2?'topSpace':'headGap', start=G.mn[key], [,,,mn,mx]=rangeOf('mn',key);
+      mnDrag=key==='topSpace'?'head':'body'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
+      const move=e=>{ const v=Math.min(mx,Math.max(mn,Math.round((start+((e.clientY-r.top)*k-y0))/2)*2)); if(v!==G.mn[key]){ G.mn[key]=v; render(); sync(); } };
+      const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); };
+      cv.addEventListener('pointermove',move); cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); overlay(); return; }
+    selectEl(pick(ev)); ev.preventDefault(); });
+  cv.addEventListener('pointerenter',()=>{ mnHover=true; if(cur==='mn') overlay(); });
+  cv.addEventListener('pointerleave',()=>{ mnHover=false; if(cur==='mn'&&!mnDrag) overlay(); });
+  cv.addEventListener('pointermove',ev=>{ if(cur!=='mn'){ cv.style.cursor=''; return; } if(mnDrag) return; const svg=svgEl(), g=LAST.guides; if(!svg||!g) return;
+    const r=svg.getBoundingClientRect(), y=(ev.clientY-r.top)*850/r.width; cv.style.cursor=(y>=0&&y<=1100)?'ns-resize':''; });
   document.addEventListener('keydown',ev=>{
     const tg=ev.target.tagName; if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA') return;
     if(cur==='mn'||ev.metaKey||ev.ctrlKey) return;
@@ -1719,10 +1917,10 @@ function resizeSel(m){
   window.addEventListener('resize',()=>{ if(now()>max()) setW(max()); overlay(); });
 })();
 
-function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,menuMode,links:[...LINKS]})); }catch(e){} }
+function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,menuMode,links:[...LINKS]})); }catch(e){} storeMenu(); }
 function restore(){ try{ const v=JSON.parse(localStorage.getItem('meme10_last')||'null'); if(!v) return;
   S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(['text','docs','sheet','boxes'].includes(v.menuMode)) menuMode=v.menuMode; }catch(e){} }
-restore(); loadVersions();
+restore(); loadVersions(); loadMenus();
 { const h=decodeURIComponent(location.hash.slice(1)); if(h==='menu') cur='mn'; else if(LAYOUTS[h]) cur=h; else if(cur==='mn' && h!=='mn') cur='1b';
   // Keep the address in step with what is shown, so the top nav underlines the right tab.
   history.replaceState(null,'','#'+(cur==='mn'?'menu':cur)); window.dispatchEvent(new HashChangeEvent('hashchange')); }
