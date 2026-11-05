@@ -85,6 +85,10 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .mcard .mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.panel .mcard .mhead .mk{margin:0}
 .panel .mdish .mrow{display:grid;grid-template-columns:1fr 76px 30px;gap:8px;align-items:center}
 .panel .madd{margin-top:10px}
+/* the row a selected line on the menu page belongs to lights up for a moment */
+.panel .row2.flash{animation:rowflash 1.8s ease-out;border-radius:6px}
+@keyframes rowflash{0%,30%{background:#dbe8fb;box-shadow:0 0 0 6px #dbe8fb}100%{background:transparent;box-shadow:0 0 0 6px transparent}}
+#canvas:focus{outline:none}
 .popmenu{position:fixed;z-index:100;list-style:none;margin:0;padding:4px;background:#fff;border:1px solid #d9d1c6;border-radius:8px;box-shadow:0 8px 24px rgba(43,39,36,.16);min-width:210px;font:14px "Helvetica Neue",Helvetica,Arial,sans-serif}
 .popmenu button{display:block;width:100%;text-align:left;border:none;border-radius:5px;background:none;padding:8px 10px;font:inherit;color:#2b2724;cursor:pointer}
 .popmenu button:hover,.popmenu button:focus-visible{background:#efe9df;outline:none}
@@ -316,13 +320,13 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 
 <div class="app">
   <div class="stage">
-    <div class="canvas" id="canvas"></div>
+    <div class="canvas" id="canvas" tabindex="-1"></div>
     <div class="bar">
       <button class="primary" id="btnPdf">Export PDF</button>
       <button id="btnSvg" class="only-full">Download SVG</button>
       <button id="btnPng">Download PNG</button>
       <span class="sep only-full" aria-hidden="true"></span>
-      <label class="only-full" style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="gd"> Show center lines</label><span class="hint only-full" id="selInfo"></span><span class="hint" id="pdfHint" style="flex-basis:100%">PDF: in the window that opens, choose “Save as PDF”, set Margins to “None”, and turn on “Background graphics”.</span>
+      <label class="only-full" style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="gd"> Show center lines</label><span class="hint" id="selInfo" aria-live="polite" style="font-weight:600;color:var(--ink);flex-basis:100%;min-height:1.5em;order:-1"></span><span class="hint" id="pdfHint" style="flex-basis:100%">PDF: in the window that opens, choose “Save as PDF”, set Margins to “None”, and turn on “Background graphics”.</span>
     </div>
   </div>
   <div class="grip" id="grip" tabindex="0" role="separator" aria-orientation="vertical" aria-label="Sidebar width" title="Drag to make the sidebar wider or narrower. Double-click to reset."></div>
@@ -336,8 +340,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=20;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=21;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 21','Menu page: every blue line can be dragged, including the left and right margins and the bottom margin. Click a line to select it: its setting lights up in the panel, and the arrow keys move it (Shift for 10). The line under the page says what you are moving and by how much, in Simple too.'],
  ['v26 · 20','Menu page: drag a dish price left or right on the page (all prices move together); pull it up to the names and it sits right after each name. “A dish’s own price” in Look does the same. With the Header tab’s header and its colored band, drag the bottom edge of the band (or use Header height) to make it taller or shorter. The menus bar is lighter.'],
  ['v26 · 19','Tidier Menu panel: your menus are a bar at the top (pick a menu or make a new one, Save to my computer, and ⋯ for the rest); the four ways to change the words sit in one row; Edit in boxes has one ⋯ per dish and per section instead of rows of buttons; shorter labels and help. The menu header can no longer overlap: the logo stops at the biggest size that fits beside the tagline, and says so. The Header tab warns when its pieces are wider than the header.'],
  ['v26 · 18','Menu page: margins like the Google Docs ruler (top, where the menu text starts, left and right, bottom), and you can drag the menu text or the header up and down on the page; a bigger logo now pushes the text down instead of crowding it; space between lines, dishes and sections; “Spread out to fill the page” so there is no big blank space at the bottom; menus made before this look exactly the same until you change something; text sizes in points for section names, dish names and what’s in them. “Your menus”: make a new menu (for example Desserts) without losing the others, and save a menu to your computer as a text file you can read, then open it again. The page header now says where it comes from (this page, or the Header tab), with a small picture of each, and the Header tab says when your menus use it.'],
@@ -1930,22 +1935,67 @@ function dragPrice(ev,cv,k){
       if(isFinite(room)&&v>room){ mode='edge'; g.pricePos='edge'; g.priceIn=0; g.priceGap=14; base=0; from=e.clientX; buildPanel(); render(); return; }
       if(v!==g.priceGap){ g.priceGap=v; render(); sync(); } }
   };
-  const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); };
+  const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); showMenuRow('price'); };
   cv.addEventListener('pointermove',move); cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); overlay();
 }
-/* Menu page: margin lines (like the ruler in Google Docs) show while the pointer is over the page,
-   and dragging moves the menu text (below the header) or the header (top margin) up and down. */
-let mnHover=false, mnDrag=null, mnNearBand=false;
+/* Menu page: the margin lines (like the ruler in Google Docs) show while the pointer is over the page.
+   Every line can be grabbed and dragged, or clicked to select it (then the arrow keys move it, Shift for 10):
+   top of the header, bottom of the header's band, where the menu text starts, left and right margins, bottom margin.
+   A dish price can be dragged left or right too. */
+let mnHover=false, mnDrag=null, mnHot=null, mnSel=null;
+// what each line changes: setting, which way it moves, its name, and the row in the panel that sets it
+const MN_H={
+  head:{key:'topSpace',axis:'y',sign:1,name:'Top margin',row:'Top',sec:'spacing'},
+  body:{key:'headGap',axis:'y',sign:1,name:'Menu text starts below the header',row:'Under the header',sec:'spacing'},
+  band:{key:'hdH',axis:'y',sign:1,name:'Header height',row:'Header height',sec:'order'},
+  sideL:{key:'side',axis:'x',sign:1,name:'Left and right margins',row:'Left and right',sec:'spacing'},
+  sideR:{key:'side',axis:'x',sign:-1,name:'Left and right margins',row:'Left and right',sec:'spacing'},
+  bottom:{key:'bottom',axis:'y',sign:-1,name:'Bottom margin',row:'Bottom',sec:'spacing'},
+  price:{key:'price',axis:'x',sign:1,name:'Dish prices',row:'A dish’s own price',sec:'look'}};
+// the value a line gets when it has moved by `delta` page units from where it started (`start`)
+function handleValue(h,start,delta){
+  const H=MN_H[h], g=LAST.guides||{}, sp=rangeOf('mn',H.key)||[0,0,0,-1e9,1e9];
+  let v=h==='band'?start+2*delta/(g.bandU||1):start+H.sign*delta;
+  return Math.min(sp[4],Math.max(sp[3],Math.round(v)));
+}
+function menuHit(ev){
+  const svg=svgEl(), g=LAST.guides; if(!svg||!g) return null;
+  const r=svg.getBoundingClientRect(), k=850/r.width, x=(ev.clientX-r.left)*k, y=(ev.clientY-r.top)*k, t=8*k;
+  if(x<-t||x>850+t||y<-t||y>1100+t) return null;
+  if(ev.target.closest&&ev.target.closest('[data-pr]')) return 'price';
+  if(g.bandU&&Math.abs(y-g.hBot)<t) return 'band';
+  if(Math.abs(x-g.side)<t) return 'sideL';
+  if(Math.abs(x-(850-g.side))<t) return 'sideR';
+  if(Math.abs(y-g.bottom)<t) return 'bottom';
+  return y<g.hBot+(g.bodyTop-g.hBot)/2?'head':'body';
+}
 function menuGuides(svg){
-  const g=LAST.guides; if(!g||!(mnHover||mnDrag||document.getElementById('gd').checked)) return;
+  const g=LAST.guides; if(!g||!(mnHover||mnDrag||mnSel||document.getElementById('gd').checked)) return;
   const k=850/svg.getBoundingClientRect().width, BL='#1f6fd1', d=`${5*k} ${4*k}`;
-  line(svg,g.side,0,g.side,1100,BL,1*k,d,.5); line(svg,850-g.side,0,850-g.side,1100,BL,1*k,d,.5);
-  line(svg,0,g.bottom,850,g.bottom,BL,1*k,d,.5);
-  line(svg,0,g.hTop,850,g.hTop,BL,(mnDrag==='head'?2:1)*k,d,mnDrag==='head'?1:.5);
-  if(g.bandU) line(svg,0,g.hBot,850,g.hBot,BL,(mnDrag==='band'||mnNearBand?3:1.4)*k,mnDrag==='band'||mnNearBand?null:d,mnDrag==='band'||mnNearBand?1:.75);
-  line(svg,0,g.bodyTop,850,g.bodyTop,BL,(mnDrag==='body'?2:1.4)*k,mnDrag==='body'?null:d,mnDrag==='body'?1:.75);
-  const info=document.getElementById('selInfo');
-  if(info) info.textContent=mnDrag==='band'||mnNearBand?`Header height: ${G.hd.H} (drag the bottom edge up or down)`:mnDrag==='price'?(G.mn.pricePos==='name'?`Prices: ${G.mn.priceGap} after the name`:`Prices: ${G.mn.priceIn} in from the right edge`):mnDrag==='head'?`Top margin: ${G.mn.topSpace}`:mnDrag==='body'?`Menu text starts ${G.mn.headGap} below the header`:'Drag the menu text or the header up or down to move it, or a price left or right.';
+  const on=h=>[mnDrag,mnHot,mnSel].some(x=>x===h||(h.startsWith('side')&&x&&x.startsWith('side')));
+  const ln=(h,x1,y1,x2,y2,base)=>{ const o=on(h); line(svg,x1,y1,x2,y2,BL,(o?2.6:base)*k,o?null:d,o?1:.6); };
+  ln('sideL',g.side,0,g.side,1100,1); ln('sideR',850-g.side,0,850-g.side,1100,1);
+  ln('bottom',0,g.bottom,850,g.bottom,1);
+  ln('head',0,g.hTop,850,g.hTop,1);
+  if(g.bandU) ln('band',0,g.hBot,850,g.hBot,1.4);
+  ln('body',0,g.bodyTop,850,g.bodyTop,1.4);
+  const info=document.getElementById('selInfo'); if(!info) return;
+  const h=mnDrag||mnSel||mnHot, H=h&&MN_H[h];
+  const val=h==='price'?(G.mn.pricePos==='name'?`${G.mn.priceGap} after the name`:`${G.mn.priceIn} in from the right edge`):H?Math.round(get(H.key)):'';
+  info.textContent=H?`${H.name}: ${val}`+(mnSel===h&&!mnDrag?` · arrow keys move it (Shift for 10), Esc to let go`:` · drag to move it, or click to select it`)
+    :'Drag any blue line to move it: the margins, the top of the header, or where the menu text starts. Or drag a price left or right.';
+}
+// open the panel section that holds a line's setting and point at its row
+function showMenuRow(h){
+  const H=MN_H[h]; if(!H) return;
+  if(!OPEN.mn) OPEN.mn=new Set();
+  if(!OPEN.mn.has(H.sec)){ OPEN.mn.add(H.sec); buildPanel(); }
+  const row=[...panel.querySelectorAll('.row2')].find(r=>{ const l=r.querySelector('label'); return l&&l.textContent.trim()===H.row; });
+  if(row){ row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); row.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+}
+function menuNudge(h,delta){
+  if(h==='price'){ const g=G.mn; if(g.pricePos==='name') g.priceGap=Math.max(8,Math.min(200,(g.priceGap??14)+delta)); else g.priceIn=Math.max(0,Math.min(300,(g.priceIn||0)-delta)); render(); sync(); return; }
+  const H=MN_H[h], v=handleValue(h,get(H.key),delta); if(v!==get(H.key)){ put(H.key,v); render(); sync(); }
 }
 function pick(ev){
   const svg=svgEl(); if(!svg||cur==='mn') return null;
@@ -1994,28 +2044,28 @@ function resizeSel(m){
   // no dragging: clicking a part only selects it; the keyboard moves it
   const cv=document.getElementById('canvas');
   cv.addEventListener('pointerdown',ev=>{
-    if(cur==='mn'){ const svg=svgEl(), g=LAST.guides; if(!svg||!g||ev.button!==0) return;
-      const r=svg.getBoundingClientRect(), k=850/r.width, y0=(ev.clientY-r.top)*k; if(y0<0||y0>1100) return;
-      if(ev.target.closest&&ev.target.closest('[data-pr]')){ dragPrice(ev,cv,k); return; }
-      if(g.bandU&&Math.abs(y0-g.hBot)<14){   // the bottom edge of the header's band: its height (the Header tab's Height)
-        const H0=G.hd.H, [,,,mn_,mx_]=rangeOf('mn','hdH')||[0,0,0,80,400]; mnDrag='band'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
-        // the logo stays put (it starts at the top margin), so the band grows by half of the new height below it
-        const move=e=>{ const v=Math.min(mx_,Math.max(mn_,Math.round(H0+2*((e.clientY-r.top)*k-y0)/g.bandU))); if(v!==G.hd.H){ G.hd.H=v; render(); sync(); } };
-        const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); };
-        cv.addEventListener('pointermove',move); cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); overlay(); return; }
-      const key=y0<g.hBot+(g.bodyTop-g.hBot)/2?'topSpace':'headGap', start=G.mn[key], [,,,mn,mx]=rangeOf('mn',key);
-      mnDrag=key==='topSpace'?'head':'body'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
-      const move=e=>{ const v=Math.min(mx,Math.max(mn,Math.round((start+((e.clientY-r.top)*k-y0))/2)*2)); if(v!==G.mn[key]){ G.mn[key]=v; render(); sync(); } };
-      const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); };
+    if(cur==='mn'){ if(ev.button!==0) return; const h=menuHit(ev);
+      if(!h){ if(mnSel){ mnSel=null; overlay(); } return; }
+      mnSel=h; cv.focus({preventScroll:true});
+      if(h==='price'){ const r=svgEl().getBoundingClientRect(); dragPrice(ev,cv,850/r.width); return; }
+      const H=MN_H[h], r=svgEl().getBoundingClientRect(), k=850/r.width, start=get(H.key), p0=H.axis==='x'?ev.clientX:ev.clientY;
+      mnDrag=h; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
+      const move=e=>{ const v=handleValue(h,start,((H.axis==='x'?e.clientX:e.clientY)-p0)*k); if(v!==get(H.key)){ put(H.key,v); render(); sync(); } };
+      const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); showMenuRow(h); };
       cv.addEventListener('pointermove',move); cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); overlay(); return; }
     selectEl(pick(ev)); ev.preventDefault(); });
   cv.addEventListener('pointerenter',()=>{ mnHover=true; if(cur==='mn') overlay(); });
-  cv.addEventListener('pointerleave',()=>{ mnHover=false; if(cur==='mn'&&!mnDrag) overlay(); });
-  cv.addEventListener('pointermove',ev=>{ if(cur!=='mn'){ cv.style.cursor=''; return; } if(mnDrag) return; const svg=svgEl(), g=LAST.guides; if(!svg||!g) return;
-    const r=svg.getBoundingClientRect(), y=(ev.clientY-r.top)*850/r.width; cv.style.cursor=ev.target.closest&&ev.target.closest('[data-pr]')?'ew-resize':(y>=0&&y<=1100)?'ns-resize':'';
-    const near=g.bandU&&Math.abs(y-g.hBot)<14; if(near!==mnNearBand){ mnNearBand=near; overlay(); } });
+  cv.addEventListener('pointerleave',()=>{ mnHover=false; mnHot=null; if(cur==='mn'&&!mnDrag) overlay(); });
+  cv.addEventListener('pointermove',ev=>{ if(cur!=='mn'){ cv.style.cursor=''; return; } if(mnDrag) return;
+    const h=menuHit(ev); cv.style.cursor=!h?'':MN_H[h].axis==='x'?'ew-resize':'ns-resize';
+    const hot=['head','body'].includes(h)?null:h; if(hot!==mnHot){ mnHot=hot; overlay(); } });
   document.addEventListener('keydown',ev=>{
     const tg=ev.target.tagName; if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA') return;
+    if(cur==='mn'&&mnSel&&!ev.metaKey&&!ev.ctrlKey){
+      if(ev.key==='Escape'){ mnSel=null; overlay(); return; }
+      const H=MN_H[mnSel], dir=H.axis==='x'?{ArrowLeft:-1,ArrowRight:1}[ev.key]:{ArrowUp:-1,ArrowDown:1}[ev.key];
+      if(dir){ ev.preventDefault(); menuNudge(mnSel,dir*(ev.shiftKey?10:1)); }
+      return; }
     if(cur==='mn'||ev.metaKey||ev.ctrlKey) return;
     if(ev.key==='Tab'&&sel){ const ps=partsHere(); if(!ps.length) return; ev.preventDefault();
       const i=ps.indexOf(sel); selectEl(ps[(i+(ev.shiftKey?-1:1)+ps.length)%ps.length]); return; }
