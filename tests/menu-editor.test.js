@@ -15,6 +15,9 @@ async function fresh(browser) {
   await page.reload();
   return page;
 }
+// compare menus without caring about key order
+const norm = v => Array.isArray(v) ? v.map(norm) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, norm(v[k])])) : v;
+const same = (a, b) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
 const menu = page => page.evaluate(() => JSON.parse(JSON.stringify(M)));
 // DOM-level clicks and typing: the Menu words section may be folded shut, which is fine for these checks
 const click = (page, sel, text) => page.evaluate(([sel, text]) => {
@@ -137,6 +140,102 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ok(/is a PDF/.test(msg) && /meme on 10 menu\.txt/.test(msg), 'open: a PDF gets a clear explanation');
     msg = await pick('menu.png', 'image/png', 'x');
     ok(/picture of the menu/.test(msg), 'open: a picture gets a clear explanation');
+    await page.close();
+  }
+
+  // ---- Structure: per-section columns, subheadings, choices — kept by every way of editing
+  {
+    const page = await fresh(browser);
+    const RICH = [
+      { title: '', price: '', items: [{ sub: 'Lunch', align: 'center' }] },
+      { title: 'Tapas', price: '', cols: 2, items: [
+        { name: 'Shipudim', desc: 'Grilled skewers, served with pita', price: '', opts: [{ name: 'Chicken', price: '24' }, { name: 'Lamb kebab', price: '28' }] },
+        { name: 'Hummus', desc: 'Chickpeas, tahini, olive oil', price: '14', opts: [{ name: 'Falafel', price: '18' }, { name: 'Lamb', price: '22' }] },
+        { sub: 'From the grill', align: 'left' },
+        { name: 'Halloumi', desc: 'Honey, za’atar', price: '12' },
+        { name: 'Merguez', desc: 'Harissa', price: '13' }] },
+      { title: 'Salads', price: '', cols: 1, items: [
+        { sub: 'Small plates', align: 'right' },
+        { name: 'Fattoush', desc: 'Pita, sumac, greens', price: '12' }] },
+      { title: 'Beers', price: '10', items: [{ name: 'Pilsner', desc: '', price: '' }] },
+    ];
+    await page.evaluate(m => { M = JSON.parse(JSON.stringify(m)); buildPanel(); render(); }, RICH);
+    ok(same(await menu(page), RICH), 'structure: menu set');
+    for (const m of ['Typing', 'Google Docs', 'Google Sheets', 'Boxes', 'Typing', 'Boxes']) {
+      await mode(page, m);
+      if (m === 'Typing' || m === 'Google Docs') await type(page, '#menuEditor textarea', '', true);   // re-read the box
+      ok(same(await menu(page), RICH), `structure: kept after ${m}`);
+    }
+    // Google Sheets: copy the rows and paste them back
+    await mode(page, 'Google Sheets');
+    const tsv = await page.evaluate(() => toTSV(menuRows()));
+    await type(page, '#menuEditor textarea', tsv);
+    ok(same(await menu(page), RICH), 'structure: kept through a Google Sheet (rows copied and pasted back)');
+    // saved file → opened again
+    const back = await page.evaluate(() => readMenuFile(menuFileText(), 'x.txt').words);
+    ok(same(back, RICH), 'structure: kept through Save to my computer → Open');
+    // drawn on the page
+    const svg = await page.$eval('#canvas svg', e => e.outerHTML);
+    ok(svg.includes('>LUNCH<') && svg.includes('text-anchor="middle"') && svg.includes('>FROM THE GRILL<'), 'drawn: subheadings, centered one included');
+    ok(svg.includes('>LAMB KEBAB<') && svg.includes('>28<') && svg.includes('>CHICKEN<'), 'drawn: choices and their prices');
+    const xs = await page.$$eval('#canvas svg text', ts => ts.map(t => [t.textContent, +t.getAttribute('x')]));
+    const x = n => (xs.find(t => t[0] === n) || [])[1];
+    ok(x('HALLOUMI') !== x('MERGUEZ'), 'drawn: Tapas in two columns');
+    await page.close();
+  }
+
+  // ---- Boxes: column buttons, subheadings, choices, duplicate a section
+  {
+    const page = await fresh(browser);
+    await mode(page, 'Boxes');
+    await page.evaluate(() => { G.mn.columns = 2; render(); });
+    await click(page, '.mcard:nth-of-type(1) .mcols button', '1 column');
+    let m = await menu(page);
+    ok(m[0].cols === 1 && m[1].cols === undefined, 'boxes: one section’s columns change, the others don’t');
+    await click(page, '.mcard:nth-of-type(1) button', '+ Add a subheading');
+    await type(page, '#menuEditor input[aria-label="Subheading"]', 'Classics');
+    await click(page, '.msub .mcols button', 'Center');
+    m = await menu(page);
+    ok(same(m[0].items[m[0].items.length - 1], { sub: 'Classics', align: 'center' }), 'boxes: subheading added, typed and centered');
+    await click(page, '.mcard:nth-of-type(2) .mdish button', '+ Add a choice');
+    await click(page, '.mcard:nth-of-type(2) .mdish button', '+ Add a choice');
+    await type(page, '#menuEditor input[aria-label="Dish 1, choice 1"]', 'Draft');
+    await type(page, '#menuEditor input[aria-label="Dish 1, choice 2"]', 'Bottle');
+    await type(page, '#menuEditor input[aria-label="Dish 1, choice 2 price"]', '8');
+    await click(page, '.dots[aria-label="Options for choice 2"]');
+    await click(page, '.popmenu button', 'Move up');
+    m = await menu(page);
+    ok(same(m[1].items[0].opts, [{ name: 'Bottle', price: '8' }, { name: 'Draft', price: '' }]), 'boxes: choices added, priced and moved');
+    await click(page, '.dots[aria-label="Options for choice 1"]');
+    await click(page, '.popmenu button', 'Delete this choice');
+    await click(page, '.popmenu button', 'Click again to delete this choice');
+    ok((await menu(page))[1].items[0].opts.length === 1, 'boxes: choice deleted');
+    // duplicate Cocktails
+    const before = await menu(page);
+    await click(page, '.mcard:nth-of-type(1) .dots[aria-label="Section options"]');
+    await click(page, '.popmenu button', 'Duplicate this section');
+    m = await menu(page);
+    ok(m.length === 3 && m[1].title === 'Cocktails copy' && same({ ...m[1], title: 'x' }, { ...before[0], title: 'x' }), 'duplicate: a full copy right after the original, with its columns');
+    await type(page, '#menuEditor .mcard:nth-of-type(2) input[aria-label="Section name"]', 'Mocktails');
+    await click(page, '.mcard:nth-of-type(2) .mcols button', '2 columns');
+    m = await menu(page);
+    ok(m[1].title === 'Mocktails' && m[1].cols === 2 && same(m[0], before[0]) && same(m[2], before[1]), 'duplicate: renaming and changing the copy leaves the others alone');
+    await click(page, '.mundo'); await click(page, '.mundo'); await click(page, '.mundo');
+    ok(same(await menu(page), before), 'duplicate: undo removes the copy');
+    await page.close();
+  }
+
+  // ---- Google Docs: bullets under a dish are its choices; a label at the top is a subheading
+  {
+    const page = await fresh(browser);
+    await page.evaluate(() => { M = BLANK_MENU(); buildPanel(); render(); });
+    await mode(page, 'Google Docs');
+    const doc = '<h1 style="text-align:center">Lunch</h1><h2>Grill</h2><p><b>Shipudim</b></p><p>Grilled skewers with pita</p><ul><li><p>Chicken 24</p></li><li><p>Lamb 28</p></li></ul><p><b>Kebab</b></p><p>Spiced beef, onion</p><h2>Salads</h2><p><b>Fattoush</b></p><p>Pita, sumac</p>';
+    await paste(page, '#menuEditor textarea', doc, 'x');
+    const m = await menu(page);
+    ok(same(m[0].items, [{ sub: 'Lunch', align: 'center' }]), 'docs: label at the top is a centered subheading');
+    ok(m[1].title === 'Grill' && same(m[1].items[0].opts, [{ name: 'Chicken', price: '24' }, { name: 'Lamb', price: '28' }]) && m[1].items[1].name === 'Kebab', 'docs: bullets under a dish are its choices');
+    ok(m[2] && m[2].title === 'Salads', 'docs: the sections are still sections');
     await page.close();
   }
 
