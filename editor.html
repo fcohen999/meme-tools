@@ -354,8 +354,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=27;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=28;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 28','Menu: a dish’s choices (like Chicken or Lamb) are now in bold Bodoni, in normal letters instead of all caps, so they stand apart from the dish names.'],
  ['v26 · 27','Menu: a dish’s choices can sit side by side on one line (Chicken 18 · Lamb 22) instead of one per line: use the One per line / Side by side buttons under its choices in Boxes, or type them on one line with “ · ” between them. A section’s own price (like Beers 10) can sit next to the section name or at the right edge, lined up with the dish prices: Look → Prices → “A section’s price”, or drag it left or right on the page.'],
  ['v26 · 26','Edit in boxes: the ↑ ↓ arrows are back on every section, dish, subheading and choice (a dish at the top or bottom of its section moves into the next one). The first box is “Menu title, under the logo”, with Left / Center / Right. The ⋯ menus keep Duplicate and Delete. This list of changes is up to date again.'],
  ['v26 · 25','Menu page: Look → Layout → Page can be “Two half pages”: two menus side by side on one sheet, each with its own header, to print and cut down the middle. The right half can be any saved menu or the same one again, with a light dashed cutting line you can turn off.'],
@@ -605,7 +606,7 @@ function menuLayout(S,G,M,top,m){
   const step=19*sc*big*ln, toDesc=21*sc*big*ln, itemGap=34*sc*big*(G.dishSpace||100)/100*m, secGap=48*sc*big*(G.secSpace||100)/100*m;
   const wrap=(t,w,fam,wt,sz,ls)=>{ const words=String(t||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean); const lines=[]; let c=''; words.forEach(wd=>{ const tr=c?c+' '+wd:wd; if(c&&measure(tr,fam,wt,sz,ls)>w){lines.push(c);c=wd;} else c=tr; }); if(c) lines.push(c); return lines; };
   const nextTo=G.pricePos==='name', priceIn=G.priceIn||0, gapP=G.priceGap??14;
-  const nls=1.7*ns/14.5, ols=1.7*ds_/14.5, sls=3.4*ss/12, hls=3.4*sc*hs/(12*sc), optIn=14*sc;
+  const nls=1.7*ns/14.5, sls=3.4*ss/12, hls=3.4*sc*hs/(12*sc), optIn=14*sc;
   const usedDish=it=>!isSub(it)&&((it.name||'').trim()||(it.desc||'').trim()||(it.opts||[]).some(o=>(o.name||'').trim()));
   let y=top, out='', end=top, first=true, room=Infinity;   // room: how far a price can move before it reaches a name (or the edge)
   // a price at the right edge of its column (moved in by priceIn), or right after the name (priceGap after it)
@@ -632,12 +633,12 @@ function menuLayout(S,G,M,top,m){
       const nm=wrap((it.name||'').trim().toUpperCase(),Math.max(40,nmW),dFam,500,ns,nls);
       if(pr&&nm.length) room=Math.min(room,colW-measure(nm[0],dFam,500,ns,nls)-pw);
       const ds=wrap(it.desc,colW,'Bodoni Moda',400,ds_,0);
-      // choices: one line each under the description, a little indented, each with its own price
+      // choices: one line each under the description (or side by side), a little indented, in bold Bodoni, each with its own price
       const opts=(it.opts||[]).filter(o=>(o.name||'').trim()||(o.price||'').trim()).map(o=>{
         const op=(o.price||'').trim().replace(/^\$/,''), opw=op?measure(op,'Bodoni Moda',400,ps,0):0;
-        const t=wrap((o.name||'').trim().toUpperCase(),Math.max(40,colW-optIn-(op?(nextTo?opw+gapP:priceIn+70*sc):0)),dFam,400,ds_,ols)[0]||'';
-        if(op&&t&&!it.optsInline) room=Math.min(room,colW-optIn-measure(t,dFam,400,ds_,ols)-opw);
-        return {t,op,tw:t?measure(t,dFam,400,ds_,ols):0,opw};
+        const t=wrap((o.name||'').trim(),Math.max(40,colW-optIn-(op?(nextTo?opw+gapP:priceIn+70*sc):0)),'Bodoni Moda',700,ds_,0)[0]||'';
+        if(op&&t&&!it.optsInline) room=Math.min(room,colW-optIn-measure(t,'Bodoni Moda',700,ds_,0)-opw);
+        return {t,op,tw:t?measure(t,'Bodoni Moda',700,ds_,0):0,opw};
       });
       // side by side: “NAME price · NAME price”, flowing onto a new line when the next one won't fit (a choice is never split)
       let rows=null;
@@ -687,11 +688,11 @@ function menuLayout(S,G,M,top,m){
           if(d.rows) d.rows.forEach((row,i)=>{ const oy=gy+d.o0+i*step, ox=xs[gi]+optIn;
             row.forEach(o=>{
               if(o.dx!==null) out+=`<text x="${f(ox+o.dx)}" y="${f(oy)}" text-anchor="middle" font-family='"Bodoni Moda", serif' font-size="${f(ps)}" font-weight="400" fill="${brand}">·</text>`;
-              if(o.t) out+=`<text x="${f(ox+o.x)}" y="${f(oy)}" font-family='${tagFam}' font-size="${f(ds_)}" font-weight="400" letter-spacing="${f(ols)}" fill="${ink}">${esc(o.t)}</text>`;
+              if(o.t) out+=`<text x="${f(ox+o.x)}" y="${f(oy)}" font-family='"Bodoni Moda", serif' font-size="${f(ds_)}" font-weight="700" fill="${ink}">${esc(o.t)}</text>`;
               if(o.op) out+=`<text x="${f(ox+o.px)}" y="${f(oy)}" font-family='"Bodoni Moda", serif' font-size="${f(ps)}" font-weight="400" fill="${brand}">${esc(o.op)}</text>`; }); });
           else d.opts.forEach((o,i)=>{ const oy=gy+d.o0+i*step, ox=xs[gi]+optIn;
-            if(o.t) out+=`<text x="${f(ox)}" y="${f(oy)}" font-family='${tagFam}' font-size="${f(ds_)}" font-weight="400" letter-spacing="${f(ols)}" fill="${ink}">${esc(o.t)}</text>`;
-            if(o.op) out+=priceEl(o.op,ox,rights[gi],oy,o.t?measure(o.t,dFam,400,ds_,ols):0); });
+            if(o.t) out+=`<text x="${f(ox)}" y="${f(oy)}" font-family='"Bodoni Moda", serif' font-size="${f(ds_)}" font-weight="700" fill="${ink}">${esc(o.t)}</text>`;
+            if(o.op) out+=priceEl(o.op,ox,rights[gi],oy,o.t?measure(o.t,'Bodoni Moda',700,ds_,0):0); });
           end=Math.max(end,gy+d.lastOff); gy+=d.h;
         });
         next=Math.max(next,gy);
