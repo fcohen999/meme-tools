@@ -189,21 +189,20 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     const page = await fresh(browser);
     await mode(page, 'Boxes');
     await page.evaluate(() => { G.mn.columns = 2; render(); });
-    await click(page, '.mcard:nth-of-type(1) .mcols button', '1 column');
+    await click(page, '.mcard:nth-of-type(2) .mcols button', '1 column');
     let m = await menu(page);
     ok(m[0].cols === 1 && m[1].cols === undefined, 'boxes: one section’s columns change, the others don’t');
-    await click(page, '.mcard:nth-of-type(1) button', '+ Add a subheading');
+    await click(page, '.mcard:nth-of-type(2) button', '+ Add a subheading');
     await type(page, '#menuEditor input[aria-label="Subheading"]', 'Classics');
     await click(page, '.msub .mcols button', 'Center');
     m = await menu(page);
     ok(same(m[0].items[m[0].items.length - 1], { sub: 'Classics', align: 'center' }), 'boxes: subheading added, typed and centered');
-    await click(page, '.mcard:nth-of-type(2) .mdish button', '+ Add a choice');
-    await click(page, '.mcard:nth-of-type(2) .mdish button', '+ Add a choice');
+    await click(page, '.mcard:nth-of-type(3) .mdish button', '+ Add a choice');
+    await click(page, '.mcard:nth-of-type(3) .mdish button', '+ Add a choice');
     await type(page, '#menuEditor input[aria-label="Dish 1, choice 1"]', 'Draft');
     await type(page, '#menuEditor input[aria-label="Dish 1, choice 2"]', 'Bottle');
     await type(page, '#menuEditor input[aria-label="Dish 1, choice 2 price"]', '8');
-    await click(page, '.dots[aria-label="Options for choice 2"]');
-    await click(page, '.popmenu button', 'Move up');
+    await page.evaluate(() => document.querySelectorAll('.mopt button[aria-label="Move this choice up"]')[1].click());
     m = await menu(page);
     ok(same(m[1].items[0].opts, [{ name: 'Bottle', price: '8' }, { name: 'Draft', price: '' }]), 'boxes: choices added, priced and moved');
     await click(page, '.dots[aria-label="Options for choice 1"]');
@@ -212,12 +211,12 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ok((await menu(page))[1].items[0].opts.length === 1, 'boxes: choice deleted');
     // duplicate Cocktails
     const before = await menu(page);
-    await click(page, '.mcard:nth-of-type(1) .dots[aria-label="Section options"]');
+    await click(page, '.mcard:nth-of-type(2) .dots[aria-label="Section options"]');
     await click(page, '.popmenu button', 'Duplicate this section');
     m = await menu(page);
     ok(m.length === 3 && m[1].title === 'Cocktails copy' && same({ ...m[1], title: 'x' }, { ...before[0], title: 'x' }), 'duplicate: a full copy right after the original, with its columns');
-    await type(page, '#menuEditor .mcard:nth-of-type(2) input[aria-label="Section name"]', 'Mocktails');
-    await click(page, '.mcard:nth-of-type(2) .mcols button', '2 columns');
+    await type(page, '#menuEditor .mcard:nth-of-type(3) input[aria-label="Section name"]', 'Mocktails');
+    await click(page, '.mcard:nth-of-type(3) .mcols button', '2 columns');
     m = await menu(page);
     ok(m[1].title === 'Mocktails' && m[1].cols === 2 && same(m[0], before[0]) && same(m[2], before[1]), 'duplicate: renaming and changing the copy leaves the others alone');
     await click(page, '.mundo'); await click(page, '.mundo'); await click(page, '.mundo');
@@ -236,6 +235,82 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ok(same(m[0].items, [{ sub: 'Lunch', align: 'center' }]), 'docs: label at the top is a centered subheading');
     ok(m[1].title === 'Grill' && same(m[1].items[0].opts, [{ name: 'Chicken', price: '24' }, { name: 'Lamb', price: '28' }]) && m[1].items[1].name === 'Kebab', 'docs: bullets under a dish are its choices');
     ok(m[2] && m[2].title === 'Salads', 'docs: the sections are still sections');
+    await page.close();
+  }
+
+  // ---- Two half pages on one sheet
+  {
+    const page = await fresh(browser);
+    // a second menu, “Drink specials”, with its own words and look
+    await page.evaluate(() => {
+      addMenu('Drink specials', [{ title: 'Specials', price: '', items: [{ name: 'Arak spritz', desc: 'Arak, soda, mint', price: '14' }] }], Object.assign(lookOf(G.mn), { menuBg: '#ffffff' }));
+      useMenu('Cocktails'); buildPanel(); render();
+    });
+    await click(page, '.row2 .seg button', 'Two half pages');
+    ok(await page.evaluate(() => G.mn.sheet === 'halves'), 'halves: picked from the panel');
+    ok(await page.$('#panel select[id] option[value="Drink specials"]') !== null, 'halves: right-half menu list shows the other menu');
+    await page.$eval('#panel .row2.two select', s => { s.value = 'Drink specials'; s.dispatchEvent(new Event('change')); });
+    const svg = await page.$eval('#canvas svg', e => e.outerHTML);
+    ok(svg.includes('translate(425 0)') && svg.includes('>ARAK SPRITZ<') && svg.includes('>MÉMÉ’S MANHATTAN<'), 'halves: left is this menu, right is Drink specials');
+    ok(svg.includes('x1="425"') && svg.includes('stroke-dasharray'), 'halves: dashed cutting line down the middle');
+    ok(svg.includes('fill="#ffffff"') && svg.includes('<rect width="425"'), 'halves: each half has its own page color');
+    const pos = await page.$$eval('#canvas svg text', ts => ts.map(t => { const b = t.getBBox(), m = t.getCTM(); return [t.textContent, m.e + b.x * m.a, m.e + (b.x + b.width) * m.a]; }));
+    const leftOK = pos.filter(p => p[1] < 425 * 0.96).every(p => p[2] <= 425 + 1);
+    ok(leftOK, 'halves: nothing on the left half crosses the cutting line');
+    ok(pos.filter(p => /KITCHEN/.test(p[0])).length === 2, 'halves: each half has its own header');
+    // saved file keeps it; header picture stays one page
+    const r = await page.evaluate(() => readMenuFile(menuFileText(), 'x.txt').look);
+    ok(r.sheet === 'halves' && r.rightMenu === 'Drink specials' && r.cutLine === true, 'halves: kept in the saved file');
+    // renaming the right-hand menu keeps it in the right half
+    await page.evaluate(() => { useMenu('Drink specials'); buildPanel(); render(); });
+    await click(page, '.mbar .dots'); await click(page, '.popmenu button', 'Rename…');
+    await page.$eval('.mform input', i => { i.value = 'Bar specials'; }); await click(page, '.mform button.primary');
+    await page.evaluate(() => { useMenu('Cocktails'); buildPanel(); render(); });
+    ok(await page.evaluate(() => G.mn.rightMenu === 'Bar specials') && (await page.$eval('#canvas svg', e => e.outerHTML)).includes('>ARAK SPRITZ<'), 'halves: renaming the right menu keeps it there');
+    await page.waitForTimeout(800);
+    await click(page, '.row2 .seg button', 'Whole page');
+    await page.waitForTimeout(800);
+    await click(page, '.mundo');
+    ok(await page.evaluate(() => G.mn.sheet === 'halves'), 'halves: Undo brings back two half pages');
+    await page.evaluate(() => { G.mn.sheet = 'full'; render(); });
+    ok(!(await page.$eval('#canvas svg', e => e.outerHTML)).includes('translate(425 0)'), 'whole page: back to one menu');
+    await page.close();
+  }
+
+  // ---- Boxes: ↑ ↓ arrows in view; the menu title under the logo is the first box
+  {
+    const page = await fresh(browser);
+    await mode(page, 'Boxes');
+    ok(await page.$eval('#menuEditor > .mcard', c => c.classList.contains('mtop')), 'title box: the first box is the menu title under the logo');
+    await page.evaluate(() => { document.querySelector('#menuEditor').closest('.acc').classList.add('open'); document.querySelector('#menuEditor input[aria-label="Menu title under the logo"]').focus(); });
+    await type(page, '#menuEditor input[aria-label="Menu title under the logo"]', 'Lunch');
+    await page.waitForTimeout(50);
+    let m = await menu(page);
+    ok(same(m[0], { title: '', price: '', items: [{ sub: 'Lunch', align: 'center' }] }) && m[1].title === 'Cocktails', 'title box: typing “Lunch” puts it under the logo, centered, above the sections');
+    ok((await page.$eval('#canvas svg', e => e.outerHTML)).includes('>LUNCH<'), 'title box: drawn on the page');
+    ok(await page.$eval('#menuEditor input[aria-label="Menu title under the logo"]', i => document.activeElement === i), 'title box: cursor stays in the box');
+    await click(page, '.mcard:nth-of-type(2) button[aria-label="Move this dish down"]');
+    m = await menu(page);
+    ok(m[1].items[0].name === 'Spicy Margarita' && m[1].items[1].name === 'Mémé’s Manhattan', 'arrows: ↓ moves a dish down');
+    await page.evaluate(() => { const d = document.querySelectorAll('.mcard:nth-of-type(2) button[aria-label="Move this dish down"]'); d[d.length - 1].click(); });
+    m = await menu(page);
+    ok(m[1].items.length === 11 && m[2].items[0].name === 'Amaro Carajillo', 'arrows: ↓ on the last dish moves it into the next section');
+    await click(page, '.mcard:nth-of-type(3) .mhead button[aria-label="Move this section up"]');
+    m = await menu(page);
+    ok(m[0].items[0].sub === 'Lunch' && m[1].title === 'Beers' && m[2].title === 'Cocktails', 'arrows: ↑ moves a section up, the title stays on top');
+    ok(await page.$eval('.mcard:nth-of-type(2) .mhead button[aria-label="Move this section up"]', b => b.disabled), 'arrows: the first section can’t go above the title');
+    await page.close();
+  }
+  // ---- Mom’s case: “Lunch” typed as a subheading at the bottom of the first section → ↑ moves it under the logo
+  {
+    const page = await fresh(browser);
+    await page.evaluate(() => { M = [{ title: 'woo', price: '', items: [{ name: '', desc: '' }, { sub: 'Lunch', align: 'center' }] }, { title: 'New section', price: '', items: [{ name: '', desc: '' }] }]; buildPanel(); render(); });
+    await mode(page, 'Boxes');
+    await click(page, 'button[aria-label="Move this subheading up"]');
+    await click(page, 'button[aria-label="Move this subheading up"]');
+    const m = await menu(page);
+    ok(same(m[0], { title: '', price: '', items: [{ sub: 'Lunch', align: 'center' }] }) && m[1].title === 'woo' && m[1].items.length === 1, 'subheading ↑ out of the first section becomes the menu title');
+    ok(await page.$eval('#menuEditor input[aria-label="Menu title under the logo"]', i => i.value) === 'Lunch', 'and it shows in the first box');
     await page.close();
   }
 

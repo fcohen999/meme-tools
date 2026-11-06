@@ -85,12 +85,16 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .mform{display:flex;gap:6px;margin:-2px 0 12px}.panel .mform input{flex:1;min-width:0}
 .panel .mcard .dots,.panel .mdish .dots{flex:none;width:30px;height:30px;padding:0;font-size:17px;line-height:1;color:var(--muted)}
 .panel .mcard .mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.panel .mcard .mhead .mk{margin:0}
-.panel .mdish .mrow{display:grid;grid-template-columns:1fr 76px 30px;gap:8px;align-items:center}
+.panel .mdish .mrow{display:grid;grid-template-columns:1fr 76px auto 30px;gap:8px;align-items:center}
 .panel .madd{margin-top:10px}
 .panel .madds{display:flex;flex-wrap:wrap;gap:8px}
+.panel .marrows{display:inline-flex;gap:2px}
+.panel .marrows button{width:30px;height:30px;padding:0;font-size:15px;line-height:1;color:var(--muted)}
+.panel .mtools{display:inline-flex;gap:6px;align-items:center}
+.panel .mcard.mtop{background:var(--hover)}
 .panel .mcols{display:flex;align-items:center;gap:10px;margin-top:8px}.panel .mcols .fl{margin:0}
-.panel .mdish .mrow.sub{grid-template-columns:1fr 30px}
-.panel .mdish .mrow.mopt{margin-top:6px;padding-left:16px;grid-template-columns:1fr 76px 30px}
+.panel .mdish .mrow.sub{grid-template-columns:1fr auto 30px}
+.panel .mdish .mrow.mopt{margin-top:6px;padding-left:16px;grid-template-columns:1fr 76px auto 30px}
 .panel .mdish .mopt input{font-size:13px!important}
 .panel .mdish button.madd-opt{margin-top:4px;padding:4px 0 0 16px;font-size:12.5px}
 .panel .msub>.fl{margin-bottom:4px}
@@ -350,7 +354,7 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=24;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=25;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
  ['v26 · 22','Menu page: when you point at, drag or select a line, the note under the page also says where the same setting is in the panel (for example “also in Margins and spacing → Bottom”).'],
  ['v26 · 21','Menu page: every blue line can be dragged, including the left and right margins and the bottom margin. Click a line to select it: its setting lights up in the panel, and the arrow keys move it (Shift for 10). The line under the page says what you are moving and by how much, in Simple too.'],
@@ -557,14 +561,14 @@ const tagPos=[['sub','Position']];
 const secColors=[['h','Colors','colors'],['swatches'],['sub','Your colors'],['color','accent','Oval'],['color','sqColor','Squiggle'],['color','ink','Text'],['color','bg','Background'],['check','transparent','Transparent background (no fill)']];
 // Option names shown on the buttons and lists (the saved value stays the same)
 const OPTNAME={onCase:{lowercase:'lowercase',caps:'CAPS'},squiggle:{A:'Style 1',B:'Style 2'},amp:{sans:'Plain &',Bodoni:'Bodoni &'},
-  oval:{'hand-drawn':'Hand-drawn',clean:'Clean line'},align:{left:'Left',center:'Center',right:'Right'},columns:{1:'1 column',2:'2 columns'},
+  oval:{'hand-drawn':'Hand-drawn',clean:'Clean line'},align:{left:'Left',center:'Center',right:'Right'},columns:{1:'1 column',2:'2 columns'},sheet:{full:'Whole page',halves:'Two half pages'},
   onWeight:{400:'400 Regular',500:'500 Medium',600:'600 Semibold',700:'700 Bold'},
   headAlign:{'spread across':'Spread out','together on the left':'Left','together in the center':'Center'},
   headColors:{menu:'Menu colors',header:'Header tab colors'},
   headSrc:{menu:'This page (one line)',mine:'The Header tab'},
   pricePos:{edge:'At the right edge',name:'Next to the name'}};
 // point sizes read “10.5 pt”
-['headPt','namePt','descPt'].forEach(k=>{ OPTNAME[k]={}; [7,7.5,8,8.5,8.64,9,9.5,10,10.08,10.44,10.5,11,11.5,12,13,14,15,16,18].forEach(v=>OPTNAME[k][v]=(Math.round(v*10)/10)+' pt'); });
+['headPt','namePt','descPt','subPt'].forEach(k=>{ OPTNAME[k]={}; [7,7.5,8,8.5,8.64,9,9.5,10,10.08,10.44,10.5,11,11.5,12,13,14,15,16,18].forEach(v=>OPTNAME[k][v]=(Math.round(v*10)/10)+' pt'); });
 const optName=(k,o)=>(OPTNAME[k]&&OPTNAME[k][o]!==undefined)?OPTNAME[k][o]:String(o);
 // What some color settings are called on each layout (they color different things)
 function colorLabel(k,lab){
@@ -589,7 +593,7 @@ const PTSIZES=[7,7.5,8,8.5,8.64,9,9.5,10,10.08,10.44,10.5,11,11.5,12,13,14,15,16
 // lay the dishes out from `top`; dish and section gaps are multiplied by m (used by “Spread out to fill the page”)
 function menuLayout(S,G,M,top,m){
   const sc=G.menuScale/100, ink=G.menuInk, brand=G.menuBrand;
-  const side=G.side??64, L=side, R=850-side, GAP=48, pageCols=+G.columns===2?2:1;
+  const side=G.side??64, L=side, R=(G._pw||850)-side, GAP=48, pageCols=+G.columns===2?2:1;
   const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
   const hs=(G.headPt||8.64)*PT*sc, ns=(G.namePt||10.44)*PT*sc, ds_=(G.descPt||10.08)*PT*sc, ss=(G.subPt||12)*PT*sc, ps=ns*16/14.5;
   const ln=(G.lineSpace||100)/100, big=Math.max(1,Math.max(ns,ds_)/(14.5*sc));
@@ -883,12 +887,12 @@ const LAYOUTS = {
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','subPt','Subheadings'],['spick','pricePos','A dish’s own price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',8,200,1,'',''],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['srange','hdH','Header height',80,400,1,'',''],
+    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','subPt','Subheadings'],['spick','pricePos','A dish’s own price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',8,200,1,'',''],['spick','sheet','Page'],['scheck','cutLine','Dashed line to cut along'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['srange','hdH','Header height',80,400,1,'',''],
       ['h','Margins and spacing'],['srange','topSpace','Top',0,200,2,'less','more'],['srange','headGap','Under the header',-40,300,2,'higher','lower'],['srange','side','Left and right',20,200,2,'less','more'],['srange','bottom','Bottom',20,200,2,'less','more'],['srange','lineSpace','Lines',70,200,5,'tighter','looser'],['srange','dishSpace','Dishes',50,300,5,'less','more'],['srange','secSpace','Sections',50,300,5,'less','more'],['scheck','fill','Spread out to fill the page'],
       ['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
     geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headSrc:'menu', headColors:'menu', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2',
-          headPt:8.64, namePt:10.44, descPt:10.08, subPt:12, topSpace:null, headGap:null, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:false, pricePos:'edge', priceIn:0, priceGap:14 },
+          headPt:8.64, namePt:10.44, descPt:10.08, subPt:12, topSpace:null, headGap:null, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:false, pricePos:'edge', priceIn:0, priceGap:14, sheet:'full', rightMenu:'', cutLine:true },
     // a getter, so the header settings change with “Header comes from”
     get panel(){ return [
       ['h','Menu words','words'],['menuedit'],
@@ -905,6 +909,9 @@ const LAYOUTS = {
       G.mn.pricePos==='name'?['range','priceGap','Space after the name',8,200,1]:['range','priceIn','In from the right edge',0,300,1],
       ['hint','Or drag a price left or right on the page. All the prices move together.'],
       ['sub','Layout'],
+      ['pick','sheet','Page',['full','halves']],
+      ...(G.mn.sheet==='halves'?[['rightmenu','Right half'],['check','cutLine','Dashed line to cut along'],
+        ['hint','Two menus side by side on one sheet, each with its own header: print it and cut down the middle. Each half keeps its own words and look; to change the right half, choose its menu at the top. In a half, sections are 1 column unless you give one its own.']]:[]),
       ['pick','columns','Columns',[2,1]],
       ['hint','For every section that hasn’t got its own. To give a section its own, use its 1 column / 2 columns buttons in Boxes, or write (1 column) or (2 columns) after its name.'],
       ['pick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],
@@ -939,7 +946,24 @@ const LAYOUTS = {
       ['h','Colors','colors'],
       ['color','menuBrand','Logo, headings, prices'],['color','menuInk','Dish names and tagline'],['color','menuBg','Page'],
     ]; },
+    // the page: one menu across the whole sheet, or two half-page menus side by side (cut down the middle)
     build(S,G){
+      const mn=LAYOUTS.mn;
+      if(G.sheet!=='halves') return mn.one(S,G,M,850);
+      const HW=425, half=g=>Object.assign({},g,{_pw:HW,columns:1});   // in a half, sections without their own setting are 1 column
+      const L=mn.one(S,half(G),M,HW);
+      // the right half: another saved menu with its own words and look (the header is shared), or this one again
+      const rn=G.rightMenu, rv=rn&&rn!==MENUS.current?MENUS.list[rn]:null;
+      const R=mn.one(S,half(rv?Object.assign({},G,lookOf(mn.geo),rv.look||{}):G),rv?(rv.M||[]):M,HW);
+      const cut=G.cutLine===false?'':`<line x1="${HW}" y1="0" x2="${HW}" y2="1100" stroke="${G.menuInk}" stroke-opacity="0.4" stroke-width="0.8" stroke-dasharray="6 5"/>`;
+      const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs>${L.body}<g transform="translate(${HW} 0)">${R.body.replace(/ data-pr="1"/g,'')}</g>${cut}</svg>`;
+      const rName=rv?rn:MENUS.current;
+      const overMsg=L.over&&R.over?'Both halves are longer than the page. Make the text smaller, or the margins and spacing smaller.'
+        :L.over?'The left half is longer than the page. Make the text smaller, or the margins and spacing smaller.'
+        :R.over?`The right half (“${rName}”) is longer than the page. Choose “${rName}” at the top and make its text or spacing smaller.`:'';
+      return Object.assign({},L,{svg,over:L.over||R.over,overMsg});
+    },
+    one(S,G,M,PW){
       const brand=G.menuBrand, ink=G.menuInk;
       const S2=Object.assign({},S,{ink:brand,accent:brand,sqColor:brand,bg:G.menuBg,transparent:false});
       const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
@@ -991,15 +1015,21 @@ const LAYOUTS = {
         head=`<g transform="translate(0 ${f(dy)})">${PIECES.filter(p=>seq.includes(p)).map(p=>draw[p]()).join('').replace(/ data-el="[^"]*"/g,'')}</g>`;
       }
       if(topM==null){ topM=64; hTop=hBot=topM; }
+      // a half page: the header is drawn smaller to fit between the margins (the Header tab's header, with its band, at half size)
+      if(PW<850&&head){
+        if(G.headSrc==='mine'){ const k2=PW/850; head=`<g transform="scale(${f(k2)})">${head}</g>`; hTop*=k2; hBot*=k2; bandU*=k2; }
+        else { const k2=(PW-2*HL)/(850-2*HL); head=`<g transform="translate(${f(HL)} ${f(topM)}) scale(${f(k2)}) translate(${f(-HL)} ${f(-topM)})">${head}</g>`; hBot=topM+(hBot-topM)*k2; }
+      }
       // the first section name sits its cap height below the start line
       const cap=(G.headPt||8.64)*PT*G.menuScale/100*0.72;
       if(gapM==null) gapM=oldBase-cap-hBot;
       const bodyTop=hBot+gapM, top=bodyTop+cap;
       const mt=menuSVG(S,G,M,top);
       const priceRoom=mt.room;
-      const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs><rect width="850" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}</svg>`;
-      return {W:816,H:1056,svg,over:mt.end>1100-(G.bottom??64)+8,fit:G.headSrc==='mine'?(wide?'The header’s pieces don’t fit across it, so some get cut off. On the Header tab, make the header wider, or the logo or tagline smaller.':''):fit?`The logo can’t get bigger than ${fit}% with the other pieces beside it, so it stops there. To go bigger, hide the tagline or squiggle, or make the side margins smaller.`:'',
-        priceRoom,guides:{bandU,hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
+      const body=`<rect width="${PW}" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}`;
+      const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs>${body}</svg>`;
+      return {W:816,H:1056,svg,body,over:mt.end>1100-(G.bottom??64)+8,fit:G.headSrc==='mine'?(wide?'The header’s pieces don’t fit across it, so some get cut off. On the Header tab, make the header wider, or the logo or tagline smaller.':''):fit?`The logo can’t get bigger than ${fit}% with the other pieces beside it, so it stops there. To go bigger, hide the tagline or squiggle, or make the side margins smaller.`:'',
+        priceRoom,guides:{pw:PW,bandU,hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
     }
   },
 };
@@ -1460,27 +1490,69 @@ function renderMenuEditor(){
   const btn=(label,fn,title)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=label; b.onclick=fn; if(title){ b.title=title; b.setAttribute('aria-label',title); } return b; };
   const fl=t=>{ const d=document.createElement('div'); d.className='fl'; d.textContent=t; return d; };
   const redo=()=>{ renderMenuEditor(); render(); };
+  // after typing the first letter of a new menu title: redraw the boxes, keeping the cursor in that box
+  const redoLater=()=>setTimeout(()=>{ renderMenuEditor(); const t=document.querySelector('#menuEditor input[aria-label="Menu title under the logo"]'); if(t){ t.focus(); t.setSelectionRange(t.value.length,t.value.length); } });
   const mv=(arr,i,d)=>{ const j=i+d; if(j<0||j>=arr.length) return; [arr[i],arr[j]]=[arr[j],arr[i]]; redo(); };
   // a row of buttons, one pressed: [[value,label],…]
   const seg=(aria,opts,now,pick)=>{ const g=document.createElement('div'); g.className='seg small'; g.setAttribute('role','group'); g.setAttribute('aria-label',aria);
     opts.forEach(([v,label])=>{ const b=btn(label,()=>{ if(v!==now) pick(v); }); b.setAttribute('aria-pressed',v===now); g.appendChild(b); }); return g; };
   const nameOf=t=>((t||'').trim()||'with no name');
+  // ↑ ↓ buttons, always in view (as before update 19); the ⋯ menu keeps the rest
+  const arrows=(what,canUp,canDown,up,down)=>{ const w=document.createElement('span'); w.className='marrows';
+    const u=btn('↑',up,'Move '+what+' up'), d=btn('↓',down,'Move '+what+' down'); u.disabled=!canUp; d.disabled=!canDown; w.append(u,d); return w; };
+  // the menu title under the logo (“Lunch”) is the first box. On the menu it is a subheading before the first section.
+  const isTop=s_=>!!s_&&!(s_.title||'').trim()&&!(s_.price||'').trim()&&(s_.items||[]).length>0&&s_.items.every(isSub);
+  const top=isTop(M[0])?M[0]:null, first=top?1:0, secs=M.length-first;
+  {
+    const card=document.createElement('div'); card.className='mcard mtop';
+    const mk=document.createElement('div'); mk.className='mk'; mk.textContent='Menu title, under the logo';
+    card.appendChild(mk);
+    // one box for each line under the logo (usually just one); clearing a box and clicking away removes it
+    (top?top.items:[null]).forEach((sub,k)=>{
+      const t=inp('Like Lunch, Dinner or Brunch (leave empty for none)',sub?sub.sub:'',v=>{
+        if(!sub){ if(v.trim()){ redoLater(); M.unshift({title:'',price:'',items:[{sub:v,align:'center'}]}); } return; }
+        sub.sub=v;
+      },'Menu title under the logo');
+      t.style.fontWeight='600';
+      t.onblur=()=>{ if(sub&&!sub.sub.trim()){ top.items.splice(top.items.indexOf(sub),1); if(!top.items.length) M.shift(); redo(); } };
+      card.appendChild(t);
+      if(sub){ const al=document.createElement('div'); al.className='mcols';
+        al.append(fl('Line it up'),seg('Line up the menu title',[['left','Left'],['center','Center'],['right','Right']],sub.align||'left',v=>{ sub.align=v; redo(); })); card.appendChild(al); }
+    });
+    box.appendChild(card);
+  }
+  // move a dish or subheading one place; at the top or bottom of its section it goes into the section next to it
+  const moveItem=(si,ii,d)=>{
+    const items=M[si].items, j=ii+d;
+    if(j>=0&&j<items.length){ [items[ii],items[j]]=[items[j],items[ii]]; redo(); return; }
+    const ti=si+d;
+    // a subheading moved up out of the first section becomes the menu title under the logo
+    if(ti<first||(ti===-1&&isSub(items[ii]))){ if(!isSub(items[ii])) return;
+      const [it]=items.splice(ii,1); it.align=it.align||'center';
+      if(top) top.items.push(it); else M.unshift({title:'',price:'',items:[it]});
+      redo(); menuSay('It’s now the menu title, under the logo.'); return; }
+    if(ti>=M.length) return;
+    const [it]=items.splice(ii,1), to=M[ti].items=M[ti].items||[];
+    if(d<0) to.push(it); else to.unshift(it);
+    redo(); menuSay(`Moved into “${nameOf(M[ti].title)}”.`);
+  };
   M.forEach((sec,si)=>{
+    if(si<first) return;
     const card=document.createElement('div'); card.className='mcard';
     const top_=document.createElement('div'); top_.className='mhead';
-    const mk=document.createElement('div'); mk.className='mk'; mk.textContent=M.length>1?`Section ${si+1} of ${M.length}`:'Section';
-    top_.append(mk,dotsButton('Section options',[
-      ['Move this section up',()=>mv(M,si,-1),{disabled:si===0}],
-      ['Move this section down',()=>mv(M,si,1),{disabled:si===M.length-1}],
+    const mk=document.createElement('div'); mk.className='mk'; mk.textContent=secs>1?`Section ${si-first+1} of ${secs}`:'Section';
+    const tools=document.createElement('span'); tools.className='mtools';
+    tools.append(arrows('this section',si>first,si<M.length-1,()=>mv(M,si,-1),()=>mv(M,si,1)),dotsButton('Section options',[
       ['Duplicate this section',()=>{ histAct('duplicated the section “'+nameOf(sec.title)+'”',()=>{ const c=clone(sec); c.title=((sec.title||'').trim()?sec.title.trim()+' ':'')+'copy'; M.splice(si+1,0,c); redo(); });
         menuSay('The copy is right under the original. Rename it and change it as you like; the original stays as it is.',false,true);
-        const nameBox=document.querySelectorAll('#menuEditor input[aria-label="Section name"]')[si+1]; if(nameBox){ nameBox.focus(); nameBox.select(); } }],
+        const nameBox=document.querySelectorAll('#menuEditor input[aria-label="Section name"]')[si-first+1]; if(nameBox){ nameBox.focus(); nameBox.select(); } }],
       '-',
       ['Delete this section',()=>{ histAct('deleted the section “'+nameOf(sec.title)+'”',()=>{ M.splice(si,1); redo(); }); menuSay('Section deleted. Undo brings it back.'); },{danger:true,ask:'Click again to delete the whole section'}]]));
+    top_.append(mk,tools);
     card.appendChild(top_);
     const hd=document.createElement('div'); hd.className='mgrid';
-    hd.style.gridTemplateColumns='1fr 76px 30px';   // lines up with the dish rows below (name · price · ⋯)
-    hd.append(fl('Section name'),fl('Price for all'),document.createElement('span'),inp('Like Cocktails',sec.title,v=>{sec.title=v;},'Section name'), inp('—',sec.price,v=>{sec.price=v;},'Price for the whole section'),document.createElement('span'));
+    hd.style.gridTemplateColumns='1fr 76px';
+    hd.append(fl('Section name'),fl('Price for all'),inp('Like Cocktails',sec.title,v=>{sec.title=v;},'Section name'), inp('—',sec.price,v=>{sec.price=v;},'Price for the whole section'));
     card.appendChild(hd);
     // this section's own columns (until it has its own, it follows the page's Columns setting)
     const colRow=document.createElement('div'); colRow.className='mcols';
@@ -1490,37 +1562,38 @@ function renderMenuEditor(){
     sec.items=sec.items||[];
     let dishNo=0;
     sec.items.forEach((it,ii)=>{
-      const moves=[['Move up',()=>mv(sec.items,ii,-1),{disabled:ii===0}],['Move down',()=>mv(sec.items,ii,1),{disabled:ii===sec.items.length-1}],'-'];
+      const canUp=ii>0||si>first||isSub(it), canDown=ii<sec.items.length-1||si<M.length-1;
       if(isSub(it)){
         const row=document.createElement('div'); row.className='mdish msub';
-        const t=inp('Subheading, like Lunch',it.sub,v=>{it.sub=v;},'Subheading'); t.style.fontWeight='600';
-        const top=document.createElement('div'); top.className='mrow sub';
-        top.append(t,dotsButton('Options for this subheading',[...moves,
+        const t=inp('Subheading, like From the grill',it.sub,v=>{it.sub=v;},'Subheading'); t.style.fontWeight='600';
+        const r1=document.createElement('div'); r1.className='mrow sub';
+        r1.append(t,arrows('this subheading',canUp,canDown,()=>moveItem(si,ii,-1),()=>moveItem(si,ii,1)),dotsButton('Options for this subheading',[
           ['Delete this subheading',()=>{ histAct('deleted the subheading “'+nameOf(it.sub)+'”',()=>{ sec.items.splice(ii,1); redo(); }); menuSay('Subheading deleted. Undo brings it back.'); },{danger:true}]]));
         const al=document.createElement('div'); al.className='mcols';
         al.append(fl('Line it up'),seg('Line up the subheading',[['left','Left'],['center','Center'],['right','Right']],it.align||'left',v=>{ it.align=v; redo(); }));
-        row.append(fl('Subheading'),top,al); card.appendChild(row); return;
+        row.append(fl('Subheading'),r1,al); card.appendChild(row); return;
       }
       const n=++dishNo;
       const row=document.createElement('div'); row.className='mdish';
       const nm=inp('Dish or drink name',it.name,v=>{it.name=v;},`Dish ${n} name`); nm.style.fontWeight='600';
       const pr=inp(sec.price?'—':'Price',it.price,v=>{it.price=v;},`Dish ${n} price (only if it differs from the section)`);
-      const top=document.createElement('div'); top.className='mrow';
-      top.append(nm,pr,dotsButton(`Options for dish ${n}`,[...moves,
+      const r1=document.createElement('div'); r1.className='mrow';
+      r1.append(nm,pr,arrows('this dish',canUp,canDown,()=>moveItem(si,ii,-1),()=>moveItem(si,ii,1)),dotsButton(`Options for dish ${n}`,[
         ['Delete this dish',()=>{ histAct('deleted the dish “'+nameOf(it.name)+'”',()=>{ sec.items.splice(ii,1); redo(); }); menuSay('Dish deleted. Undo brings it back.'); },{danger:true}]]));
       const ds=document.createElement('textarea'); ds.rows=2; ds.placeholder='What’s in it (leave empty for a simple list)'; ds.value=it.desc||''; ds.setAttribute('aria-label',`Dish ${n}: what’s in it`);
       ds.oninput=()=>{it.desc=ds.value;render();};
-      row.append(top,ds);
+      row.append(r1,ds);
       // choices under the dish (like meats for shipudim), each with its own price
       const opts=it.opts||[];
       opts.forEach((o,oi)=>{
         const r=document.createElement('div'); r.className='mrow mopt';
         r.append(inp('Choice, like Lamb',o.name,v=>{o.name=v;},`Dish ${n}, choice ${oi+1}`),inp('Price',o.price,v=>{o.price=v;},`Dish ${n}, choice ${oi+1} price`),
-          dotsButton(`Options for choice ${oi+1}`,[['Move up',()=>mv(opts,oi,-1),{disabled:oi===0}],['Move down',()=>mv(opts,oi,1),{disabled:oi===opts.length-1}],'-',
+          arrows('this choice',oi>0,oi<opts.length-1,()=>mv(opts,oi,-1),()=>mv(opts,oi,1)),
+          dotsButton(`Options for choice ${oi+1}`,[
             ['Delete this choice',()=>{ histAct('deleted the choice “'+nameOf(o.name)+'”',()=>{ opts.splice(oi,1); if(!opts.length) delete it.opts; redo(); }); menuSay('Choice deleted. Undo brings it back.'); },{danger:true}]]));
         row.appendChild(r);
       });
-      const addO=btn('+ Add a choice',()=>{ (it.opts=it.opts||[]).push({name:'',price:''}); redo(); const all=card.ownerDocument.querySelectorAll(`#menuEditor input[aria-label^="Dish ${n}, choice"]:not([aria-label$="price"])`); if(all.length) all[all.length-1].focus(); },
+      const addO=btn('+ Add a choice',()=>{ (it.opts=it.opts||[]).push({name:'',price:''}); redo(); const all=document.querySelectorAll(`#menuEditor input[aria-label^="Dish ${n}, choice"]:not([aria-label$="price"])`); if(all.length) all[all.length-1].focus(); },
         'Add a choice under this dish, like a meat or a topping, each with its own price'); addO.className='link madd-opt'; addO.textContent='+ Add a choice';
       row.appendChild(addO);
       card.appendChild(row);
@@ -1612,9 +1685,20 @@ function goLayout(k){ cur=k; sel=null; history.replaceState(null,'','#'+(k==='mn
 // a small picture of the menu page's header, as it would be drawn with each choice
 function headerThumb(src){
   const keep=M; M=[];
-  let r; try{ r=LAYOUTS.mn.build(S,Object.assign({},G.mn,{headSrc:src})); } finally { M=keep; }
+  let r; try{ r=LAYOUTS.mn.build(S,Object.assign({},G.mn,{headSrc:src,sheet:'full'})); } finally { M=keep; }
   const g=r.guides, y0=Math.max(0,g.hTop-24), h=Math.max(40,g.hBot-y0+24);
   return r.svg.replace(/^<svg[^>]*>/,`<svg xmlns="${NS}" viewBox="0 ${f(y0)} 850 ${f(h)}" width="100%" style="display:block;border:1px solid var(--line);border-radius:4px;margin-top:6px" aria-hidden="true">`);
+}
+// two half pages: which saved menu goes in the right half
+function rightMenuRow(label){
+  const r=document.createElement('div'), id='f'+(++uid); r.className='row2 two';
+  const l=document.createElement('label'); l.htmlFor=id; l.textContent=label;
+  const s_=document.createElement('select'); s_.id=id;
+  const opts=[['','Same as the left ('+MENUS.current+')']].concat(Object.keys(MENUS.list).filter(n=>n!==MENUS.current).map(n=>[n,n]));
+  opts.forEach(([v,t])=>{ const o=document.createElement('option'); o.value=v; o.textContent=t; s_.appendChild(o); });
+  s_.value=MENUS.list[G.mn.rightMenu]&&G.mn.rightMenu!==MENUS.current?G.mn.rightMenu:'';
+  s_.onchange=()=>{ G.mn.rightMenu=s_.value; render(); };
+  r.append(l,s_); return r;
 }
 function headSrcBlock(){
   const d=document.createElement('div');
@@ -1645,12 +1729,13 @@ function headSrcBlock(){
 /* ============ YOUR MENUS: each menu keeps its own words, text sizes, margins, spacing and colors.
    The header and the logo are shared by every menu. Kept in this browser; “Save this menu to my computer”
    writes a plain text file a person can read (and open again). ============ */
-const MENU_LOOK=['pricePos','priceIn','priceGap','menuScale','headPt','subPt','namePt','descPt','columns','menuInk','menuBrand','menuBg','topSpace','headGap','side','bottom','lineSpace','fill','dishSpace','secSpace'];
+const MENU_LOOK=['pricePos','priceIn','priceGap','menuScale','headPt','subPt','namePt','descPt','columns','menuInk','menuBrand','menuBg','topSpace','headGap','side','bottom','lineSpace','fill','dishSpace','secSpace','sheet','rightMenu','cutLine'];
 // the settings part of a saved menu file: [setting, words in the file, kind]
 const LOOKFILE=[['headPt','Section names size','pt'],['subPt','Subheadings size','pt'],['namePt','Dish names size','pt'],['descPt','What’s in it size','pt'],['menuScale','Everything bigger or smaller','%'],
   ['columns','Columns',''],['topSpace','Top margin',''],['headGap','Menu text starts below the header',''],['side','Left and right margins',''],['bottom','Bottom margin',''],
   ['pricePos','Dish prices','price'],['priceIn','Dish prices in from the right edge',''],['priceGap','Space between a dish name and its price',''],
   ['lineSpace','Space between lines','%'],['fill','Spread out to fill the page','yes'],['dishSpace','Space between dishes','%'],['secSpace','Space between sections','%'],
+  ['sheet','Page','sheet'],['rightMenu','Right half','name'],['cutLine','Cutting line between the halves','yes'],
   ['menuBrand','Color of the logo, headings and prices','color'],['menuInk','Color of the dish names','color'],['menuBg','Page color','color']];
 const LOOK_LINE='----- How the page looks (you can leave this part alone) -----';
 let MENUS={current:'',list:{}};
@@ -1679,7 +1764,8 @@ function histCheck(){
   HIST.past.push({state:HIST.cur,label:HIST.label||'your last change'}); if(HIST.past.length>HIST.max) HIST.past.shift();
   HIST.future=[]; HIST.cur=s_; HIST.label=''; HIST.dirty=true; histButtons();
 }
-const histLater=()=>{ clearTimeout(HIST.timer); HIST.timer=setTimeout(histCheck,700); };
+// waits for a pause, but never more than 1.5 s after the first change (the page redraws a lot while fonts load)
+const histLater=()=>{ const now=Date.now(); if(!HIST.timer) HIST.since=now; else if(now-HIST.since>1500) return; clearTimeout(HIST.timer); HIST.timer=setTimeout(histCheck,700); };
 // do something that deletes or replaces work, as its own named step
 function histAct(label,fn){ histCheck(); HIST.label=label; fn(); histCheck(); }
 function histGo(back){
@@ -1716,7 +1802,7 @@ function useMenu(n,redraw=true){
 function addMenu(n,words,look){ storeMenu(); n=uniqueName(n); MENUS.list[n]={M:clone(words),look:clone(look)}; useMenu(n); return n; }
 // the plain text file: the words (same as “Type like a document”), then the look as “Name: value” lines
 function menuFileText(){
-  const g=G.mn, val=(k,kind)=>kind==='price'?(g[k]==='name'?'next to the name':'at the right edge'):kind==='pt'?g[k]+' pt':kind==='%'?g[k]+'%':kind==='yes'?(g[k]===false?'no':'yes'):String(g[k]);
+  const g=G.mn, val=(k,kind)=>kind==='price'?(g[k]==='name'?'next to the name':'at the right edge'):kind==='pt'?g[k]+' pt':kind==='%'?g[k]+'%':kind==='yes'?(g[k]===false?'no':'yes'):kind==='sheet'?(g[k]==='halves'?'two half pages':'whole page'):kind==='name'?(g[k]||'same menu'):String(g[k]);
   return menuToText()+'\n\n\n'+LOOK_LINE+'\nMenu name: '+MENUS.current+'\n'+LOOKFILE.map(([k,lab,kind])=>lab+': '+val(k,kind)).join('\n')+'\n';
 }
 function readMenuFile(text,fileName){
@@ -1729,6 +1815,8 @@ function readMenuFile(text,fileName){
     const e=LOOKFILE.find(x=>x[1].toLowerCase()===lab); if(!e) return; const [k,,kind]=e;
     if(kind==='yes') look[k]=!/^(no|off|false)$/i.test(v);
     else if(kind==='price') look[k]=/name/i.test(v)?'name':'edge';
+    else if(kind==='sheet') look[k]=/half|halves|two/i.test(v)?'halves':'full';
+    else if(kind==='name') look[k]=/^same menu$/i.test(v)?'':v;
     else if(kind==='color'){ if(/^#[0-9a-f]{6}$/i.test(v)) look[k]=v; }
     else { const n=parseFloat(v); if(isFinite(n)) look[k]=n; }
   });
@@ -1778,7 +1866,8 @@ function menusBlock(){
   bar.appendChild(dotsButton('More: new menu, copy, rename, open, delete',()=>[
     ['New menu…',newMenu],
     ['Make a copy…',()=>ask('Name for the copy',MENUS.current+' copy',n=>histAct('made a copy of the menu',()=>addMenu(n,M,lookOf(G.mn))))],
-    ['Rename…',()=>ask('New name',MENUS.current,n=>{ if(n===MENUS.current) return; histAct('renamed the menu',()=>{ storeMenu(); n=uniqueName(n); MENUS.list[n]=MENUS.list[MENUS.current]; delete MENUS.list[MENUS.current]; MENUS.current=n; storeMenu(); buildPanel(); render(); }); })],
+    ['Rename…',()=>ask('New name',MENUS.current,n=>{ if(n===MENUS.current) return; histAct('renamed the menu',()=>{ storeMenu(); n=uniqueName(n); const old=MENUS.current; MENUS.list[n]=MENUS.list[old]; delete MENUS.list[old]; MENUS.current=n;
+      Object.values(MENUS.list).forEach(v=>{ if(v.look&&v.look.rightMenu===old) v.look.rightMenu=n; }); if(G.mn.rightMenu===old) G.mn.rightMenu=n; storeMenu(); buildPanel(); render(); }); })],
     ['Open a menu from my computer…',()=>fi.click()],
     '-',
     ['Clear all the words',()=>{ histAct('cleared all the words',()=>{ M=BLANK_MENU(); renderMenuEditor(); render(); }); say('All the words are cleared. Undo brings them back.'); },{danger:true,ask:'Click again to clear the words of this menu'}],
@@ -1899,7 +1988,7 @@ function stepperRow(k,label,min,max,step){
 function pickRow(k,label,opts){
   const num=typeof opts[0]==='number', seg=opts.length<=3, id='f'+(++uid);
   const r=document.createElement('div'); r.className='row2'+(seg&&opts.map(o=>optName(k,o)).join('').length>18?' stack':'');
-  const setTo=v=>{ put(k,v); render(); sync(); };
+  const setTo=v=>{ if(cur==='mn') histCheck(); put(k,v); if(cur==='mn'){ HIST.label='changed '+label.toLowerCase()+' to '+optName(k,v).toLowerCase(); histCheck(); } if(k==='sheet') buildPanel(); render(); sync(); };
   r.appendChild(labCell(k,label,seg?null:id,()=>setTo(defOf(k))));
   if(seg){
     const sg=document.createElement('div'); sg.className='seg small'; sg.setAttribute('role','group'); sg.ariaLabel=label;
@@ -1987,10 +2076,11 @@ function buildPanel(){
     const label=simple&&B[k]?dropPart(B[k],acc&&acc.dataset.sec):item[2];
     if(t==='hint'){ if(lastShown&&(!simple||cur==='mn')){ const d=document.createElement('div'); d.className='hint'; d.textContent=item[1]; body.appendChild(d); } return; }
     if(skip.includes(k)){ lastShown=false; return; }
-    const visible=!simple||basic||['menuedit','headsrc','versions','swatches','color','order','logopick','fitnote'].includes(t)||k==='transparent';
+    const visible=!simple||basic||['menuedit','headsrc','rightmenu','versions','swatches','color','order','logopick','fitnote'].includes(t)||k==='transparent';
     if(!visible){ lastShown=false; return; }
     if(t==='menuedit'){ add(menuEditorBlock()); renderMenuEditor(); return; }
     if(t==='headsrc'){ add(headSrcBlock()); return; }
+    if(t==='rightmenu'){ add(rightMenuRow(item[1])); return; }
     if(t==='fitnote'){ const d=document.createElement('div'); d.className='hint fitnote'; d.setAttribute('aria-live','polite'); d.style.cssText='color:var(--bad);font-weight:600;margin:4px 0'; d.textContent=LAST.fit||''; add(d); return; }
     if(t==='order'){ add(orderBlock(item[1])); return; }
     if(t==='logopick'){ add(logoPickBlock(item[1])); return; }
@@ -2086,7 +2176,7 @@ function render(){
   if(cur==='mn'&&LAST.guides&&(G.mn.topSpace==null||G.mn.headGap==null)){ G.mn.topSpace=LAST.guides.topSpace; G.mn.headGap=LAST.guides.headGap; LAST=LAYOUTS.mn.build(S,G.mn); setTimeout(sync); }
   document.getElementById('canvas').innerHTML=LAST.svg; autosave(); overlay();
   document.querySelectorAll('#panel .fitnote').forEach(n=>n.textContent=LAST.fit||'');
-  const mw=document.getElementById('menuWarn'); if(mw) mw.textContent=LAST.over?'The menu is longer than the page. Make the text smaller, use 2 columns, or make the margins and spacing smaller.':'';
+  const mw=document.getElementById('menuWarn'); if(mw) mw.textContent=LAST.over?LAST.overMsg||'The menu is longer than the page. Make the text smaller, use 2 columns, or make the margins and spacing smaller.':'';
   document.getElementById('pageStyle').textContent=`@page{size:${f(LAST.W)}px ${f(LAST.H)}px;margin:0}@media print{html,body{margin:0;height:auto}.app,.stage,.canvas{height:${f(LAST.H)}px!important;overflow:hidden}.canvas svg{width:${f(LAST.W)}px!important;height:${f(LAST.H)}px!important}}`;
 }
 const fileBase=()=>cur==='mn'?'meme-on-10-menu-'+slug(MENUS.current||'menu').replace(/^-|-$/g,'')+'_'+new Date().toISOString().slice(0,10):'meme-on-10-'+LAYOUTS[cur].file+'-logo_'+VERSION_DATE;
@@ -2174,11 +2264,11 @@ function handleValue(h,start,delta){
 function menuHit(ev){
   const svg=svgEl(), g=LAST.guides; if(!svg||!g) return null;
   const r=svg.getBoundingClientRect(), k=850/r.width, x=(ev.clientX-r.left)*k, y=(ev.clientY-r.top)*k, t=8*k;
-  if(x<-t||x>850+t||y<-t||y>1100+t) return null;
+  if(x<-t||x>(g.pw||850)+t||y<-t||y>1100+t) return null;   // two half pages: the lines belong to the left half
   if(ev.target.closest&&ev.target.closest('[data-pr]')) return 'price';
   if(g.bandU&&Math.abs(y-g.hBot)<t) return 'band';
   if(Math.abs(x-g.side)<t) return 'sideL';
-  if(Math.abs(x-(850-g.side))<t) return 'sideR';
+  if(Math.abs(x-((g.pw||850)-g.side))<t) return 'sideR';
   if(Math.abs(y-g.bottom)<t) return 'bottom';
   return y<g.hBot+(g.bodyTop-g.hBot)/2?'head':'body';
 }
@@ -2187,11 +2277,12 @@ function menuGuides(svg){
   const k=850/svg.getBoundingClientRect().width, BL='#1f6fd1', d=`${5*k} ${4*k}`;
   const on=h=>[mnDrag,mnHot,mnSel].some(x=>x===h||(h.startsWith('side')&&x&&x.startsWith('side')));
   const ln=(h,x1,y1,x2,y2,base)=>{ const o=on(h); line(svg,x1,y1,x2,y2,BL,(o?2.6:base)*k,o?null:d,o?1:.6); };
-  ln('sideL',g.side,0,g.side,1100,1); ln('sideR',850-g.side,0,850-g.side,1100,1);
-  ln('bottom',0,g.bottom,850,g.bottom,1);
-  ln('head',0,g.hTop,850,g.hTop,1);
-  if(g.bandU) ln('band',0,g.hBot,850,g.hBot,1.4);
-  ln('body',0,g.bodyTop,850,g.bodyTop,1.4);
+  const W=g.pw||850;
+  ln('sideL',g.side,0,g.side,1100,1); ln('sideR',W-g.side,0,W-g.side,1100,1);
+  ln('bottom',0,g.bottom,W,g.bottom,1);
+  ln('head',0,g.hTop,W,g.hTop,1);
+  if(g.bandU) ln('band',0,g.hBot,W,g.hBot,1.4);
+  ln('body',0,g.bodyTop,W,g.bodyTop,1.4);
   const info=document.getElementById('selInfo'); if(!info) return;
   const h=mnDrag||mnSel||mnHot, H=h&&MN_H[h];
   const val=h==='price'?(G.mn.pricePos==='name'?`${G.mn.priceGap} after the name`:`${G.mn.priceIn} in from the right edge`):H?Math.round(get(H.key)):'';
