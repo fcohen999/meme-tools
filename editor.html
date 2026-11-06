@@ -354,8 +354,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=28;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=29;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 29','Menu: a section’s price at the right edge now lines up with the right edge of its column (where the dish prices are) instead of the far edge of the page, when the section is in two columns.'],
  ['v26 · 28','Menu: a dish’s choices (like Chicken or Lamb) are now in bold Bodoni, in normal letters instead of all caps, so they stand apart from the dish names.'],
  ['v26 · 27','Menu: a dish’s choices can sit side by side on one line (Chicken 18 · Lamb 22) instead of one per line: use the One per line / Side by side buttons under its choices in Boxes, or type them on one line with “ · ” between them. A section’s own price (like Beers 10) can sit next to the section name or at the right edge, lined up with the dish prices: Look → Prices → “A section’s price”, or drag it left or right on the page.'],
  ['v26 · 26','Edit in boxes: the ↑ ↓ arrows are back on every section, dish, subheading and choice (a dish at the top or bottom of its section moves into the next one). The first box is “Menu title, under the logo”, with Left / Center / Right. The ⋯ menus keep Duplicate and Delete. This list of changes is up to date again.'],
@@ -622,9 +623,9 @@ function menuLayout(S,G,M,top,m){
     if(!first) y=end+secGap;
     if(title||price){
       out+=`<text x="${L}" y="${f(y)}" font-family='${tagFam}' font-size="${f(hs)}" font-weight="500" letter-spacing="${f(hls)}" fill="${brand}">${esc(title.toUpperCase())}</text>`;
-      // a section's own price: right after the section name, or at the right edge (in by priceIn, lined up with the dish prices)
-      if(price){ const atEdge=G.secPricePos==='edge', px=atEdge?R-priceIn:L+(title?measure(title.toUpperCase(),dFam,500,hs,hls)+hls+16*sc:0);
-        out+=`<text data-spr="1" x="${f(px)}" y="${f(y)}"${atEdge?' text-anchor="end"':''} font-family='"Bodoni Moda", serif' font-size="${f(hs*4/3)}" font-weight="400" fill="${brand}">${esc(price)}</text>`; }
+      // a section's own price: right after the section name, or at the right edge of the first column (in by priceIn, lined up with the dish prices)
+      if(price){ const atEdge=G.secPricePos==='edge', px=atEdge?rights[0]-priceIn:L+(title?measure(title.toUpperCase(),dFam,500,hs,hls)+hls+16*sc:0);
+        out+=`<text data-spr="1" data-edge="${f(rights[0])}" x="${f(px)}" y="${f(y)}"${atEdge?' text-anchor="end"':''} font-family='"Bodoni Moda", serif' font-size="${f(hs*4/3)}" font-weight="400" fill="${brand}">${esc(price)}</text>`; }
     }
     const dishOf=it=>{
       const pr=(it.price||'').trim().replace(/^\$/,'');
@@ -2286,7 +2287,7 @@ function dragPrice(ev,cv,k){
 function setSecPrice(v){ const g=G.mn; if(g.secPricePos===v) return; histCheck(); g.secPricePos=v; HIST.label='moved the section prices '+(v==='edge'?'to the right edge':'next to the names'); histCheck(); buildPanel(); render(); sync(); }
 function dragSecPrice(ev,cv,k){
   const g=G.mn, el=ev.target.closest('[data-spr]'), svg=svgEl(), b=el&&svg?boxOf(el,svg):null, W=LAST.guides&&LAST.guides.pw||850;
-  const right=W-(g.side??64)-(g.priceIn||0), mid=b?(b.x+b.w+right)/2:right; let from=ev.clientX, base=g.priceIn||0;
+  const colR=el&&el.dataset.edge?+el.dataset.edge:W-(g.side??64), right=colR-(g.priceIn||0), mid=b?(b.x+b.w+right)/2:right; let from=ev.clientX, base=g.priceIn||0;
   mnDrag='secprice'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
   const move=e=>{ const dx=(e.clientX-from)*k;
     if(g.secPricePos!=='edge'){ if(b&&b.x+b.w+dx>mid){ setSecPrice('edge'); from=e.clientX; base=g.priceIn||0; } return; }
