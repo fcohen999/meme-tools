@@ -177,7 +177,7 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     // drawn on the page
     const svg = await page.$eval('#canvas svg', e => e.outerHTML);
     ok(svg.includes('>LUNCH<') && svg.includes('text-anchor="middle"') && svg.includes('>FROM THE GRILL<'), 'drawn: subheadings, centered one included');
-    ok(svg.includes('>LAMB KEBAB<') && svg.includes('>28<') && svg.includes('>CHICKEN<'), 'drawn: choices and their prices');
+    ok(svg.includes('>Lamb kebab<') && svg.includes('>28<') && svg.includes('>Chicken<'), 'drawn: choices and their prices');
     const xs = await page.$$eval('#canvas svg text', ts => ts.map(t => [t.textContent, +t.getAttribute('x')]));
     const x = n => (xs.find(t => t[0] === n) || [])[1];
     ok(x('HALLOUMI') !== x('MERGUEZ'), 'drawn: Tapas in two columns');
@@ -193,11 +193,11 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     await mode(page, 'Boxes');
     const ys = () => page.$$eval('#canvas svg text', ts => Object.fromEntries(ts.map(t => [t.textContent, +t.getAttribute('y')])));
     let y = await ys();
-    ok(y.CHICKEN !== y.LAMB, 'choices: one per line to start');
+    ok(y.Chicken !== y.Lamb, 'choices: one per line to start');
     await click(page, `.seg[aria-label="Choices for dish 1"] button`, 'Side by side');
     ok((await menu(page))[0].items[0].optsInline === true, 'choices: Side by side button sets it');
     y = await ys();
-    ok(y.CHICKEN === y.LAMB && y.LAMB === y.SHRIMP && y['22'] === y.CHICKEN, 'choices: side by side on one line, prices too');
+    ok(y.Chicken === y.Lamb && y.Lamb === y.Shrimp && y['22'] === y.Chicken, 'choices: side by side on one line, prices too');
     const t = await page.evaluate(() => menuToText());
     ok(t.includes('- Chicken (18) · Lamb (22) · Shrimp (24)'), 'choices: written as one line when typing');
     ok(same(await page.evaluate(() => parseMenuText('# A\nKebab\n- Beef (9) · Lamb (11)')), [{ title: 'A', price: '', items: [{ name: 'Kebab', desc: '', price: '', optsInline: true, opts: [{ name: 'Beef', price: '9' }, { name: 'Lamb', price: '11' }] }] }]), 'choices: a typed “ · ” line reads back side by side');
