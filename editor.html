@@ -77,6 +77,8 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .mbar .dots{flex:none;width:34px;height:34px;padding:0;border:1px solid var(--edge);border-radius:6px;background:#fff;color:var(--ink);font-size:18px;line-height:1}
 .panel .mbar .dots:hover{background:var(--soft)}
 .panel .mbar-sub{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:12px;color:var(--muted);margin:0 2px 14px}
+.panel .mbar-sub .mhist{display:inline-flex;gap:6px;margin-right:4px}
+.panel .mbar-sub .mhist button{height:30px;padding:0 10px;font-size:13px;font-weight:600}
 .panel .mbar-sub details{display:inline}.panel .mbar-sub summary{cursor:pointer;text-decoration:underline;display:inline}
 .panel .mbar-sub details[open]{display:block;flex-basis:100%}.panel .mbar-sub details p{margin:6px 0 0;line-height:1.5}
 .panel .mbar-sub .mst{color:var(--ok);font-weight:600;transition:opacity .6s}
@@ -340,7 +342,7 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-05', UPDATE=22;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=23;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
  ['v26 · 22','Menu page: when you point at, drag or select a line, the note under the page also says where the same setting is in the panel (for example “also in Margins and spacing → Bottom”).'],
  ['v26 · 21','Menu page: every blue line can be dragged, including the left and right margins and the bottom margin. Click a line to select it: its setting lights up in the panel, and the arrow keys move it (Shift for 10). The line under the page says what you are moving and by how much, in Simple too.'],
@@ -1011,13 +1013,15 @@ const put=(k,v)=>{ if(k==='hdH') G.hd.H=v; else if(isGeo(k)) G[cur][k]=v; else S
 
 /* ============ MENU TEXT AS A DOCUMENT ============ */
 let menuMode='text';
-// DUPLICATE: menuAsText() below does almost the same thing. The difference: this one always writes a “#” line for
-// every section (even one with no name), so typing it back never merges two sections. Keep both until that is sorted.
-function menuToText(){
-  return M.map(sec=>{
-    const head='# '+[sec.title,sec.price].filter(x=>(x||'').trim()).join(' ');
+// the menu as "type like a document" text. Every section gets a “#” line (even one with no name, or no dishes yet),
+// so reading it back never merges two sections or drops a new empty one.
+// loose: for a piece pasted into the middle of the text — its first section, if it has no name, joins the section it lands in.
+function menuToText(m=M,loose=false){
+  return m.map((sec,i)=>{
+    const name=[sec.title,sec.price].filter(x=>(x||'').trim()).join(' ');
+    const head=loose&&i===0&&!name?[]:['# '+name];
     const lines=(sec.items||[]).map(it=>{ const n=(it.name||'').trim(), pr=(it.price||'').trim(), d=(it.desc||'').replace(/\s+/g,' ').trim(); const nm=pr?(n+' ('+pr+')'):n; return d?(nm+': '+d):nm; }).filter(Boolean);
-    return head+'\n'+lines.join('\n');
+    return head.concat(lines).join('\n');
   }).join('\n\n');
 }
 function parseMenuText(t){
@@ -1092,7 +1096,7 @@ function renderSheetMode(box){
     const m=rowsToMenu(parseDelimited(text,dl||(text.includes('\t')?'\t':',')));
     const n=m.reduce((a,s)=>a+s.items.length,0);
     if(!n){ st.style.color='#b35a3e'; st.textContent='That doesn’t look like the menu sheet yet. Make sure the four columns (Section, Dish, What’s in it, Price) are there.'; return; }
-    M=m; st.style.color='#3f6b35'; st.textContent=`Menu updated: ${m.length} section${m.length===1?'':'s'}, ${n} dish${n===1?'':'es'}.`; render();
+    histAct('replaced the menu from Google Sheets',()=>{ M=m; }); st.style.color='#3f6b35'; st.textContent=`Menu updated from the Sheet: ${m.length} section${m.length===1?'':'s'}, ${n} dish${n===1?'':'es'}. Undo brings back the menu from before.`; render();
   };
   ta.oninput=()=>load(ta.value);
   ta.addEventListener('paste',e=>{
@@ -1100,9 +1104,8 @@ function renderSheetMode(box){
     if(!plain.trim()||/^\s*section\s*[\t,]/i.test(plain)) return;   // the real sheet: read it as columns
     const m=readDocPaste(cd.getData('text/html'),plain), n=m.reduce((a,s)=>a+s.items.length,0);
     if(!n) return;
-    e.preventDefault(); M=m; render();
-    const ns=m.filter(s=>s.title).length;
-    docsNote=`That looked like a Google Doc, not the Sheet, so it was read as a document: ${ns} section${ns===1?'':'s'}, ${n} dish${n===1?'':'es'}. The box shows how it was read; you can fix anything in it.`;
+    e.preventDefault();
+    docsNote={msg:'That looked like a Google Doc, not the Sheet, so it was read as a document. '+addDocToMenu(m),pasted:m};
     menuMode='docs'; buildPanel(); render();
   });
   const alt=document.createElement('div'); alt.className='hint'; alt.style.marginTop='10px';
@@ -1264,39 +1267,60 @@ function readDocPaste(html,plain){
   if(!m.reduce((a,s)=>a+s.items.length,0)&&(plain||'').trim()) m=/^\s*#/m.test(plain)?parseMenuText(plain):blocksToMenu(plainBlocks(plain));
   return m;
 }
-// the menu as "type like a document" text; a section with no title just lists its dishes
-// DUPLICATE: see menuToText() above.
-function menuAsText(m){
-  return m.map(sec=>{
-    const head=(sec.title||'').trim()||(sec.price||'').trim()?['# '+[sec.title,sec.price].filter(x=>(x||'').trim()).join(' ')]:[];
-    const lines=(sec.items||[]).map(it=>{ const n=(it.name||'').trim(), pr=(it.price||'').trim(), d=(it.desc||'').replace(/\s+/g,' ').trim(); const nm=pr?(n+' ('+pr+')'):n; return d?(nm+': '+d):nm; }).filter(Boolean);
-    return head.concat(lines).join('\n');
-  }).join('\n\n');
+/* A pasted Doc is added to the menu, never put in place of it:
+   - a pasted section with the same name as one on the menu replaces that section's dishes (the Doc is newer);
+   - any other pasted section fills the first empty section (like one just made with “+ Add a section”), or goes at the end.
+   Nothing else on the menu changes. “Replace the whole menu instead” is offered after. */
+const secKey=t=>String(t||'').replace(/\s+/g,' ').trim().toLowerCase();
+const emptySec=s_=>!(s_.items||[]).some(it=>(it.name||'').trim()||(it.desc||'').trim());
+function mergeMenu(base,add){
+  const out=clone(base), added=[], updated=[];
+  add.forEach(p=>{
+    const nm=(p.title||'').trim(), k=secKey(nm);
+    let i=k?out.findIndex(x=>secKey(x.title)===k):-1;
+    if(i>=0){ out[i]=Object.assign({},out[i],{items:clone(p.items),price:p.price||out[i].price}); updated.push(nm); return; }
+    i=out.findIndex(emptySec);
+    if(i>=0){ const was=(out[i].title||'').trim(); out[i]=Object.assign({},out[i],clone(p),{title:nm||(was==='New section'?'':was),price:p.price||out[i].price}); added.push(out[i].title); return; }
+    out.push(clone(p)); added.push(nm);
+  });
+  return {menu:out,added,updated};
 }
-let docsNote='';
+const nameList=a=>{ a=a.map(t=>t?'“'+t+'”':'a section with no name'); return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]; };
+// add a pasted Doc to the menu; returns what to tell the person
+function addDocToMenu(m){
+  const r=mergeMenu(M,m), n=m.reduce((a,s_)=>a+s_.items.length,0);
+  histAct('pasted from Google Docs',()=>{ M=r.menu; });
+  const said=[];
+  if(r.added.length) said.push('Added '+nameList(r.added)+'.');
+  if(r.updated.length) said.push('Updated '+nameList(r.updated)+' (same name as on the menu, so its dishes came from the Doc).');
+  return `${said.join(' ')} ${n} dish${n===1?'':'es'} in all. Everything else on the menu is the same. Undo puts it back the way it was.`;
+}
+let docsNote=null;   // {msg, pasted}: set when the Sheets box got a Google Doc
 function renderDocsMode(box){
   const ol=document.createElement('ol'); ol.className='steps';
-  ol.innerHTML='<li>Open your menu in <b>Google Docs</b> (Word works too). Select everything (<b>Ctrl+A</b>, or <b>⌘A</b> on a Mac) and copy.</li>'
-    +'<li>Click in the box below and paste. The menu updates right away and replaces the one that’s there.</li>';
+  ol.innerHTML='<li>In <b>Google Docs</b> (Word works too), select the part of the menu you want (or <b>Ctrl+A</b> / <b>⌘A</b> for all of it) and copy.</li>'
+    +'<li>Click in the box below and paste. What you paste is <b>added</b> to the menu: a section with the same name as one already here is updated, and a new section goes into the empty section you just made (or at the end). Nothing else changes.</li>';
   const tips=document.createElement('div'); tips.className='hint'; tips.style.margin='0 0 8px';
-  tips.innerHTML='<b>How it reads your Doc:</b> section names in a <b>Heading</b> style (or bigger text) become sections. Dish names in <b>bold</b> or CAPITALS become dishes, and the normal text under a dish is what’s in it. A number at the end of a section or dish line is its price.';
+  tips.innerHTML='<b>How it reads your Doc:</b> section names in a <b>Heading</b> style (or bigger text) become sections. Dish names in <b>bold</b> or CAPITALS become dishes, and the normal text under a dish is what’s in it. A number at the end of a section or dish line is its price. The box shows the whole menu; you can fix anything in it.';
   const ta=document.createElement('textarea'); ta.className='pastebox'; ta.placeholder='Paste from Google Docs here'; ta.rows=10; ta.spellcheck=false;
-  ta.style.fontFamily='inherit'; ta.style.fontSize='14px';
+  ta.style.fontFamily='inherit'; ta.style.fontSize='14px'; ta.value=menuToText();
   const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
-  const say=(good,msg)=>{ st.style.color=good?'#3f6b35':'#b35a3e'; st.textContent=msg; };
+  const say=(good,msg,pasted)=>{ st.style.color=good?'#3f6b35':'#b35a3e'; st.textContent=msg;
+    if(pasted){ const b=document.createElement('button'); b.type='button'; b.className='link'; b.textContent='Replace the whole menu with what I pasted';
+      b.onclick=()=>{ histAct('replaced the whole menu with the Doc',()=>{ M=clone(pasted); }); ta.value=menuToText(); render(); say(true,'The whole menu is now what you pasted. Undo brings back the menu from before.'); };
+      st.append(' ',b); } };
   ta.addEventListener('paste',e=>{
     const cd=e.clipboardData; if(!cd) return;
     const m=readDocPaste(cd.getData('text/html'),cd.getData('text/plain'));
     e.preventDefault();
-    const n=m.reduce((a,s)=>a+s.items.length,0);
+    const n=m.reduce((a,s_)=>a+s_.items.length,0);
     if(!n){ say(false,'Nothing to read there. Copy the menu from your Google Doc first, then paste here.'); return; }
-    M=m; render(); ta.value=menuAsText(m);
-    const ns=m.filter(s=>s.title).length;
-    say(true,`Menu updated: ${ns} section${ns===1?'':'s'}, ${n} dish${n===1?'':'es'}. The box shows how your Doc was read; you can fix anything in it.`);
+    const msg=addDocToMenu(m); render(); ta.value=menuToText(); ta.scrollTop=ta.scrollHeight;
+    say(true,msg,m);
   });
-  ta.oninput=()=>{ if(ta.value.trim()){ M=parseMenuText(ta.value); render(); } };
+  ta.oninput=()=>{ M=parseMenuText(ta.value); render(); };
   box.append(ol,tips,ta,st);
-  if(docsNote){ ta.value=menuAsText(M); say(true,docsNote); docsNote=''; }
+  if(docsNote){ say(true,docsNote.msg,docsNote.pasted); docsNote=null; }
 }
 function renderTextMode(box){
   const how=document.createElement('div'); how.className='hint';
@@ -1311,7 +1335,7 @@ function renderTextMode(box){
     if(!n) return;
     e.preventDefault();
     const a=ta.selectionStart, z=ta.selectionEnd, v=ta.value;   // keep what's pasted on its own lines
-    const txt=(a>0&&v[a-1]!=='\n'?'\n':'')+menuAsText(m)+(z<v.length&&v[z]!=='\n'?'\n':'');
+    const txt=(a>0&&v[a-1]!=='\n'?'\n':'')+menuToText(m,true)+(z<v.length&&v[z]!=='\n'?'\n':'');
     ta.setRangeText(txt,a,z,'end');
     M=parseMenuText(ta.value); render();
     st.style.color='#3f6b35'; st.textContent=`Pasted from your document: ${m.filter(s=>s.title).length} section${m.filter(s=>s.title).length===1?'':'s'}, ${n} dish${n===1?'':'es'}. Check the menu page; if something landed in the wrong place, fix it in the box.`;
@@ -1322,7 +1346,7 @@ function renderTextMode(box){
   const fi=files.querySelector('input');
   files.querySelector('[data-a="dl"]').onclick=e=>{ e.preventDefault(); download(new Blob([menuToText()+'\n'],{type:'text/plain;charset=utf-8'}),`meme-on-10-menu_${new Date().toISOString().slice(0,10)}.txt`); };
   files.querySelector('[data-a="open"]').onclick=e=>{ e.preventDefault(); fi.click(); };
-  fi.onchange=()=>{ const fl=fi.files[0]; if(!fl) return; fl.text().then(t=>{ ta.value=t.replace(/^﻿/,'').replace(/\r\n?/g,'\n'); M=parseMenuText(ta.value); render();
+  fi.onchange=()=>{ const fl=fi.files[0]; if(!fl) return; fl.text().then(t=>{ ta.value=t.replace(/^﻿/,'').replace(/\r\n?/g,'\n'); histAct('put in the words from “'+fl.name+'”',()=>{ M=parseMenuText(ta.value); }); render();
     const n=M.reduce((a,s)=>a+s.items.length,0); st.style.color=n?'#3f6b35':'#b35a3e'; st.textContent=n?`Opened “${fl.name}”: ${n} dish${n===1?'':'es'}.`:'That file has no dishes in it.'; }); fi.value=''; };
   box.append(how,ta,st,files);
 }
@@ -1355,7 +1379,7 @@ function renderMenuEditor(){
       ['Move this section up',()=>mv(M,si,-1),{disabled:si===0}],
       ['Move this section down',()=>mv(M,si,1),{disabled:si===M.length-1}],
       '-',
-      ['Delete this section',()=>{ M.splice(si,1); redo(); },{danger:true,ask:'Click again to delete the whole section'}]]));
+      ['Delete this section',()=>{ histAct('deleted the section “'+((sec.title||'').trim()||'with no name')+'”',()=>{ M.splice(si,1); redo(); }); menuSay('Section deleted. Undo brings it back.'); },{danger:true,ask:'Click again to delete the whole section'}]]));
     card.appendChild(top_);
     const hd=document.createElement('div'); hd.className='mgrid';
     hd.style.gridTemplateColumns='1fr 76px 30px';   // lines up with the dish rows below (name · price · ⋯)
@@ -1371,7 +1395,7 @@ function renderMenuEditor(){
         ['Move up',()=>mv(sec.items,ii,-1),{disabled:ii===0}],
         ['Move down',()=>mv(sec.items,ii,1),{disabled:ii===sec.items.length-1}],
         '-',
-        ['Delete this dish',()=>{ sec.items.splice(ii,1); redo(); },{danger:true}]]));
+        ['Delete this dish',()=>{ histAct('deleted the dish “'+((it.name||'').trim()||'with no name')+'”',()=>{ sec.items.splice(ii,1); redo(); }); menuSay('Dish deleted. Undo brings it back.'); },{danger:true}]]));
       const ds=document.createElement('textarea'); ds.rows=2; ds.placeholder='What’s in it (leave empty for a simple list)'; ds.value=it.desc||''; ds.setAttribute('aria-label',`Dish ${ii+1}: what’s in it`);
       ds.oninput=()=>{it.desc=ds.value;render();};
       row.append(top,ds); card.appendChild(row);
@@ -1379,7 +1403,7 @@ function renderMenuEditor(){
     const add=btn('+ Add a dish',()=>{ sec.items.push({name:'',desc:''}); redo(); }); add.className='madd';
     card.appendChild(add); box.appendChild(card);
   });
-  box.appendChild(btn('+ Add a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); redo(); }));
+  box.appendChild(btn('+ Add a section',()=>histAct('added a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); redo(); })));
 }
 function menuEditorBlock(){
   const d=document.createElement('div');
@@ -1512,6 +1536,50 @@ function loadMenus(){
   if(!MENUS.current||!MENUS.list[MENUS.current]){ const n=Object.keys(MENUS.list)[0]; if(n) MENUS.current=n; else { MENUS.current='Cocktails'; MENUS.list.Cocktails={M:clone(M),look:lookOf(G.mn)}; } }
   useMenu(MENUS.current,false);
 }
+/* ============ UNDO / REDO for the menus (words and look of every menu, and which one is open) ============
+   Every change is kept as a step: render() calls autosave(), which waits for a short pause and then records the step
+   (so typing a word is one step, not one per letter). Things that delete or replace work go through histAct(label, fn),
+   which records the step right away, with a name, so Undo can say what it put back. */
+const HIST={past:[],future:[],cur:null,label:'',timer:null,max:100,dirty:false};
+function histSnap(){ storeMenu(); return JSON.stringify({menus:MENUS}); }
+// record a step if anything changed since the last one
+function histCheck(){
+  clearTimeout(HIST.timer); HIST.timer=null;
+  if(!MENUS.current) return;
+  const s_=histSnap();
+  if(HIST.cur==null){ HIST.cur=s_; return; }
+  if(s_===HIST.cur){ HIST.label=''; return; }
+  HIST.past.push({state:HIST.cur,label:HIST.label||'your last change'}); if(HIST.past.length>HIST.max) HIST.past.shift();
+  HIST.future=[]; HIST.cur=s_; HIST.label=''; HIST.dirty=true; histButtons();
+}
+const histLater=()=>{ clearTimeout(HIST.timer); HIST.timer=setTimeout(histCheck,700); };
+// do something that deletes or replaces work, as its own named step
+function histAct(label,fn){ histCheck(); HIST.label=label; fn(); histCheck(); }
+function histGo(back){
+  histCheck();
+  const from=back?HIST.past:HIST.future, to=back?HIST.future:HIST.past; if(!from.length) return;
+  const e=from.pop(); to.push({state:HIST.cur,label:e.label});
+  MENUS=JSON.parse(e.state).menus; useMenu(MENUS.current,false); HIST.dirty=true;
+  buildPanel(); render(); HIST.cur=histSnap();
+  menuSay((back?'Undid: ':'Redid: ')+e.label+'.');
+}
+function histButtons(){
+  const u=panel.querySelector('.mundo'), r=panel.querySelector('.mredo'); if(!u) return;
+  u.disabled=!HIST.past.length; r.disabled=!HIST.future.length;
+  u.title=HIST.past.length?'Undo: '+HIST.past[HIST.past.length-1].label:'Nothing to undo';
+  r.title=HIST.future.length?'Redo: '+HIST.future[HIST.future.length-1].label:'Nothing to redo';
+}
+// the status line under the menu bar
+let menuSayT=null;
+function menuSay(t,bad,long){ const st=panel.querySelector('.mst'); if(!st) return; clearTimeout(menuSayT);
+  st.style.color=bad?'var(--bad)':''; st.style.opacity=1; st.textContent=t; menuSayT=setTimeout(()=>{ st.style.opacity=0; },long?12000:5000); }
+document.addEventListener('keydown',ev=>{
+  if(cur!=='mn'||!(ev.metaKey||ev.ctrlKey)||ev.altKey||ev.key.toLowerCase()!=='z'&&ev.key.toLowerCase()!=='y') return;
+  const tg=ev.target.tagName; if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||ev.target.isContentEditable) return;   // text boxes keep their own undo
+  ev.preventDefault(); histGo(ev.key.toLowerCase()==='z'&&!ev.shiftKey);
+});
+// leaving the page with changes that aren't in a saved file: the browser asks first
+window.addEventListener('beforeunload',e=>{ histCheck(); if(HIST.dirty){ e.preventDefault(); e.returnValue=''; } });
 function uniqueName(n){ n=String(n||'').trim()||'New menu'; if(!MENUS.list[n]) return n; let i=2; while(MENUS.list[n+' '+i]) i++; return n+' '+i; }
 function useMenu(n,redraw=true){
   const v=MENUS.list[n]; if(!v) return;
@@ -1540,18 +1608,30 @@ function readMenuFile(text,fileName){
   if(!name) name=String(fileName||'').replace(/\.txt$/i,'').replace(/\s*-\s*meme on 10 menu.*$/i,'').trim();
   return {name,words,look};
 }
+// why a picked file can't be opened as a menu ('' when it can)
+function fileProblem(fl){
+  const name=fl.name||'', ext=(name.match(/\.([a-z0-9]+)$/i)||['',''])[1].toLowerCase(), type=fl.type||'';
+  if(['txt','text','csv','tsv'].includes(ext)||(!ext&&(!type||type.startsWith('text/')))) return '';
+  const keep='To keep working on a menu, open the file that “Save to my computer” made: its name ends in “meme on 10 menu.txt”, and it’s in your Downloads folder.';
+  if(ext==='pdf'||type==='application/pdf') return `“${name}” is a PDF. A PDF is a printout of the menu, so its words can’t be changed here. ${keep}`;
+  if(/^(png|jpe?g|gif|webp|heic|svg|bmp|tiff?)$/.test(ext)||type.startsWith('image/')) return `“${name}” is a picture of the menu, so its words can’t be changed here. ${keep}`;
+  if(/^(docx?|pages|odt|rtf)$/.test(ext)) return `“${name}” is a Word (or Pages) document. To bring in its words, open it, copy the menu, and paste it with “Google Docs” under “Change the words by”.`;
+  if(/^(xlsx?|numbers|ods)$/.test(ext)) return `“${name}” is a spreadsheet. Save it as a .csv file first (in Google Sheets: File → Download → .csv), then open that.`;
+  return `“${name}” isn’t a menu file this editor can open. ${keep}`;
+}
 // the bar at the top of the Menu panel: which menu, save it to the computer, and ⋯ for the rest.
 // It is always shown (not a section that opens and closes), so it looks different from the sections below it.
 function menusBlock(){
   const wrap=document.createElement('div');
   wrap.innerHTML=`<div class="mbar"><span class="mbl">Menu</span><select aria-label="Which menu"></select><button type="button" class="msave" title="Saves a text file you can read to your Downloads folder">Save to my computer</button></div>
     <div class="mform" style="display:none"><input type="text" aria-label="Menu name"><button type="button" class="primary">OK</button><button type="button">Cancel</button></div>
-    <div class="mbar-sub"><span>Kept automatically in this browser.</span><details><summary>Where is it saved?</summary><p>Every change is kept as you go, but only in this browser on this computer. Clearing the browser’s history, or using another computer, loses it. For a copy you can keep, press <b>Save to my computer</b>: a text file you can read goes to your Downloads folder, and <b>⋯ → Open a menu from my computer</b> brings it back. All your menus share one header.</p></details><span class="mst" aria-live="polite"></span></div>
-    <input type="file" accept=".txt,text/plain" hidden>`;
+    <div class="mbar-sub"><span class="mhist"><button type="button" class="mundo" aria-label="Undo">↶ Undo</button><button type="button" class="mredo" aria-label="Redo">↷ Redo</button></span><span>Kept automatically in this browser.</span><details><summary>Where is it saved?</summary><p>Every change is kept as you go, but only in this browser on this computer. Clearing the browser’s history, or using another computer, loses it. For a copy you can keep, press <b>Save to my computer</b>: a text file you can read goes to your Downloads folder, and <b>⋯ → Open a menu from my computer</b> brings it back. All your menus share one header.</p></details><span class="mst" aria-live="polite"></span></div>
+    <input type="file" hidden>`;
   const bar=wrap.querySelector('.mbar'), sel_=bar.querySelector('select'), form=wrap.querySelector('.mform'), nameIn=form.querySelector('input'),
         st=wrap.querySelector('.mst'), fi=wrap.querySelector('input[type=file]');
-  let stT=null;
-  const say=(t,bad)=>{ clearTimeout(stT); st.style.color=bad?'var(--bad)':''; st.style.opacity=1; st.textContent=t; stT=setTimeout(()=>{ st.style.opacity=0; },5000); };
+  const say=menuSay;
+  wrap.querySelector('.mundo').onclick=()=>histGo(true); wrap.querySelector('.mredo').onclick=()=>histGo(false);
+  setTimeout(histButtons);
   const fill=()=>{ sel_.innerHTML=''; Object.keys(MENUS.list).forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel_.appendChild(o); });
     const o=document.createElement('option'); o.value='\u0000new'; o.textContent='+ New menu…'; sel_.appendChild(o); sel_.value=MENUS.current; };
   fill();
@@ -1562,26 +1642,31 @@ function menusBlock(){
   const ok=()=>{ const v=nameIn.value.trim(); if(!v){ nameIn.focus(); return; } const fn=after; show(false); if(fn) fn(v); };
   form.querySelector('.primary').onclick=ok; form.querySelectorAll('button')[1].onclick=()=>show(false);
   nameIn.onkeydown=e=>{ if(e.key==='Enter') ok(); if(e.key==='Escape') show(false); };
-  const newMenu=()=>ask('Name for the new menu, e.g. Desserts','',n=>addMenu(n,BLANK_MENU(),lookOf(G.mn)));
-  sel_.onchange=()=>{ if(sel_.value==='\u0000new'){ newMenu(); return; } storeMenu(); useMenu(sel_.value); };
+  const newMenu=()=>ask('Name for the new menu, e.g. Desserts','',n=>histAct('made a new menu',()=>addMenu(n,BLANK_MENU(),lookOf(G.mn))));
+  sel_.onchange=()=>{ if(sel_.value==='\u0000new'){ newMenu(); return; } const n=sel_.value; histAct('switched to “'+n+'”',()=>{ storeMenu(); useMenu(n); }); };
   bar.querySelector('.msave').onclick=()=>{ const n=MENUS.current.replace(/[\\/:*?"<>|]+/g,' ').trim()||'menu';
     download(new Blob([menuFileText()],{type:'text/plain;charset=utf-8'}),`${n} - meme on 10 menu.txt`);
-    say(`Saved “${n} - meme on 10 menu.txt” to your Downloads folder.`); };
+    HIST.dirty=false; say(`Saved “${n} - meme on 10 menu.txt” to your Downloads folder.`); };
   const many=Object.keys(MENUS.list).length>1;
   bar.appendChild(dotsButton('More: new menu, copy, rename, open, delete',()=>[
     ['New menu…',newMenu],
-    ['Make a copy…',()=>ask('Name for the copy',MENUS.current+' copy',n=>addMenu(n,M,lookOf(G.mn)))],
-    ['Rename…',()=>ask('New name',MENUS.current,n=>{ if(n===MENUS.current) return; storeMenu(); n=uniqueName(n); MENUS.list[n]=MENUS.list[MENUS.current]; delete MENUS.list[MENUS.current]; MENUS.current=n; storeMenu(); buildPanel(); render(); })],
+    ['Make a copy…',()=>ask('Name for the copy',MENUS.current+' copy',n=>histAct('made a copy of the menu',()=>addMenu(n,M,lookOf(G.mn))))],
+    ['Rename…',()=>ask('New name',MENUS.current,n=>{ if(n===MENUS.current) return; histAct('renamed the menu',()=>{ storeMenu(); n=uniqueName(n); MENUS.list[n]=MENUS.list[MENUS.current]; delete MENUS.list[MENUS.current]; MENUS.current=n; storeMenu(); buildPanel(); render(); }); })],
     ['Open a menu from my computer…',()=>fi.click()],
     '-',
-    ['Clear all the words',()=>{ M=BLANK_MENU(); renderMenuEditor(); render(); },{danger:true,ask:'Click again to clear the words of this menu'}],
-    ...(mode==='simple'?[]:[['Put back the sample menu',()=>{ M=clone(MENU_DEFAULT); renderMenuEditor(); render(); },{danger:true,ask:'Click again to replace the words with the sample'}]]),
-    ['Delete this menu',()=>{ delete MENUS.list[MENUS.current]; MENUS.current=''; useMenu(Object.keys(MENUS.list)[0]); },{danger:true,disabled:!many,ask:`Click again to delete “${MENUS.current}”`}]]));
-  fi.onchange=()=>{ const fl=fi.files[0]; fi.value=''; if(!fl) return; fl.text().then(t=>{
-    const r=readMenuFile(t,fl.name), n=r.words.reduce((a,s_)=>a+s_.items.length,0);
-    if(!n&&!Object.keys(r.look).length){ say('That file has no dishes in it.',true); return; }
-    const nm=addMenu(r.name||'Opened menu',r.words.length?r.words:BLANK_MENU(),Object.assign(lookOf(G.mn),r.look));
-    const s2=panel.querySelector('.mst'); if(s2){ s2.textContent=`Opened “${fl.name}” as “${nm}”: ${n} dish${n===1?'':'es'}.`; setTimeout(()=>{ s2.style.opacity=0; },6000); } }); };
+    ['Clear all the words',()=>{ histAct('cleared all the words',()=>{ M=BLANK_MENU(); renderMenuEditor(); render(); }); say('All the words are cleared. Undo brings them back.'); },{danger:true,ask:'Click again to clear the words of this menu'}],
+    ...(mode==='simple'?[]:[['Put back the sample menu',()=>{ histAct('put back the sample menu',()=>{ M=clone(MENU_DEFAULT); renderMenuEditor(); render(); }); say('The sample menu is back. Undo brings back your words.'); },{danger:true,ask:'Click again to replace the words with the sample'}]]),
+    ['Delete this menu',()=>{ const gone=MENUS.current; histAct('deleted the menu “'+gone+'”',()=>{ delete MENUS.list[MENUS.current]; MENUS.current=''; useMenu(Object.keys(MENUS.list)[0]); }); menuSay(`Deleted “${gone}”. Undo brings it back.`); },{danger:true,disabled:!many,ask:`Click again to delete “${MENUS.current}”`}]]));
+  // any file can be picked; files that aren't a saved menu get a plain explanation instead of being greyed out
+  fi.onchange=()=>{ const fl=fi.files[0]; fi.value=''; if(!fl) return;
+    const why=fileProblem(fl); if(why){ say(why,true,true); return; }
+    fl.text().then(t=>{
+    const sheet=/\.(csv|tsv)$/i.test(fl.name);
+    const r=sheet?{name:fl.name.replace(/\.(csv|tsv)$/i,'').replace(/^meme-on-10-menu_/,'').trim(),words:rowsToMenu(parseDelimited(t.replace(/^\uFEFF/,''),/\.tsv$/i.test(fl.name)||t.includes('\t')?'\t':',')),look:{}}:readMenuFile(t,fl.name);
+    const n=r.words.reduce((a,s_)=>a+s_.items.length,0);
+    if(!n&&!Object.keys(r.look).length){ say(`“${fl.name}” has no dishes in it. Pick the file that “Save to my computer” made (its name ends in “meme on 10 menu.txt”).`,true,true); return; }
+    let nm; histAct('opened “'+fl.name+'”',()=>{ nm=addMenu(r.name||'Opened menu',r.words.length?r.words:BLANK_MENU(),Object.assign(lookOf(G.mn),r.look)); });
+    menuSay(`Opened “${fl.name}” as “${nm}”: ${n} dish${n===1?'':'es'}.`); }); };
   return wrap;
 }
 
@@ -2101,14 +2186,14 @@ function resizeSel(m){
   window.addEventListener('resize',()=>{ if(now()>max()) setW(max()); overlay(); });
 })();
 
-function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,menuMode,links:[...LINKS]})); }catch(e){} storeMenu(); }
+function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,menuMode,links:[...LINKS]})); }catch(e){} storeMenu(); if(HIST.cur==null) histCheck(); else histLater(); }
 function restore(){ try{ const v=JSON.parse(localStorage.getItem('meme10_last')||'null'); if(!v) return;
   S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(['text','docs','sheet','boxes'].includes(v.menuMode)) menuMode=v.menuMode; }catch(e){} }
-restore(); loadVersions(); loadMenus();
+restore(); loadVersions(); loadMenus(); HIST.cur=null;
 { const h=decodeURIComponent(location.hash.slice(1)); if(h==='menu') cur='mn'; else if(LAYOUTS[h]) cur=h; else if(cur==='mn' && h!=='mn') cur='1b';
   // Keep the address in step with what is shown, so the top nav underlines the right tab.
   history.replaceState(null,'','#'+(cur==='mn'?'menu':cur)); window.dispatchEvent(new HashChangeEvent('hashchange')); }
-buildPanel(); render();
+buildPanel(); render(); HIST.cur=histSnap(); HIST.past=[]; HIST.dirty=false; histButtons();
 if(document.fonts){
   const loaded=()=>[...document.fonts].filter(f=>f.status==='loaded').length;
   let seen=loaded(), timer=null;
