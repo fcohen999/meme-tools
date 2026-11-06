@@ -354,8 +354,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=26;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=27;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 27','Menu: a dish’s choices can sit side by side on one line (Chicken 18 · Lamb 22) instead of one per line: use the One per line / Side by side buttons under its choices in Boxes, or type them on one line with “ · ” between them. A section’s own price (like Beers 10) can sit next to the section name or at the right edge, lined up with the dish prices: Look → Prices → “A section’s price”, or drag it left or right on the page.'],
  ['v26 · 26','Edit in boxes: the ↑ ↓ arrows are back on every section, dish, subheading and choice (a dish at the top or bottom of its section moves into the next one). The first box is “Menu title, under the logo”, with Left / Center / Right. The ⋯ menus keep Duplicate and Delete. This list of changes is up to date again.'],
  ['v26 · 25','Menu page: Look → Layout → Page can be “Two half pages”: two menus side by side on one sheet, each with its own header, to print and cut down the middle. The right half can be any saved menu or the same one again, with a light dashed cutting line you can turn off.'],
  ['v26 · 24','Menu: each section can have its own 1 or 2 columns. Subheadings (like “Lunch”) can go under the logo or label a group of dishes inside a section. A dish can have choices under it, each with its own price. A section’s ⋯ menu can duplicate it. Typing, Google Docs, Google Sheets and saved files keep all of these.'],
@@ -570,7 +571,7 @@ const OPTNAME={onCase:{lowercase:'lowercase',caps:'CAPS'},squiggle:{A:'Style 1',
   headAlign:{'spread across':'Spread out','together on the left':'Left','together in the center':'Center'},
   headColors:{menu:'Menu colors',header:'Header tab colors'},
   headSrc:{menu:'This page (one line)',mine:'The Header tab'},
-  pricePos:{edge:'At the right edge',name:'Next to the name'}};
+  pricePos:{edge:'At the right edge',name:'Next to the name'},secPricePos:{edge:'At the right edge',name:'Next to the name'}};
 // point sizes read “10.5 pt”
 ['headPt','namePt','descPt','subPt'].forEach(k=>{ OPTNAME[k]={}; [7,7.5,8,8.5,8.64,9,9.5,10,10.08,10.44,10.5,11,11.5,12,13,14,15,16,18].forEach(v=>OPTNAME[k][v]=(Math.round(v*10)/10)+' pt'); });
 const optName=(k,o)=>(OPTNAME[k]&&OPTNAME[k][o]!==undefined)?OPTNAME[k][o]:String(o);
@@ -620,7 +621,9 @@ function menuLayout(S,G,M,top,m){
     if(!first) y=end+secGap;
     if(title||price){
       out+=`<text x="${L}" y="${f(y)}" font-family='${tagFam}' font-size="${f(hs)}" font-weight="500" letter-spacing="${f(hls)}" fill="${brand}">${esc(title.toUpperCase())}</text>`;
-      if(price){ const px=L+(title?measure(title.toUpperCase(),dFam,500,hs,hls)+hls+16*sc:0); out+=`<text x="${f(px)}" y="${f(y)}" font-family='"Bodoni Moda", serif' font-size="${f(hs*4/3)}" font-weight="400" fill="${brand}">${esc(price)}</text>`; }
+      // a section's own price: right after the section name, or at the right edge (in by priceIn, lined up with the dish prices)
+      if(price){ const atEdge=G.secPricePos==='edge', px=atEdge?R-priceIn:L+(title?measure(title.toUpperCase(),dFam,500,hs,hls)+hls+16*sc:0);
+        out+=`<text data-spr="1" x="${f(px)}" y="${f(y)}"${atEdge?' text-anchor="end"':''} font-family='"Bodoni Moda", serif' font-size="${f(hs*4/3)}" font-weight="400" fill="${brand}">${esc(price)}</text>`; }
     }
     const dishOf=it=>{
       const pr=(it.price||'').trim().replace(/^\$/,'');
@@ -633,14 +636,25 @@ function menuLayout(S,G,M,top,m){
       const opts=(it.opts||[]).filter(o=>(o.name||'').trim()||(o.price||'').trim()).map(o=>{
         const op=(o.price||'').trim().replace(/^\$/,''), opw=op?measure(op,'Bodoni Moda',400,ps,0):0;
         const t=wrap((o.name||'').trim().toUpperCase(),Math.max(40,colW-optIn-(op?(nextTo?opw+gapP:priceIn+70*sc):0)),dFam,400,ds_,ols)[0]||'';
-        if(op&&t) room=Math.min(room,colW-optIn-measure(t,dFam,400,ds_,ols)-opw);
-        return {t,op};
+        if(op&&t&&!it.optsInline) room=Math.min(room,colW-optIn-measure(t,dFam,400,ds_,ols)-opw);
+        return {t,op,tw:t?measure(t,dFam,400,ds_,ols):0,opw};
       });
+      // side by side: “NAME price · NAME price”, flowing onto a new line when the next one won't fit (a choice is never split)
+      let rows=null;
+      if(it.optsInline&&opts.length){
+        const pg=5*sc, dot='·', dotW=measure(dot,'Bodoni Moda',400,ps,0), sep=10*sc*2+dotW, maxW=colW-optIn;
+        rows=[[]]; let x=0;
+        opts.forEach(o=>{ const w=o.tw+(o.t&&o.op?pg:0)+o.opw, row=rows[rows.length-1];
+          if(row.length&&x+sep+w>maxW){ rows.push([]); x=0; }
+          const r2=rows[rows.length-1]; if(r2.length) x+=sep;
+          r2.push({t:o.t,op:o.op,x,px:x+o.tw+(o.t?pg:0),dx:r2.length?x-sep/2:null}); x+=w; });
+      }
       const descEnd=ds.length?(nm.length?toDesc:0)+(ds.length-1)*step:-Infinity;
       const nameEnd=Math.max(0,nm.length-1)*step;
       const o0=ds.length?descEnd+step:(nm.length?nameEnd+toDesc:0);
-      const lastOff=opts.length?o0+(opts.length-1)*step:Math.max(nameEnd,descEnd);
-      return {nm,ds,pr,opts,o0,lastOff,h:lastOff+itemGap};
+      const nOpt=rows?rows.length:opts.length;
+      const lastOff=nOpt?o0+(nOpt-1)*step:Math.max(nameEnd,descEnd);
+      return {nm,ds,pr,opts,rows,o0,lastOff,h:lastOff+itemGap};
     };
     // the first thing sits under the section name by the usual gap (not stretched)
     let yy=(title||price)?y+34*sc*big:y; end=y;
@@ -670,7 +684,12 @@ function menuLayout(S,G,M,top,m){
           if(d.pr&&d.nm.length) out+=priceEl(d.pr,xs[gi],rights[gi],gy,measure(d.nm[0],dFam,500,ns,nls));
           const d0=gy+(d.nm.length?(d.nm.length-1)*step+toDesc:0);
           d.ds.forEach((L2,i)=>{ out+=`<text x="${xs[gi]}" y="${f(d0+i*step)}" font-family='"Bodoni Moda", serif' font-size="${f(ds_)}" font-weight="400" fill="${ink}" fill-opacity="0.9">${esc(L2)}</text>`; });
-          d.opts.forEach((o,i)=>{ const oy=gy+d.o0+i*step, ox=xs[gi]+optIn;
+          if(d.rows) d.rows.forEach((row,i)=>{ const oy=gy+d.o0+i*step, ox=xs[gi]+optIn;
+            row.forEach(o=>{
+              if(o.dx!==null) out+=`<text x="${f(ox+o.dx)}" y="${f(oy)}" text-anchor="middle" font-family='"Bodoni Moda", serif' font-size="${f(ps)}" font-weight="400" fill="${brand}">·</text>`;
+              if(o.t) out+=`<text x="${f(ox+o.x)}" y="${f(oy)}" font-family='${tagFam}' font-size="${f(ds_)}" font-weight="400" letter-spacing="${f(ols)}" fill="${ink}">${esc(o.t)}</text>`;
+              if(o.op) out+=`<text x="${f(ox+o.px)}" y="${f(oy)}" font-family='"Bodoni Moda", serif' font-size="${f(ps)}" font-weight="400" fill="${brand}">${esc(o.op)}</text>`; }); });
+          else d.opts.forEach((o,i)=>{ const oy=gy+d.o0+i*step, ox=xs[gi]+optIn;
             if(o.t) out+=`<text x="${f(ox)}" y="${f(oy)}" font-family='${tagFam}' font-size="${f(ds_)}" font-weight="400" letter-spacing="${f(ols)}" fill="${ink}">${esc(o.t)}</text>`;
             if(o.op) out+=priceEl(o.op,ox,rights[gi],oy,o.t?measure(o.t,dFam,400,ds_,ols):0); });
           end=Math.max(end,gy+d.lastOff); gy+=d.h;
@@ -891,12 +910,12 @@ const LAYOUTS = {
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','subPt','Subheadings'],['spick','pricePos','A dish’s own price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',8,200,1,'',''],['spick','sheet','Page'],['scheck','cutLine','Dashed line to cut along'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['srange','hdH','Header height',80,400,1,'',''],
+    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','subPt','Subheadings'],['spick','pricePos','A dish’s own price'],['spick','secPricePos','A section’s price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',8,200,1,'',''],['spick','sheet','Page'],['scheck','cutLine','Dashed line to cut along'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['srange','hdH','Header height',80,400,1,'',''],
       ['h','Margins and spacing'],['srange','topSpace','Top',0,200,2,'less','more'],['srange','headGap','Under the header',-40,300,2,'higher','lower'],['srange','side','Left and right',20,200,2,'less','more'],['srange','bottom','Bottom',20,200,2,'less','more'],['srange','lineSpace','Lines',70,200,5,'tighter','looser'],['srange','dishSpace','Dishes',50,300,5,'less','more'],['srange','secSpace','Sections',50,300,5,'less','more'],['scheck','fill','Spread out to fill the page'],
       ['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
     geo:{ seq:['name','sq','tag'], off:['sq'], logo:'line', headSrc:'menu', headColors:'menu', headAlign:'spread across', menuLogo:100, menuScale:100, columns:2, menuInk:'#2b2724', menuBrand:'#56603c', menuBg:'#f4eee2',
-          headPt:8.64, namePt:10.44, descPt:10.08, subPt:12, topSpace:null, headGap:null, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:false, pricePos:'edge', priceIn:0, priceGap:14, sheet:'full', rightMenu:'', cutLine:true },
+          headPt:8.64, namePt:10.44, descPt:10.08, subPt:12, topSpace:null, headGap:null, side:64, bottom:64, lineSpace:100, dishSpace:100, secSpace:100, fill:false, pricePos:'edge', secPricePos:'name', priceIn:0, priceGap:14, sheet:'full', rightMenu:'', cutLine:true },
     // a getter, so the header settings change with “Header comes from”
     get panel(){ return [
       ['h','Menu words','words'],['menuedit'],
@@ -910,8 +929,10 @@ const LAYOUTS = {
       ['hint','Sizes are in points, like in Word. “All text” makes everything bigger or smaller at once.'],
       ['sub','Prices'],
       ['pick','pricePos','A dish’s own price',['edge','name']],
-      G.mn.pricePos==='name'?['range','priceGap','Space after the name',8,200,1]:['range','priceIn','In from the right edge',0,300,1],
-      ['hint','Or drag a price left or right on the page. All the prices move together.'],
+      ['pick','secPricePos','A section’s price',['name','edge']],
+      ...(G.mn.pricePos==='name'?[['range','priceGap','Space after the name',8,200,1]]:[]),
+      ...(G.mn.pricePos!=='name'||G.mn.secPricePos==='edge'?[['range','priceIn','In from the right edge',0,300,1]]:[]),
+      ['hint','Or drag a price left or right on the page. All the prices move together. A section’s price at the right edge lines up with the dish prices.'],
       ['sub','Layout'],
       ['pick','sheet','Page',['full','halves']],
       ...(G.mn.sheet==='halves'?[['rightmenu','Right half'],['check','cutLine','Dashed line to cut along'],
@@ -960,7 +981,7 @@ const LAYOUTS = {
       const rn=G.rightMenu, rv=rn&&rn!==MENUS.current?MENUS.list[rn]:null;
       const R=mn.one(S,half(rv?Object.assign({},G,lookOf(mn.geo),rv.look||{}):G),rv?(rv.M||[]):M,HW);
       const cut=G.cutLine===false?'':`<line x1="${HW}" y1="0" x2="${HW}" y2="1100" stroke="${G.menuInk}" stroke-opacity="0.4" stroke-width="0.8" stroke-dasharray="6 5"/>`;
-      const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs>${L.body}<g transform="translate(${HW} 0)">${R.body.replace(/ data-pr="1"/g,'')}</g>${cut}</svg>`;
+      const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs>${L.body}<g transform="translate(${HW} 0)">${R.body.replace(/ data-s?pr="1"/g,'')}</g>${cut}</svg>`;
       const rName=rv?rn:MENUS.current;
       const overMsg=L.over&&R.over?'Both halves are longer than the page. Make the text smaller, or the margins and spacing smaller.'
         :L.over?'The left half is longer than the page. Make the text smaller, or the margins and spacing smaller.'
@@ -1090,7 +1111,7 @@ const put=(k,v)=>{ if(k==='hdH') G.hd.H=v; else if(isGeo(k)) G[cur][k]=v; else S
 let menuMode='text';
 /* What a menu is made of:
    section    {title, price, cols?, items}   cols: 1 or 2 for this section only (none: the page's Columns setting)
-   dish       {name, desc, price, opts?}     opts: choices under the dish, each {name, price}
+   dish       {name, desc, price, opts?, optsInline?}  opts: choices under the dish, each {name, price}; optsInline: drawn side by side on one line
    subheading {sub, align}                   align: 'left' | 'center' | 'right'. Before the first section it sits under the logo.
    Every way of editing (Typing, Google Docs, Google Sheets, Boxes, the saved file) keeps all of this. */
 const isSub=it=>!!it&&typeof it.sub==='string';
@@ -1104,6 +1125,14 @@ const optLine=o=>{ const n=(o.name||'').trim(), pr=(o.price||'').trim(); return 
 // a choice line, "- Lamb (22)" or "- Lamb 22" -> {name, price}
 const readOpt=t=>{ const [name,price]=splitPrice(String(t).replace(/^[-•–]\s*/,'')); return {name,price:price.replace(/^\$/,'')}; };
 const isOptLine=L=>/^[-•–]\s+\S/.test(L);
+// a choice line that may hold several choices side by side, “- Chicken (18) · Lamb (22)”: adds them to the dish
+const OPT_SEP=/\s+[·|]\s+/;
+function addOpts(dish,t,price=''){
+  const parts=String(t).replace(/^[-•–]\s*/,'').split(OPT_SEP).filter(x=>x.trim()), os=parts.map(readOpt);
+  if(os.length===1&&price) os[0].price=price;
+  (dish.opts=dish.opts||[]).push(...os); if(os.length>1) dish.optsInline=true;
+}
+const optsLines=it=>{ const os=(it.opts||[]).map(optLine).filter(Boolean); return it.optsInline&&os.length>1?['- '+os.map(o=>o.slice(2)).join(' · ')]:os; };
 // the menu as "type like a document" text. Every section gets a “#” line (even one with no name, or no dishes yet),
 // so reading it back never merges two sections or drops a new empty one. (The first section, when it has no name
 // but has something in it, needs none: lines before the first “#” are a section with no name.)
@@ -1113,7 +1142,7 @@ function menuToText(m=M,loose=false){
     const lines=[];
     (sec.items||[]).forEach(it=>{
       if(isSub(it)){ if(it.sub.trim()) lines.push('## '+it.sub.trim()+alignTag(it.align)); return; }
-      const d=dishLine(it), os=(it.opts||[]).map(optLine).filter(Boolean);
+      const d=dishLine(it), os=optsLines(it);
       if(d||os.length) lines.push(d||'(no name)');
       lines.push(...os);
     });
@@ -1136,7 +1165,7 @@ function parseMenuText(t){
     }
     need();
     const last=sec.items[sec.items.length-1];
-    if(isOptLine(L)&&last&&!isSub(last)){ (last.opts=last.opts||[]).push(readOpt(L)); return; }
+    if(isOptLine(L)&&last&&!isSub(last)){ addOpts(last,L); return; }
     const i=L.indexOf(':');
     let name=(i>=0?L.slice(0,i):L).trim(), desc=(i>=0?L.slice(i+1):'').trim(), price='';
     const pm=name.match(/^(.*?)\s*\((\$?\d+(?:\.\d+)?)\)$/);
@@ -1156,7 +1185,8 @@ function menuRows(){
     (sec.items||[]).forEach(it=>{
       if(isSub(it)){ rows.push(['','## '+it.sub.trim()+alignTag(it.align),'','']); return; }
       rows.push(['',it.name||'',(it.desc||'').replace(/\s+/g,' ').trim(),it.price||'']);
-      (it.opts||[]).forEach(o=>rows.push(['','- '+(o.name||''),'',o.price||'']));
+      if(it.optsInline&&optsLines(it).length===1&&(it.opts||[]).length>1) rows.push(['',optsLines(it)[0],'','']);
+      else (it.opts||[]).forEach(o=>rows.push(['','- '+(o.name||''),'',o.price||'']));
     }); });
   return rows;
 }
@@ -1186,7 +1216,7 @@ function rowsToMenu(rows){
     if(!sec) start('');
     if(/^##/.test(dish)){ const [sub,align]=splitAlign(dish.replace(/^#+\s*/,'')); sec.items.push({sub,align}); return; }
     const last=sec.items[sec.items.length-1];
-    if(isOptLine(dish)&&last&&!isSub(last)){ const o=readOpt(dish); (last.opts=last.opts||[]).push({name:o.name,price:price||o.price}); return; }
+    if(isOptLine(dish)&&last&&!isSub(last)){ addOpts(last,dish,price); return; }
     if(dish||desc) sec.items.push({name:dish,desc,price});
   });
   return out;
@@ -1367,7 +1397,7 @@ function blocksToMenu(blocks){
     gr.lines.forEach((l,i)=>{
       if(l.kind==='sub'){ sec.items.push({sub:l.text.trim(),align:l.align}); dish=null; return; }
       // a bulleted line under a dish (that isn't itself in the list) is one of its choices
-      if(l.li&&dish&&!dish._li){ const o=readOpt(cleanSep(l.text)); (dish.opts=dish.opts||[]).push(o); return; }
+      if(l.li&&dish&&!dish._li){ addOpts(dish,cleanSep(l.text)); return; }
       if(l.kind==='price'){ const p=l.text.replace('$',''); if(dish&&!dish.price) dish.price=p; else if(!sec.price) sec.price=p; return; }
       if(l.kind==='dish'){ const [n,d]=nameDesc(l.text); addDish(n,d,l,i===0); return; }
       if(l.kind==='dishdesc'){ addDish(l.boldPre,l.text.slice(l.boldPre.length),l,i===0); return; }
@@ -1597,6 +1627,11 @@ function renderMenuEditor(){
             ['Delete this choice',()=>{ histAct('deleted the choice “'+nameOf(o.name)+'”',()=>{ opts.splice(oi,1); if(!opts.length) delete it.opts; redo(); }); menuSay('Choice deleted. Undo brings it back.'); },{danger:true}]]));
         row.appendChild(r);
       });
+      // two or more choices can sit one per line (the usual) or side by side on one line
+      if(opts.length>1){ const lay=document.createElement('div'); lay.className='mcols';
+        lay.append(fl('Choices'),seg(`Choices for dish ${n}`,[['list','One per line'],['inline','Side by side']],it.optsInline?'inline':'list',
+          v=>histAct(`put the choices for “${nameOf(it.name)}” ${v==='inline'?'side by side':'one per line'}`,()=>{ if(v==='inline') it.optsInline=true; else delete it.optsInline; redo(); })));
+        row.appendChild(lay); }
       const addO=btn('+ Add a choice',()=>{ (it.opts=it.opts||[]).push({name:'',price:''}); redo(); const all=document.querySelectorAll(`#menuEditor input[aria-label^="Dish ${n}, choice"]:not([aria-label$="price"])`); if(all.length) all[all.length-1].focus(); },
         'Add a choice under this dish, like a meat or a topping, each with its own price'); addO.className='link madd-opt'; addO.textContent='+ Add a choice';
       row.appendChild(addO);
@@ -1733,11 +1768,11 @@ function headSrcBlock(){
 /* ============ YOUR MENUS: each menu keeps its own words, text sizes, margins, spacing and colors.
    The header and the logo are shared by every menu. Kept in this browser; “Save this menu to my computer”
    writes a plain text file a person can read (and open again). ============ */
-const MENU_LOOK=['pricePos','priceIn','priceGap','menuScale','headPt','subPt','namePt','descPt','columns','menuInk','menuBrand','menuBg','topSpace','headGap','side','bottom','lineSpace','fill','dishSpace','secSpace','sheet','rightMenu','cutLine'];
+const MENU_LOOK=['pricePos','secPricePos','priceIn','priceGap','menuScale','headPt','subPt','namePt','descPt','columns','menuInk','menuBrand','menuBg','topSpace','headGap','side','bottom','lineSpace','fill','dishSpace','secSpace','sheet','rightMenu','cutLine'];
 // the settings part of a saved menu file: [setting, words in the file, kind]
 const LOOKFILE=[['headPt','Section names size','pt'],['subPt','Subheadings size','pt'],['namePt','Dish names size','pt'],['descPt','What’s in it size','pt'],['menuScale','Everything bigger or smaller','%'],
   ['columns','Columns',''],['topSpace','Top margin',''],['headGap','Menu text starts below the header',''],['side','Left and right margins',''],['bottom','Bottom margin',''],
-  ['pricePos','Dish prices','price'],['priceIn','Dish prices in from the right edge',''],['priceGap','Space between a dish name and its price',''],
+  ['pricePos','Dish prices','price'],['secPricePos','Section prices','price'],['priceIn','Dish prices in from the right edge',''],['priceGap','Space between a dish name and its price',''],
   ['lineSpace','Space between lines','%'],['fill','Spread out to fill the page','yes'],['dishSpace','Space between dishes','%'],['secSpace','Space between sections','%'],
   ['sheet','Page','sheet'],['rightMenu','Right half','name'],['cutLine','Cutting line between the halves','yes'],
   ['menuBrand','Color of the logo, headings and prices','color'],['menuInk','Color of the dish names','color'],['menuBg','Page color','color']];
@@ -1992,7 +2027,7 @@ function stepperRow(k,label,min,max,step){
 function pickRow(k,label,opts){
   const num=typeof opts[0]==='number', seg=opts.length<=3, id='f'+(++uid);
   const r=document.createElement('div'); r.className='row2'+(seg&&opts.map(o=>optName(k,o)).join('').length>18?' stack':'');
-  const setTo=v=>{ if(cur==='mn') histCheck(); put(k,v); if(cur==='mn'){ HIST.label='changed '+label.toLowerCase()+' to '+optName(k,v).toLowerCase(); histCheck(); } if(k==='sheet') buildPanel(); render(); sync(); };
+  const setTo=v=>{ if(cur==='mn') histCheck(); put(k,v); if(cur==='mn'){ HIST.label='changed '+label.toLowerCase()+' to '+optName(k,v).toLowerCase(); histCheck(); } if(k==='sheet'||k==='pricePos'||k==='secPricePos') buildPanel(); render(); sync(); };
   r.appendChild(labCell(k,label,seg?null:id,()=>setTo(defOf(k))));
   if(seg){
     const sg=document.createElement('div'); sg.className='seg small'; sg.setAttribute('role','group'); sg.ariaLabel=label;
@@ -2245,6 +2280,21 @@ function dragPrice(ev,cv,k){
   const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); showMenuRow('price'); };
   cv.addEventListener('pointermove',move); cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); overlay();
 }
+/* Dragging a section's own price: pulled right it goes to the right edge (lined up with the dish prices),
+   pulled back left it sits after the section name again. At the edge, dragging further moves it in (with the dish prices). */
+function setSecPrice(v){ const g=G.mn; if(g.secPricePos===v) return; histCheck(); g.secPricePos=v; HIST.label='moved the section prices '+(v==='edge'?'to the right edge':'next to the names'); histCheck(); buildPanel(); render(); sync(); }
+function dragSecPrice(ev,cv,k){
+  const g=G.mn, el=ev.target.closest('[data-spr]'), svg=svgEl(), b=el&&svg?boxOf(el,svg):null, W=LAST.guides&&LAST.guides.pw||850;
+  const right=W-(g.side??64)-(g.priceIn||0), mid=b?(b.x+b.w+right)/2:right; let from=ev.clientX, base=g.priceIn||0;
+  mnDrag='secprice'; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
+  const move=e=>{ const dx=(e.clientX-from)*k;
+    if(g.secPricePos!=='edge'){ if(b&&b.x+b.w+dx>mid){ setSecPrice('edge'); from=e.clientX; base=g.priceIn||0; } return; }
+    const v=Math.round(base-dx);
+    if(v>Math.min(300,(right-(g.side??64))/2)){ setSecPrice('name'); return; }
+    const c=Math.max(0,Math.min(300,v)); if(c!==g.priceIn){ g.priceIn=c; render(); sync(); } };
+  const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); showMenuRow('secprice'); };
+  cv.addEventListener('pointermove',move); cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); overlay();
+}
 /* Menu page: the margin lines (like the ruler in Google Docs) show while the pointer is over the page.
    Every line can be grabbed and dragged, or clicked to select it (then the arrow keys move it, Shift for 10):
    top of the header, bottom of the header's band, where the menu text starts, left and right margins, bottom margin.
@@ -2258,7 +2308,8 @@ const MN_H={
   sideL:{key:'side',axis:'x',sign:1,name:'Left and right margins',row:'Left and right',sec:'spacing'},
   sideR:{key:'side',axis:'x',sign:-1,name:'Left and right margins',row:'Left and right',sec:'spacing'},
   bottom:{key:'bottom',axis:'y',sign:-1,name:'Bottom margin',row:'Bottom',sec:'spacing'},
-  price:{key:'price',axis:'x',sign:1,name:'Dish prices',row:'A dish’s own price',sec:'look'}};
+  price:{key:'price',axis:'x',sign:1,name:'Dish prices',row:'A dish’s own price',sec:'look'},
+  secprice:{key:'secprice',axis:'x',sign:1,name:'Section prices',row:'A section’s price',sec:'look'}};
 // the value a line gets when it has moved by `delta` page units from where it started (`start`)
 function handleValue(h,start,delta){
   const H=MN_H[h], g=LAST.guides||{}, sp=rangeOf('mn',H.key)||[0,0,0,-1e9,1e9];
@@ -2270,6 +2321,7 @@ function menuHit(ev){
   const r=svg.getBoundingClientRect(), k=850/r.width, x=(ev.clientX-r.left)*k, y=(ev.clientY-r.top)*k, t=8*k;
   if(x<-t||x>(g.pw||850)+t||y<-t||y>1100+t) return null;   // two half pages: the lines belong to the left half
   if(ev.target.closest&&ev.target.closest('[data-pr]')) return 'price';
+  if(ev.target.closest&&ev.target.closest('[data-spr]')) return 'secprice';
   if(g.bandU&&Math.abs(y-g.hBot)<t) return 'band';
   if(Math.abs(x-g.side)<t) return 'sideL';
   if(Math.abs(x-((g.pw||850)-g.side))<t) return 'sideR';
@@ -2289,7 +2341,7 @@ function menuGuides(svg){
   ln('body',0,g.bodyTop,W,g.bodyTop,1.4);
   const info=document.getElementById('selInfo'); if(!info) return;
   const h=mnDrag||mnSel||mnHot, H=h&&MN_H[h];
-  const val=h==='price'?(G.mn.pricePos==='name'?`${G.mn.priceGap} after the name`:`${G.mn.priceIn} in from the right edge`):H?Math.round(get(H.key)):'';
+  const val=h==='secprice'?(G.mn.secPricePos==='edge'?`at the right edge, ${G.mn.priceIn} in`:'next to the section name'):h==='price'?(G.mn.pricePos==='name'?`${G.mn.priceGap} after the name`:`${G.mn.priceIn} in from the right edge`):H?Math.round(get(H.key)):'';
   // say where the same setting is in the panel, so it is clear the two are one and the same
   const where=H?` · also in ${{spacing:'Margins and spacing',look:'Look',order:'Page header'}[H.sec]} → ${H.row}`:'';
   info.textContent=H?`${H.name}: ${val}${where}`+(mnDrag?'':mnSel===h?` · arrow keys move it (Shift for 10), Esc to let go`:` · drag it or click to select it`)
@@ -2304,6 +2356,7 @@ function showMenuRow(h){
   if(row){ row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); row.scrollIntoView({block:'nearest',behavior:'smooth'}); }
 }
 function menuNudge(h,delta){
+  if(h==='secprice'){ setSecPrice(delta>0?'edge':'name'); return; }
   if(h==='price'){ const g=G.mn; if(g.pricePos==='name') g.priceGap=Math.max(8,Math.min(200,(g.priceGap??14)+delta)); else g.priceIn=Math.max(0,Math.min(300,(g.priceIn||0)-delta)); render(); sync(); return; }
   const H=MN_H[h], v=handleValue(h,get(H.key),delta); if(v!==get(H.key)){ put(H.key,v); render(); sync(); }
 }
@@ -2358,6 +2411,7 @@ function resizeSel(m){
       if(!h){ if(mnSel){ mnSel=null; overlay(); } return; }
       mnSel=h; cv.focus({preventScroll:true});
       if(h==='price'){ const r=svgEl().getBoundingClientRect(); dragPrice(ev,cv,850/r.width); return; }
+      if(h==='secprice'){ const r=svgEl().getBoundingClientRect(); dragSecPrice(ev,cv,850/r.width); return; }
       const H=MN_H[h], r=svgEl().getBoundingClientRect(), k=850/r.width, start=get(H.key), p0=H.axis==='x'?ev.clientX:ev.clientY;
       mnDrag=h; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
       const move=e=>{ const v=handleValue(h,start,((H.axis==='x'?e.clientX:e.clientY)-p0)*k); if(v!==get(H.key)){ put(H.key,v); render(); sync(); } };

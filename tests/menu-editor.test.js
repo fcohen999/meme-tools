@@ -150,7 +150,7 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
       { title: '', price: '', items: [{ sub: 'Lunch', align: 'center' }] },
       { title: 'Tapas', price: '', cols: 2, items: [
         { name: 'Shipudim', desc: 'Grilled skewers, served with pita', price: '', opts: [{ name: 'Chicken', price: '24' }, { name: 'Lamb kebab', price: '28' }] },
-        { name: 'Hummus', desc: 'Chickpeas, tahini, olive oil', price: '14', opts: [{ name: 'Falafel', price: '18' }, { name: 'Lamb', price: '22' }] },
+        { name: 'Hummus', desc: 'Chickpeas, tahini, olive oil', price: '14', optsInline: true, opts: [{ name: 'Falafel', price: '18' }, { name: 'Lamb', price: '22' }] },
         { sub: 'From the grill', align: 'left' },
         { name: 'Halloumi', desc: 'Honey, za’atar', price: '12' },
         { name: 'Merguez', desc: 'Harissa', price: '13' }] },
@@ -181,6 +181,37 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     const xs = await page.$$eval('#canvas svg text', ts => ts.map(t => [t.textContent, +t.getAttribute('x')]));
     const x = n => (xs.find(t => t[0] === n) || [])[1];
     ok(x('HALLOUMI') !== x('MERGUEZ'), 'drawn: Tapas in two columns');
+    await page.close();
+  }
+
+  // ---- Choices side by side, and where a section's own price sits
+  {
+    const page = await fresh(browser);
+    const M1 = [{ title: 'Beers', price: '10', items: [
+      { name: 'Shipudim', desc: '', price: '', opts: [{ name: 'Chicken', price: '18' }, { name: 'Lamb', price: '22' }, { name: 'Shrimp', price: '24' }] }] }];
+    await page.evaluate(m => { M = JSON.parse(JSON.stringify(m)); G.mn.columns = 1; buildPanel(); render(); }, M1);
+    await mode(page, 'Boxes');
+    const ys = () => page.$$eval('#canvas svg text', ts => Object.fromEntries(ts.map(t => [t.textContent, +t.getAttribute('y')])));
+    let y = await ys();
+    ok(y.CHICKEN !== y.LAMB, 'choices: one per line to start');
+    await click(page, `.seg[aria-label="Choices for dish 1"] button`, 'Side by side');
+    ok((await menu(page))[0].items[0].optsInline === true, 'choices: Side by side button sets it');
+    y = await ys();
+    ok(y.CHICKEN === y.LAMB && y.LAMB === y.SHRIMP && y['22'] === y.CHICKEN, 'choices: side by side on one line, prices too');
+    const t = await page.evaluate(() => menuToText());
+    ok(t.includes('- Chicken (18) · Lamb (22) · Shrimp (24)'), 'choices: written as one line when typing');
+    ok(same(await page.evaluate(() => parseMenuText('# A\nKebab\n- Beef (9) · Lamb (11)')), [{ title: 'A', price: '', items: [{ name: 'Kebab', desc: '', price: '', optsInline: true, opts: [{ name: 'Beef', price: '9' }, { name: 'Lamb', price: '11' }] }] }]), 'choices: a typed “ · ” line reads back side by side');
+    await click(page, `.seg[aria-label="Choices for dish 1"] button`, 'One per line');
+    ok(!('optsInline' in (await menu(page))[0].items[0]), 'choices: One per line turns it off');
+    // section price: next to the name to start, then at the right edge
+    const sp = () => page.$eval('#canvas svg [data-spr]', e => [e.getAttribute('text-anchor'), +e.getAttribute('x')]);
+    let [anc, sx] = await sp();
+    ok(anc === null && sx < 300, 'section price: next to the name to start');
+    await page.evaluate(() => { G.mn.secPricePos = 'edge'; G.mn.priceIn = 20; render(); });
+    [anc, sx] = await sp();
+    const right = await page.evaluate(() => 850 - (G.mn.side ?? 64) - 20);
+    ok(anc === 'end' && Math.abs(sx - right) < 0.5, 'section price: at the right edge, in by the same amount as the dish prices');
+    ok(await page.evaluate(() => readMenuFile(menuFileText(), 'x.txt').look.secPricePos) === 'edge', 'section price: kept in a saved file');
     await page.close();
   }
 
