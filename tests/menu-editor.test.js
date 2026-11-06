@@ -239,6 +239,45 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     await page.close();
   }
 
+  // ---- Two half pages on one sheet
+  {
+    const page = await fresh(browser);
+    // a second menu, “Drink specials”, with its own words and look
+    await page.evaluate(() => {
+      addMenu('Drink specials', [{ title: 'Specials', price: '', items: [{ name: 'Arak spritz', desc: 'Arak, soda, mint', price: '14' }] }], Object.assign(lookOf(G.mn), { menuBg: '#ffffff' }));
+      useMenu('Cocktails'); buildPanel(); render();
+    });
+    await click(page, '.row2 .seg button', 'Two half pages');
+    ok(await page.evaluate(() => G.mn.sheet === 'halves'), 'halves: picked from the panel');
+    ok(await page.$('#panel select[id] option[value="Drink specials"]') !== null, 'halves: right-half menu list shows the other menu');
+    await page.$eval('#panel .row2.two select', s => { s.value = 'Drink specials'; s.dispatchEvent(new Event('change')); });
+    const svg = await page.$eval('#canvas svg', e => e.outerHTML);
+    ok(svg.includes('translate(425 0)') && svg.includes('>ARAK SPRITZ<') && svg.includes('>MÉMÉ’S MANHATTAN<'), 'halves: left is this menu, right is Drink specials');
+    ok(svg.includes('x1="425"') && svg.includes('stroke-dasharray'), 'halves: dashed cutting line down the middle');
+    ok(svg.includes('fill="#ffffff"') && svg.includes('<rect width="425"'), 'halves: each half has its own page color');
+    const pos = await page.$$eval('#canvas svg text', ts => ts.map(t => { const b = t.getBBox(), m = t.getCTM(); return [t.textContent, m.e + b.x * m.a, m.e + (b.x + b.width) * m.a]; }));
+    const leftOK = pos.filter(p => p[1] < 425 * 0.96).every(p => p[2] <= 425 + 1);
+    ok(leftOK, 'halves: nothing on the left half crosses the cutting line');
+    ok(pos.filter(p => /KITCHEN/.test(p[0])).length === 2, 'halves: each half has its own header');
+    // saved file keeps it; header picture stays one page
+    const r = await page.evaluate(() => readMenuFile(menuFileText(), 'x.txt').look);
+    ok(r.sheet === 'halves' && r.rightMenu === 'Drink specials' && r.cutLine === true, 'halves: kept in the saved file');
+    // renaming the right-hand menu keeps it in the right half
+    await page.evaluate(() => { useMenu('Drink specials'); buildPanel(); render(); });
+    await click(page, '.mbar .dots'); await click(page, '.popmenu button', 'Rename…');
+    await page.$eval('.mform input', i => { i.value = 'Bar specials'; }); await click(page, '.mform button.primary');
+    await page.evaluate(() => { useMenu('Cocktails'); buildPanel(); render(); });
+    ok(await page.evaluate(() => G.mn.rightMenu === 'Bar specials') && (await page.$eval('#canvas svg', e => e.outerHTML)).includes('>ARAK SPRITZ<'), 'halves: renaming the right menu keeps it there');
+    await page.waitForTimeout(800);
+    await click(page, '.row2 .seg button', 'Whole page');
+    await page.waitForTimeout(800);
+    await click(page, '.mundo');
+    ok(await page.evaluate(() => G.mn.sheet === 'halves'), 'halves: Undo brings back two half pages');
+    await page.evaluate(() => { G.mn.sheet = 'full'; render(); });
+    ok(!(await page.$eval('#canvas svg', e => e.outerHTML)).includes('translate(425 0)'), 'whole page: back to one menu');
+    await page.close();
+  }
+
   await browser.close();
   console.log(failed ? `\n${failed} check(s) failed` : '\nAll checks passed');
   process.exit(failed ? 1 : 0);
