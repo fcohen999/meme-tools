@@ -397,9 +397,10 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-07', UPDATE=32;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-07', UPDATE=33;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
- ['v26 · 32','A tidier Menu words panel. There are two ways to change the words now: Boxes (where a first visit starts) and Text. Pasting from Google Docs or Word goes in Text and is added to the menu, as before. Google Sheets and opening or saving a spreadsheet file are under “Import / export”. Move up and Move down are in each dish’s ⋯ menu, so dish names have more room; drag the ⠿ handle to move a dish too. The “menu is too long” warning shows at the top, Tagline order moved to Page header, and the Simple switch and Reset everything button are gone from the Menu page (Simple showed the same settings there). To start the look over, use “Put the look back to how it started” in the menu’s ⋯ list.'],
+ ['v26 · 33','A tidier Menu words panel. There are two ways to change the words now: Boxes (where a first visit starts) and Text. Pasting from Google Docs or Word goes in Text and is added to the menu, as before. Google Sheets and opening or saving a spreadsheet file are under “Import / export”. Move up and Move down are in each dish’s ⋯ menu, so dish names have more room; drag the ⠿ handle to move a dish too. The “menu is too long” warning shows at the top, Tagline order moved to Page header, and the Simple switch and Reset everything button are gone from the Menu page (Simple showed the same settings there). To start the look over, use “Put the look back to how it started” in the menu’s ⋯ list.'],
+ ['v26 · 32','Menu: two half pages now print on a letter sheet turned sideways (landscape), so each half is a normal 5½ × 8½ menu. The choice moved out of Look → Layout into its own section, Paper, right under the menu words: “One menu, upright” or “Two menus, sideways”.'],
  ['v26 · 31','Edit in boxes: drag a dish or subheading by the ⠿ handle on its left to put it anywhere: higher or lower in its section, or into another section. A blue line shows where it will go. Drop it on a closed section to put it at the end of that section. The panel scrolls when you drag near its top or bottom. The ↑ ↓ arrows still work for small moves, and Undo puts a drag back.'],
  ['v26 · 30','Edit in boxes: each section is now easy to tell apart and quicker to edit. Its name sits in a dark bar that stays in view while you scroll its dishes; click the bar to fold the section closed (it then shows its dishes in one line) or open it again, or use Open all / Close all. Each dish is its own white card. The “What’s in it” box is one line until you type more. In a section with a “Price for all”, dishes have no price box unless they have their own price (⋯ → Give this dish its own price). “Add a choice” is in each dish’s ⋯ menu.'],
  ['v26 · 29','Menu: a section’s price at the right edge now lines up with the right edge of its column (where the dish prices are) instead of the far edge of the page, when the section is in two columns.'],
@@ -614,7 +615,7 @@ const tagPos=[['sub','Position']];
 const secColors=[['h','Colors','colors'],['swatches'],['sub','Your colors'],['color','accent','Oval'],['color','sqColor','Squiggle'],['color','ink','Text'],['color','bg','Background'],['check','transparent','Transparent background (no fill)']];
 // Option names shown on the buttons and lists (the saved value stays the same)
 const OPTNAME={onCase:{lowercase:'lowercase',caps:'CAPS'},squiggle:{A:'Style 1',B:'Style 2'},amp:{sans:'Plain &',Bodoni:'Bodoni &'},
-  oval:{'hand-drawn':'Hand-drawn',clean:'Clean line'},align:{left:'Left',center:'Center',right:'Right'},columns:{1:'1 column',2:'2 columns'},sheet:{full:'Whole page',halves:'Two half pages'},
+  oval:{'hand-drawn':'Hand-drawn',clean:'Clean line'},align:{left:'Left',center:'Center',right:'Right'},columns:{1:'1 column',2:'2 columns'},sheet:{full:'One menu, upright',halves:'Two menus, sideways'},
   onWeight:{400:'400 Regular',500:'500 Medium',600:'600 Semibold',700:'700 Bold'},
   headAlign:{'spread across':'Spread out','together on the left':'Left','together in the center':'Center'},
   headColors:{menu:'Menu colors',header:'Header tab colors'},
@@ -753,7 +754,7 @@ function menuLayout(S,G,M,top,m){
 // the menu text; with “Spread out” on, the gaps between dishes and sections grow (up to MAXSPREAD times) so the menu reaches the bottom margin
 const MAXSPREAD=2.2;
 function menuSVG(S,G,M,top=200){
-  const MENU_BOTTOM=1100-(G.bottom??64), r=menuLayout(S,G,M,top,1);
+  const MENU_BOTTOM=(G._ph||1100)-(G.bottom??64), r=menuLayout(S,G,M,top,1);
   if(G.fill===false||r.end>=MENU_BOTTOM) return r;
   if(menuLayout(S,G,M,top,MAXSPREAD).end<=MENU_BOTTOM) return menuLayout(S,G,M,top,MAXSPREAD);
   let lo=1,hi=MAXSPREAD;
@@ -958,7 +959,7 @@ const LAYOUTS = {
   },
   'mn': {
     tab:'Menu page', stab:'Menu', file:'menu-page', ownColors:true,
-    simple:[['h','The words on the menu'],['menuedit'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','subPt','Subheadings'],['spick','pricePos','A dish’s own price'],['spick','secPricePos','A section’s price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',8,200,1,'',''],['spick','sheet','Page'],['scheck','cutLine','Dashed line to cut along'],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['srange','hdH','Header height',80,400,1,'',''],
+    simple:[['h','The words on the menu'],['menuedit'],['h','Paper'],['spick','sheet','The sheet'],['scheck','cutLine','Dashed line to cut along'],['h','The look'],['srange','menuScale','All text',70,130,1,'smaller','bigger'],['spick','headPt','Section names'],['spick','namePt','Dish names'],['spick','descPt','What’s in it'],['spick','subPt','Subheadings'],['spick','pricePos','A dish’s own price'],['spick','secPricePos','A section’s price'],['srange','priceIn','In from the right edge',0,300,1,'',''],['srange','priceGap','Space after the name',8,200,1,'',''],['spick','columns','Columns',[2,1]],['spick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],['spick','headAlign','Pieces',['spread across','together on the left','together in the center']],['srange','menuLogo','Logo size',60,160,1,'smaller','bigger'],['spick','headColors','Header colors',['menu','header']],['srange','hdH','Header height',80,400,1,'',''],
       ['h','Margins and spacing'],['srange','topSpace','Top',0,200,2,'less','more'],['srange','headGap','Under the header',-40,300,2,'higher','lower'],['srange','side','Left and right',20,200,2,'less','more'],['srange','bottom','Bottom',20,200,2,'less','more'],['srange','lineSpace','Lines',70,200,5,'tighter','looser'],['srange','dishSpace','Dishes',50,300,5,'less','more'],['srange','secSpace','Sections',50,300,5,'less','more'],['scheck','fill','Spread out to fill the page'],
       ['h','Colors'],['scolor','menuBrand','Logo, headings and prices'],['scolor','menuInk','Dish names and tagline'],['scolor','menuBg','Page'],],
     pieces:'h',
@@ -967,6 +968,11 @@ const LAYOUTS = {
     // a getter, so the header settings change with “Header comes from”
     get panel(){ return [
       ['h','Menu words','words'],['menuedit'],
+      ['h','Paper','paper'],
+      ['pick','sheet','The sheet',['full','halves']],
+      ...(G.mn.sheet==='halves'?[['rightmenu','Right half'],['check','cutLine','Dashed line to cut along'],
+        ['hint','A letter sheet turned sideways with two menus side by side, each 5½ × 8½ inches with its own header: print it and cut down the middle. Each half keeps its own words and look; to change the right half, choose its menu at the top. In a half, sections are 1 column unless you give one its own.']]
+        :[['hint','One menu on an upright letter sheet (8½ × 11 inches).']]),
       ['h','Look','look'],
       ['sub','Text size'],
       ['pick','headPt','Section names',PTSIZES],
@@ -982,9 +988,6 @@ const LAYOUTS = {
       ...(G.mn.pricePos!=='name'||G.mn.secPricePos==='edge'?[['range','priceIn','In from the right edge',0,300,1]]:[]),
       ['hint','Or drag a price left or right on the page. All the prices move together. A section’s price at the right edge lines up with the dish prices.'],
       ['sub','Layout'],
-      ['pick','sheet','Page',['full','halves']],
-      ...(G.mn.sheet==='halves'?[['rightmenu','Right half'],['check','cutLine','Dashed line to cut along'],
-        ['hint','Two menus side by side on one sheet, each with its own header: print it and cut down the middle. Each half keeps its own words and look; to change the right half, choose its menu at the top. In a half, sections are 1 column unless you give one its own.']]:[]),
       ['pick','columns','Columns',[2,1]],
       ['hint','For every section that hasn’t got its own. A section can have its own in Menu words: open it in Boxes, or write (1 column) or (2 columns) after its name in Text.'],
       ['h','Margins and spacing','spacing'],
@@ -1024,21 +1027,21 @@ const LAYOUTS = {
     build(S,G){
       const mn=LAYOUTS.mn;
       if(G.sheet!=='halves') return mn.one(S,G,M,850);
-      const HW=425, half=g=>Object.assign({},g,{_pw:HW,columns:1});   // in a half, sections without their own setting are 1 column
+      const HW=550, PH=850, half=g=>Object.assign({},g,{_pw:HW,_ph:PH,columns:1});   // a letter sheet turned sideways: two 5½ × 8½ halves   // in a half, sections without their own setting are 1 column
       const L=mn.one(S,half(G),M,HW);
       // the right half: another saved menu with its own words and look (the header is shared), or this one again
       const rn=G.rightMenu, rv=rn&&rn!==MENUS.current?MENUS.list[rn]:null;
       const R=mn.one(S,half(rv?Object.assign({},G,lookOf(mn.geo),rv.look||{}):G),rv?(rv.M||[]):M,HW);
-      const cut=G.cutLine===false?'':`<line x1="${HW}" y1="0" x2="${HW}" y2="1100" stroke="${G.menuInk}" stroke-opacity="0.4" stroke-width="0.8" stroke-dasharray="6 5"/>`;
-      const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs>${L.body}<g transform="translate(${HW} 0)">${R.body.replace(/ data-s?pr="1"/g,'')}</g>${cut}</svg>`;
+      const cut=G.cutLine===false?'':`<line x1="${HW}" y1="0" x2="${HW}" y2="${PH}" stroke="${G.menuInk}" stroke-opacity="0.4" stroke-width="0.8" stroke-dasharray="6 5"/>`;
+      const svg=`<svg xmlns="${NS}" viewBox="0 0 1100 ${PH}" width="1056" height="816"><defs><style>${FONT_CSS}</style></defs>${L.body}<g transform="translate(${HW} 0)">${R.body.replace(/ data-s?pr="1"/g,'')}</g>${cut}</svg>`;
       const rName=rv?rn:MENUS.current;
       const overMsg=L.over&&R.over?'Both halves are longer than the page. Make the text smaller, or the margins and spacing smaller.'
         :L.over?'The left half is longer than the page. Make the text smaller, or the margins and spacing smaller.'
         :R.over?`The right half (“${rName}”) is longer than the page. Choose “${rName}” at the top and make its text or spacing smaller.`:'';
-      return Object.assign({},L,{svg,over:L.over||R.over,overMsg});
+      return Object.assign({},L,{W:1056,H:816,svg,over:L.over||R.over,overMsg,guides:Object.assign({},L.guides,{vw:1100})});
     },
     one(S,G,M,PW){
-      const brand=G.menuBrand, ink=G.menuInk;
+      const brand=G.menuBrand, ink=G.menuInk, PH=G._ph||1100;
       const S2=Object.assign({},S,{ink:brand,accent:brand,sqColor:brand,bg:G.menuBg,transparent:false});
       const tagFam=`"${S.tagFont}","Montserrat",sans-serif`, dFam=S.tagFont==='Gotham'?'Montserrat':S.tagFont;
       // header row: pieces between the left and right margins, centered on the logo's middle line
@@ -1100,10 +1103,10 @@ const LAYOUTS = {
       const bodyTop=hBot+gapM, top=bodyTop+cap;
       const mt=menuSVG(S,G,M,top);
       const priceRoom=mt.room;
-      const body=`<rect width="${PW}" height="1100" fill="${G.menuBg}"/>${head}${mt.svg}`;
+      const body=`<rect width="${PW}" height="${PH}" fill="${G.menuBg}"/>${head}${mt.svg}`;
       const svg=`<svg xmlns="${NS}" viewBox="0 0 850 1100" width="816" height="1056"><defs><style>${FONT_CSS}</style></defs>${body}</svg>`;
-      return {W:816,H:1056,svg,body,over:mt.end>1100-(G.bottom??64)+8,fit:G.headSrc==='mine'?(wide?'The header’s pieces don’t fit across it, so some get cut off. On the Header tab, make the header wider, or the logo or tagline smaller.':''):fit?`The logo can’t get bigger than ${fit}% with the other pieces beside it, so it stops there. To go bigger, hide the tagline or squiggle, or make the side margins smaller.`:'',
-        priceRoom,guides:{pw:PW,bandU,hTop,hBot,bodyTop,side:G.side??64,bottom:1100-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
+      return {W:816,H:1056,svg,body,over:mt.end>PH-(G.bottom??64)+8,fit:G.headSrc==='mine'?(wide?'The header’s pieces don’t fit across it, so some get cut off. On the Header tab, make the header wider, or the logo or tagline smaller.':''):fit?`The logo can’t get bigger than ${fit}% with the other pieces beside it, so it stops there. To go bigger, hide the tagline or squiggle, or make the side margins smaller.`:'',
+        priceRoom,guides:{pw:PW,ph:PH,bandU,hTop,hBot,bodyTop,side:G.side??64,bottom:PH-(G.bottom??64),topSpace:Math.round(topM*100)/100,headGap:Math.round(gapM*100)/100}};
     }
   },
 };
@@ -2451,8 +2454,8 @@ function handleValue(h,start,delta){
 }
 function menuHit(ev){
   const svg=svgEl(), g=LAST.guides; if(!svg||!g) return null;
-  const r=svg.getBoundingClientRect(), k=850/r.width, x=(ev.clientX-r.left)*k, y=(ev.clientY-r.top)*k, t=8*k;
-  if(x<-t||x>(g.pw||850)+t||y<-t||y>1100+t) return null;   // two half pages: the lines belong to the left half
+  const r=svg.getBoundingClientRect(), k=(g.vw||850)/r.width, x=(ev.clientX-r.left)*k, y=(ev.clientY-r.top)*k, t=8*k;
+  if(x<-t||x>(g.pw||850)+t||y<-t||y>(g.ph||1100)+t) return null;   // two half pages: the lines belong to the left half
   if(ev.target.closest&&ev.target.closest('[data-pr]')) return 'price';
   if(ev.target.closest&&ev.target.closest('[data-spr]')) return 'secprice';
   if(g.bandU&&Math.abs(y-g.hBot)<t) return 'band';
@@ -2463,11 +2466,12 @@ function menuHit(ev){
 }
 function menuGuides(svg){
   const g=LAST.guides; if(!g||!(mnHover||mnDrag||mnSel||document.getElementById('gd').checked)) return;
-  const k=850/svg.getBoundingClientRect().width, BL='#1f6fd1', d=`${5*k} ${4*k}`;
+  const k=(g.vw||850)/svg.getBoundingClientRect().width, BL='#1f6fd1', d=`${5*k} ${4*k}`;
   const on=h=>[mnDrag,mnHot,mnSel].some(x=>x===h||(h.startsWith('side')&&x&&x.startsWith('side')));
   const ln=(h,x1,y1,x2,y2,base)=>{ const o=on(h); line(svg,x1,y1,x2,y2,BL,(o?2.6:base)*k,o?null:d,o?1:.6); };
   const W=g.pw||850;
-  ln('sideL',g.side,0,g.side,1100,1); ln('sideR',W-g.side,0,W-g.side,1100,1);
+  const PH=g.ph||1100;
+  ln('sideL',g.side,0,g.side,PH,1); ln('sideR',W-g.side,0,W-g.side,PH,1);
   ln('bottom',0,g.bottom,W,g.bottom,1);
   ln('head',0,g.hTop,W,g.hTop,1);
   if(g.bandU) ln('band',0,g.hBot,W,g.hBot,1.4);
@@ -2543,9 +2547,9 @@ function resizeSel(m){
     if(cur==='mn'){ if(ev.button!==0) return; const h=menuHit(ev);
       if(!h){ if(mnSel){ mnSel=null; overlay(); } return; }
       mnSel=h; cv.focus({preventScroll:true});
-      if(h==='price'){ const r=svgEl().getBoundingClientRect(); dragPrice(ev,cv,850/r.width); return; }
-      if(h==='secprice'){ const r=svgEl().getBoundingClientRect(); dragSecPrice(ev,cv,850/r.width); return; }
-      const H=MN_H[h], r=svgEl().getBoundingClientRect(), k=850/r.width, start=get(H.key), p0=H.axis==='x'?ev.clientX:ev.clientY;
+      if(h==='price'){ const r=svgEl().getBoundingClientRect(); dragPrice(ev,cv,((LAST.guides||{}).vw||850)/r.width); return; }
+      if(h==='secprice'){ const r=svgEl().getBoundingClientRect(); dragSecPrice(ev,cv,((LAST.guides||{}).vw||850)/r.width); return; }
+      const H=MN_H[h], r=svgEl().getBoundingClientRect(), k=((LAST.guides||{}).vw||850)/r.width, start=get(H.key), p0=H.axis==='x'?ev.clientX:ev.clientY;
       mnDrag=h; cv.setPointerCapture(ev.pointerId); ev.preventDefault();
       const move=e=>{ const v=handleValue(h,start,((H.axis==='x'?e.clientX:e.clientY)-p0)*k); if(v!==get(H.key)){ put(H.key,v); render(); sync(); } };
       const up=()=>{ mnDrag=null; cv.removeEventListener('pointermove',move); cv.removeEventListener('pointerup',up); cv.removeEventListener('pointercancel',up); overlay(); showMenuRow(h); };

@@ -306,16 +306,17 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
       addMenu('Drink specials', [{ title: 'Specials', price: '', items: [{ name: 'Arak spritz', desc: 'Arak, soda, mint', price: '14' }] }], Object.assign(lookOf(G.mn), { menuBg: '#ffffff' }));
       useMenu('Cocktails'); buildPanel(); render();
     });
-    await click(page, '.row2 .seg button', 'Two half pages');
+    await click(page, '.row2 .seg button', 'Two menus, sideways');
     ok(await page.evaluate(() => G.mn.sheet === 'halves'), 'halves: picked from the panel');
     ok(await page.$('#panel select[id] option[value="Drink specials"]') !== null, 'halves: right-half menu list shows the other menu');
     await page.$eval('#panel .row2.two select', s => { s.value = 'Drink specials'; s.dispatchEvent(new Event('change')); });
     const svg = await page.$eval('#canvas svg', e => e.outerHTML);
-    ok(svg.includes('translate(425 0)') && svg.includes('>ARAK SPRITZ<') && svg.includes('>MÉMÉ’S MANHATTAN<'), 'halves: left is this menu, right is Drink specials');
-    ok(svg.includes('x1="425"') && svg.includes('stroke-dasharray'), 'halves: dashed cutting line down the middle');
-    ok(svg.includes('fill="#ffffff"') && svg.includes('<rect width="425"'), 'halves: each half has its own page color');
+    ok(svg.includes('translate(550 0)') && svg.includes('>ARAK SPRITZ<') && svg.includes('>MÉMÉ’S MANHATTAN<'), 'halves: left is this menu, right is Drink specials');
+    ok(svg.includes('x1="550"') && svg.includes('stroke-dasharray'), 'halves: dashed cutting line down the middle');
+    ok(svg.includes('viewBox="0 0 1100 850"') && await page.evaluate(() => LAST.W === 1056 && LAST.H === 816), 'halves: the sheet is landscape (11 × 8½)');
+    ok(svg.includes('fill="#ffffff"') && svg.includes('<rect width="550"'), 'halves: each half has its own page color');
     const pos = await page.$$eval('#canvas svg text', ts => ts.map(t => { const b = t.getBBox(), m = t.getCTM(); return [t.textContent, m.e + b.x * m.a, m.e + (b.x + b.width) * m.a]; }));
-    const leftOK = pos.filter(p => p[1] < 425 * 0.96).every(p => p[2] <= 425 + 1);
+    const leftOK = pos.filter(p => p[1] < 550 * 0.96).every(p => p[2] <= 550 + 1);
     ok(leftOK, 'halves: nothing on the left half crosses the cutting line');
     ok(pos.filter(p => /KITCHEN/.test(p[0])).length === 2, 'halves: each half has its own header');
     // saved file keeps it; header picture stays one page
@@ -328,12 +329,12 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     await page.evaluate(() => { useMenu('Cocktails'); buildPanel(); render(); });
     ok(await page.evaluate(() => G.mn.rightMenu === 'Bar specials') && (await page.$eval('#canvas svg', e => e.outerHTML)).includes('>ARAK SPRITZ<'), 'halves: renaming the right menu keeps it there');
     await page.waitForTimeout(800);
-    await click(page, '.row2 .seg button', 'Whole page');
+    await click(page, '.row2 .seg button', 'One menu, upright');
     await page.waitForTimeout(800);
     await click(page, '.mundo');
     ok(await page.evaluate(() => G.mn.sheet === 'halves'), 'halves: Undo brings back two half pages');
     await page.evaluate(() => { G.mn.sheet = 'full'; render(); });
-    ok(!(await page.$eval('#canvas svg', e => e.outerHTML)).includes('translate(425 0)'), 'whole page: back to one menu');
+    ok(!(await page.$eval('#canvas svg', e => e.outerHTML)).includes('translate(550 0)'), 'whole page: back to one menu');
     await page.close();
   }
 
