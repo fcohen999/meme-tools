@@ -354,7 +354,7 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-06', UPDATE=29;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-07', UPDATE=29;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
  ['v26 · 29','Menu: a section’s price at the right edge now lines up with the right edge of its column (where the dish prices are) instead of the far edge of the page, when the section is in two columns.'],
  ['v26 · 28','Menu: a dish’s choices (like Chicken or Lamb) are now in bold Bodoni, in normal letters instead of all caps, so they stand apart from the dish names.'],
