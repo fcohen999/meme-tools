@@ -367,6 +367,47 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     await page.close();
   }
 
+  // ---- Drag a dish by its ⠿ handle (real mouse)
+  {
+    const page = await fresh(browser);
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await page.evaluate(() => { M = [
+      { title: 'Cocktails', price: '', items: [{ name: 'A', desc: '' }, { name: 'B', desc: '' }, { name: 'C', desc: '' }] },
+      { title: 'Beers', price: '10', items: [{ name: 'Pils', desc: '' }, { name: 'IPA', desc: '' }] },
+      { title: 'Wine', price: '', items: [{ name: 'Red', desc: '' }] }]; buildPanel(); render(); });
+    await mode(page, 'Boxes');
+    await page.evaluate(() => { const a = [...document.querySelectorAll('.acc')].find(a => a.querySelector('#menuEditor')); if (!a.classList.contains('open')) a.querySelector('.acc-h').click(); });
+    await click(page, '.mfoldall button', 'Open all');
+    await click(page, '.mcard.msec:nth-of-type(4) .mfold');   // close Wine (the menu title box is the first card)
+    const names = async () => (await menu(page)).map(s => s.items.map(i => i.name).join(','));
+    // grab the handle of dish `name`, drop it at y of a point given by fn(box of target)
+    const drag = async (name, targetSel, where) => {
+      const h = await page.evaluateHandle(n => [...document.querySelectorAll('#menuEditor .mdish')].find(r => r.querySelector('input').value === n).querySelector('.mgrip'), name);
+      await h.scrollIntoViewIfNeeded();
+      const hb = await h.boundingBox();
+      await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down();
+      await page.mouse.move(hb.x + 10, hb.y + 20, { steps: 3 });
+      const t = await (await page.evaluateHandle(tg => tg.sec
+        ? [...document.querySelectorAll('#menuEditor .mcard.msec')].find(c => c.querySelector('.mname').textContent === tg.sec).querySelector('.mhead')
+        : [...document.querySelectorAll('#menuEditor .mdish')].find(r => r.querySelector('input').value === tg), targetSel)).boundingBox();
+      await page.mouse.move(t.x + 40, where === 'below' ? t.y + t.height - 3 : t.y + 3, { steps: 6 });
+      await page.mouse.up();
+    };
+    await drag('A', 'C', 'below');
+    ok((await names())[0] === 'B,C,A', 'drag: a dish moves down within its section');
+    await drag('IPA', 'B', 'above');
+    let n = await names();
+    ok(n[0] === 'IPA,B,C,A' && n[1] === 'Pils', 'drag: a dish moves into another section, at the line');
+    await drag('C', { sec: 'Wine' }, 'above');
+    n = await names();
+    ok(n[0] === 'IPA,B,A' && n[2] === 'Red,C', 'drag: dropped on a closed section, it goes at the end');
+    ok(!(await page.$eval('.mcard.msec:nth-of-type(4)', c => c.classList.contains('shut'))), 'drag: and that section opens');
+    ok(!(await page.$('.mghost')) && !(await page.$('.mdropline')), 'drag: nothing left floating after the drop');
+    await click(page, '.mundo');
+    ok((await names())[0] === 'IPA,B,C,A', 'drag: Undo puts it back');
+    await page.close();
+  }
+
   await browser.close();
   console.log(failed ? `\n${failed} check(s) failed` : '\nAll checks passed');
   process.exit(failed ? 1 : 0);
