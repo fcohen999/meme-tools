@@ -24,8 +24,10 @@ const click = (page, sel, text) => page.evaluate(([sel, text]) => {
   const b = [...document.querySelectorAll(sel)].find(x => !text || x.textContent.trim() === text);
   if (!b) throw new Error('no ' + sel + ' ' + (text || '')); b.click();
 }, [sel, text]);
-// Boxes, Text or Google Sheets; 'Import' is the Google Sheets choice (Sheets and spreadsheet files)
-const mode = (page, label) => click(page, '#menuModes button', label === 'Import' ? 'Google Sheets' : label);
+// Boxes or Text; 'Import' opens Google Sheets from the menu's ⋯ list (Sheets and spreadsheet files)
+const mode = async (page, label) => { if (label !== 'Import') return click(page, '#menuModes button', label);
+  if (await page.evaluate(() => menuMode) === 'sheet') return;
+  await click(page, '.mbar .dots'); await click(page, '.popmenu button', 'Edit in Google Sheets or a spreadsheet file…'); };
 // Move up / Move down from a ⋯ menu: the n-th (from 0; -1 = last) ⋯ button matching sel
 const moveVia = async (page, sel, n, label) => {
   await page.evaluate(([sel, n]) => { const d = document.querySelectorAll(sel); (n < 0 ? d[d.length + n] : d[n]).click(); }, [sel, n]);
@@ -419,7 +421,7 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
   {
     const page = await fresh(browser);
     ok(await page.evaluate(() => menuMode) === 'boxes', 'cleanup: a first visit starts in Boxes');
-    ok(await page.$$eval('#menuModes button', bs => bs.map(b => b.textContent).join()) === 'Boxes,Text,Google Sheets', 'cleanup: the modes are Boxes, Text and Google Sheets');
+    ok(await page.$$eval('#menuModes button', bs => bs.map(b => b.textContent).join()) === 'Boxes,Text', 'cleanup: the modes are Boxes and Text (Google Sheets is in ⋯)');
     ok(!(await page.$('.mimport')), 'cleanup: no Import / export link');
     await mode(page, 'Text');
     ok((await page.$eval('.mmodehint', h => h.textContent)).includes('Google Docs'), 'cleanup: Text says pasting from Google Docs goes there');
@@ -429,11 +431,12 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ok(await page.$eval('#menuWarn', w => !!(w.compareDocumentPosition(document.getElementById('menuEditor')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'cleanup: the “too long” warning sits above the boxes');
     const where = await page.evaluate(() => [...document.querySelectorAll('#panel .acc')].find(a => a.textContent.includes('Tagline order')).dataset.sec);
     ok(where === 'order', 'cleanup: Tagline order is under Page header');
-    // Google Sheets is a choice like the others
-    await mode(page, 'Import');
-    ok(!!(await page.$('#menuEditor #mCopy')) && await page.$$eval('#menuModes button.on', b => b.map(x => x.textContent).join()) === 'Google Sheets', 'import: the Sheets view opens and its button is on');
+    // Google Sheets opens from ⋯ and its ← Back link returns to the mode you came from
     await mode(page, 'Text');
-    ok(await page.evaluate(() => menuMode) === 'text', 'import: Text goes back to Text');
+    await mode(page, 'Import');
+    ok(!!(await page.$('#menuEditor #mCopy')) && await page.$$eval('#menuModes button.on', b => b.length) === 0, 'import: the Sheets view opens from ⋯');
+    await click(page, '.mmodehint button');
+    ok(await page.evaluate(() => menuMode) === 'text', 'import: Back returns to Text');
     // a saved Google Docs mode comes back as Text, a saved Sheets mode as Boxes
     await page.evaluate(() => { const v = JSON.parse(localStorage.getItem('meme10_last')); v.menuMode = 'docs'; localStorage.setItem('meme10_last', JSON.stringify(v)); });
     await page.reload();
