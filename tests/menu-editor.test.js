@@ -24,10 +24,10 @@ const click = (page, sel, text) => page.evaluate(([sel, text]) => {
   const b = [...document.querySelectorAll(sel)].find(x => !text || x.textContent.trim() === text);
   if (!b) throw new Error('no ' + sel + ' ' + (text || '')); b.click();
 }, [sel, text]);
-// Boxes or Text; 'Import' opens the Import / export view (Google Sheets and files)
-const mode = (page, label) => label === 'Import'
-  ? page.evaluate(() => { if (menuMode !== 'sheet') document.querySelector('.mimport button').click(); })
-  : click(page, '#menuModes button', label);
+// Boxes or Text; 'Import' opens Google Sheets from the menu's ⋯ list (Sheets and spreadsheet files)
+const mode = async (page, label) => { if (label !== 'Import') return click(page, '#menuModes button', label);
+  if (await page.evaluate(() => menuMode) === 'sheet') return;
+  await click(page, '.mbar .dots'); await click(page, '.popmenu button', 'Edit in Google Sheets or a spreadsheet file…'); };
 // Move up / Move down from a ⋯ menu: the n-th (from 0; -1 = last) ⋯ button matching sel
 const moveVia = async (page, sel, n, label) => {
   await page.evaluate(([sel, n]) => { const d = document.querySelectorAll(sel); (n < 0 ? d[d.length + n] : d[n]).click(); }, [sel, n]);
@@ -417,21 +417,25 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     await page.close();
   }
 
-  // ---- Panel cleanup (update 32): two ways to edit, Import / export, no Simple switch or Reset on the Menu page
+  // ---- Panel cleanup (update 32, 34): Boxes | Text | Google Sheets, no Simple switch, a menu-only reset on the Menu page
   {
     const page = await fresh(browser);
     ok(await page.evaluate(() => menuMode) === 'boxes', 'cleanup: a first visit starts in Boxes');
-    ok(await page.$$eval('#menuModes button', bs => bs.map(b => b.textContent).join()) === 'Boxes,Text', 'cleanup: the modes are Boxes and Text');
+    ok(await page.$$eval('#menuModes button', bs => bs.map(b => b.textContent).join()) === 'Boxes,Text', 'cleanup: the modes are Boxes and Text (Google Sheets is in ⋯)');
+    ok(!(await page.$('.mimport')), 'cleanup: no Import / export link');
+    await mode(page, 'Text');
+    ok((await page.$eval('.mmodehint', h => h.textContent)).includes('Google Docs'), 'cleanup: Text says pasting from Google Docs goes there');
+    await mode(page, 'Boxes');
     ok(!(await page.$('#simpleSw')), 'cleanup: no Simple switch on the Menu page');
-    ok(!(await page.$('#btnReset')), 'cleanup: no Reset everything button on the Menu page');
+    ok(!(await page.$('#btnReset')) && !!(await page.$('#btnResetMenu')), 'cleanup: the Menu page has “Reset this menu to the original”, not Reset everything');
     ok(await page.$eval('#menuWarn', w => !!(w.compareDocumentPosition(document.getElementById('menuEditor')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'cleanup: the “too long” warning sits above the boxes');
     const where = await page.evaluate(() => [...document.querySelectorAll('#panel .acc')].find(a => a.textContent.includes('Tagline order')).dataset.sec);
     ok(where === 'order', 'cleanup: Tagline order is under Page header');
-    // Import / export opens the Sheets view and goes back to the mode you came from
+    // Google Sheets opens from ⋯ and its ← Back link returns to the mode you came from
     await mode(page, 'Text');
     await mode(page, 'Import');
-    ok(!!(await page.$('#menuEditor #mCopy')) && await page.$$eval('#menuModes button.on', b => b.length) === 0, 'import: the Sheets view opens');
-    await click(page, '.mimport button');
+    ok(!!(await page.$('#menuEditor #mCopy')) && await page.$$eval('#menuModes button.on', b => b.length) === 0, 'import: the Sheets view opens from ⋯');
+    await click(page, '.mmodehint button');
     ok(await page.evaluate(() => menuMode) === 'text', 'import: Back returns to Text');
     // a saved Google Docs mode comes back as Text, a saved Sheets mode as Boxes
     await page.evaluate(() => { const v = JSON.parse(localStorage.getItem('meme10_last')); v.menuMode = 'docs'; localStorage.setItem('meme10_last', JSON.stringify(v)); });
@@ -450,6 +454,12 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ok(same(await menu(page), words), 'look reset: the words stay the same');
     await click(page, '.mundo');
     ok(await page.evaluate(() => G.mn.side === 120 && +G.mn.columns === 1), 'look reset: Undo brings the look back');
+    // Reset this menu to the original: sample words and starting look, and Undo brings yours back
+    await page.evaluate(() => { histAct('t', () => { M[0].title = 'Mine'; G.mn.side = 120; }); buildPanel(); render(); });
+    await click(page, '#btnResetMenu'); await click(page, '#btnResetMenu');
+    ok(await page.evaluate(() => JSON.stringify(M) === JSON.stringify(MENU_DEFAULT) && G.mn.side === LAYOUTS.mn.geo.side), 'menu reset: sample words and starting look are back');
+    await click(page, '.mundo');
+    ok(await page.evaluate(() => M[0].title === 'Mine' && G.mn.side === 120), 'menu reset: Undo brings yours back');
     // the logo pages keep the Simple switch and Reset everything
     await page.evaluate(() => { cur = '1b'; buildPanel(); render(); });
     ok(!!(await page.$('#simpleSw')) && !!(await page.$('#btnReset')), 'cleanup: logo pages keep the Simple switch and Reset everything');

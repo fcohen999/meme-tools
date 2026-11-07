@@ -52,7 +52,7 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .steps{padding-left:20px;margin:12px 0 10px;line-height:1.7;font-size:14px}.panel .steps li{margin:6px 0}.panel .steps button{padding:4px 10px}
 .panel .pastebox{width:100%;min-height:150px;font:13px ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff}
 .panel #menuModes.menuseg{display:grid;grid-template-columns:repeat(2,1fr);width:100%}
-.panel .mimport{margin:6px 0 0;font-size:13px}
+.panel .mmodehint{margin:6px 0 0;font-size:13px}
 .panel .mtips{margin:6px 0 0}.panel .mtips summary{cursor:pointer}.panel .mtips p{margin:6px 0 0;line-height:1.5}
 .panel .menuseg button{padding:8px 4px;font-size:12.5px;line-height:1.25}
 .panel .mcard{border:1px solid var(--line);background:#fff;border-radius:var(--radius);padding:12px;margin:12px 0}
@@ -397,8 +397,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-07', UPDATE=33;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-07', UPDATE=34;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 34','Menu words: two choices, Boxes and Text, with a line under them saying what each is for (pasting from Google Docs or Word goes in Text). The “Import / export” link is gone from there; Google Sheets and spreadsheet files still work, from the ⋯ next to “Save to my computer” → “Edit in Google Sheets or a spreadsheet file”, with a ← Back link. “Reset this menu to the original” is back at the bottom of the Menu page: it puts back the sample words and the starting look, and Undo brings yours back.'],
  ['v26 · 33','A tidier Menu words panel. There are two ways to change the words now: Boxes (where a first visit starts) and Text. Pasting from Google Docs or Word goes in Text and is added to the menu, as before. Google Sheets and opening or saving a spreadsheet file are under “Import / export”. Move up and Move down are in each dish’s ⋯ menu, so dish names have more room; drag the ⠿ handle to move a dish too. The “menu is too long” warning shows at the top, Tagline order moved to Page header, and the Simple switch and Reset everything button are gone from the Menu page (Simple showed the same settings there). To start the look over, use “Put the look back to how it started” in the menu’s ⋯ list.'],
  ['v26 · 32','Menu: two half pages now print on a letter sheet turned sideways (landscape), so each half is a normal 5½ × 8½ menu. The choice moved out of Look → Layout into its own section, Paper, right under the menu words: “One menu, upright” or “Two menus, sideways”.'],
  ['v26 · 31','Edit in boxes: drag a dish or subheading by the ⠿ handle on its left to put it anywhere: higher or lower in its section, or into another section. A blue line shows where it will go. Drop it on a closed section to put it at the end of that section. The panel scrolls when you drag near its top or bottom. The ↑ ↓ arrows still work for small moves, and Undo puts a drag back.'],
@@ -1162,7 +1163,7 @@ const get=k=>k==='hdH'?G.hd.H:isGeo(k)?G[cur][k]:S[k];
 const put=(k,v)=>{ if(k==='hdH') G.hd.H=v; else if(isGeo(k)) G[cur][k]=v; else S[k]=v; };
 
 /* ============ MENU TEXT AS A DOCUMENT ============ */
-let menuMode='boxes', menuBack='boxes';   // 'sheet' is the Import / export view; menuBack is the mode it goes back to
+let menuMode='boxes', menuBack='boxes';   // 'sheet' is the Google Sheets view; menuBack is the mode it goes back to
 /* What a menu is made of:
    section    {title, price, cols?, items}   cols: 1 or 2 for this section only (none: the page's Columns setting)
    dish       {name, desc, price, opts?, optsInline?}  opts: choices under the dish, each {name, price}; optsInline: drawn side by side on one line
@@ -1769,21 +1770,26 @@ function renderMenuEditor(){
 }
 function menuEditorBlock(){
   const d=document.createElement('div');
+  // two choices, each with one line saying what it is for (Google Docs goes in Text).
+  // Google Sheets still works, but is tucked away in the menu's ⋯ list; while it is open, the line has a way back.
   // the warning sits at the top, so it is seen even with a long list of boxes open
   d.innerHTML='<div class="sl" style="font-size:13px;margin:4px 0 6px">Change the words in</div><div id="menuModes" class="seg menuseg" role="group" aria-label="Change the words in"></div>'
-    +'<p class="mimport"><button type="button" class="link"></button></p>'
+    +'<p class="mmodehint hint"></p>'
     +'<div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><div id="menuEditor" style="margin-top:10px"></div>';
-  const modes=d.querySelector('#menuModes'), imp=d.querySelector('.mimport button');
-  const defs=[['boxes','Boxes','Edit each dish in its own box'],['text','Text','Type the menu like a document, or paste from Google Docs']], bs=[];
+  const modes=d.querySelector('#menuModes'), hint=d.querySelector('.mmodehint');
+  const defs=[['boxes','Boxes','Each dish has its own box. Click a section to open it.'],
+    ['text','Text','Type the menu like a document. <b>Pasting from Google Docs or Word?</b> Paste it here; it is added to the menu.']], bs=[];
   const paint=()=>{ bs.forEach(([m,b])=>{ b.classList.toggle('on',menuMode===m); b.setAttribute('aria-pressed',menuMode===m); });
-    imp.textContent=menuMode==='sheet'?'← Back to '+(menuBack==='text'?'Text':'Boxes'):'Import / export: Google Sheets or a file…'; };
+    hint.innerHTML=menuMode==='sheet'?'<b>Google Sheets</b> (from the ⋯ list). <button type="button" class="link">← Back to '+(menuBack==='text'?'Text':'Boxes')+'</button>'
+      :(defs.find(x=>x[0]===menuMode)||defs[0])[2];
+    const back=hint.querySelector('button'); if(back) back.onclick=()=>go(menuBack); };
   const go=m=>{ if(m!=='sheet') menuBack=m; menuMode=m; renderMenuEditor(); paint(); autosave(); };
-  defs.forEach(([m,label,tip])=>{ const b=document.createElement('button'); b.textContent=label; b.title=tip; b.type='button';
+  defs.forEach(([m,label])=>{ const b=document.createElement('button'); b.textContent=label; b.type='button';
     b.onclick=()=>go(m); bs.push([m,b]); modes.appendChild(b); });
-  imp.onclick=()=>go(menuMode==='sheet'?menuBack:'sheet');
-  paint();
+  paint(); MENU_GO=go;
   return d;
 }
+let MENU_GO=null;   // opens a way of editing (used by the ⋯ list for Google Sheets)
 
 /* a small menu that opens from a ⋯ button: items are [label, action, {danger, disabled}] or '-' for a line.
    A “danger” item asks “Click again to …” before it acts. */
@@ -1998,7 +2004,7 @@ function fileProblem(fl){
   const keep='To keep working on a menu, open the file that “Save to my computer” made: its name ends in “meme on 10 menu.txt”, and it’s in your Downloads folder.';
   if(ext==='pdf'||type==='application/pdf') return `“${name}” is a PDF. A PDF is a printout of the menu, so its words can’t be changed here. ${keep}`;
   if(/^(png|jpe?g|gif|webp|heic|svg|bmp|tiff?)$/.test(ext)||type.startsWith('image/')) return `“${name}” is a picture of the menu, so its words can’t be changed here. ${keep}`;
-  if(/^(docx?|pages|odt|rtf)$/.test(ext)) return `“${name}” is a Word (or Pages) document. To bring in its words, open it, copy the menu, and paste it with “Google Docs” under “Change the words by”.`;
+  if(/^(docx?|pages|odt|rtf)$/.test(ext)) return `“${name}” is a Word (or Pages) document. To bring in its words, open it, copy the menu, and paste it in “Text” under “Change the words in”.`;
   if(/^(xlsx?|numbers|ods)$/.test(ext)) return `“${name}” is a spreadsheet. Save it as a .csv file first (in Google Sheets: File → Download → .csv), then open that.`;
   return `“${name}” isn’t a menu file this editor can open. ${keep}`;
 }
@@ -2037,6 +2043,7 @@ function menusBlock(){
     ['Rename…',()=>ask('New name',MENUS.current,n=>{ if(n===MENUS.current) return; histAct('renamed the menu',()=>{ storeMenu(); n=uniqueName(n); const old=MENUS.current; MENUS.list[n]=MENUS.list[old]; delete MENUS.list[old]; MENUS.current=n;
       Object.values(MENUS.list).forEach(v=>{ if(v.look&&v.look.rightMenu===old) v.look.rightMenu=n; }); if(G.mn.rightMenu===old) G.mn.rightMenu=n; storeMenu(); buildPanel(); render(); }); })],
     ['Open a menu from my computer…',()=>fi.click()],
+    ['Edit in Google Sheets or a spreadsheet file…',()=>{ if(MENU_GO) MENU_GO('sheet'); const e=document.getElementById('menuModes'); if(e) e.scrollIntoView({block:'nearest'}); }],
     '-',
     ['Clear all the words',()=>{ histAct('cleared all the words',()=>{ M=BLANK_MENU(); renderMenuEditor(); render(); }); say('All the words are cleared. Undo brings them back.'); },{danger:true,ask:'Click again to clear the words of this menu'}],
     ['Put back the sample menu',()=>{ histAct('put back the sample menu',()=>{ M=clone(MENU_DEFAULT); renderMenuEditor(); render(); }); say('The sample menu is back. Undo brings back your words.'); },{danger:true,ask:'Click again to replace the words with the sample'}],
@@ -2301,10 +2308,13 @@ function buildPanel(){
   finish();
   const foot=document.createElement('div'); foot.className='foot';
   // one version line (it used to be shown twice: once plain, once on the "what changed" list)
-  // on the Menu page, resetting is in the menu's ⋯ list, next to Clear all the words
-  foot.innerHTML=(cur==='mn'?'':'<button id="btnReset">Reset everything</button>')
+  // the Menu page resets just this menu (words and look, with Undo); other pages reset every layout
+  foot.innerHTML=(cur==='mn'?'<button id="btnResetMenu">Reset this menu to the original</button>':'<button id="btnReset">Reset everything</button>')
     +`<details class="hint"><summary>Editor ${VERSION} · update ${UPDATE} · ${VERSION_DATE}</summary><ul>${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`;
   panel.appendChild(foot);
+  if(document.getElementById('btnResetMenu')) twoStep(document.getElementById('btnResetMenu'),'Click again to put back the sample words and the starting look (Undo brings yours back)',()=>{
+    histAct('reset the menu to the original',()=>{ M=clone(MENU_DEFAULT); G.mn=Object.assign({},LAYOUTS.mn.geo); buildPanel(); render(); });
+    menuSay('The menu is back to the original: sample words and starting look. Undo brings yours back.'); });
   if(document.getElementById('btnReset')) twoStep(document.getElementById('btnReset'),'Click again to reset every layout and the menu (saved versions are kept)',resetAll);
   if(document.getElementById('verSave')){
   document.getElementById('verSave').onclick=saveVersion;
@@ -2601,7 +2611,7 @@ function resizeSel(m){
 
 function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,menuMode,links:[...LINKS]})); }catch(e){} storeMenu(); if(HIST.cur==null) histCheck(); else histLater(); }
 function restore(){ try{ const v=JSON.parse(localStorage.getItem('meme10_last')||'null'); if(!v) return;
-  S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(v.menuMode) menuMode=menuBack=v.menuMode==='docs'||v.menuMode==='text'?'text':'boxes'; /* Typing and Google Docs are one mode now; Google Sheets is under Import / export */ }catch(e){} }
+  S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(v.menuMode) menuMode=menuBack=v.menuMode==='docs'||v.menuMode==='text'?'text':'boxes'; /* Typing and Google Docs are one mode (Text); Google Sheets opens as Boxes */ }catch(e){} }
 restore(); loadVersions(); loadMenus(); HIST.cur=null;
 { const h=decodeURIComponent(location.hash.slice(1)); if(h==='menu') cur='mn'; else if(LAYOUTS[h]) cur=h; else if(cur==='mn' && h!=='mn') cur='1b';
   // Keep the address in step with what is shown, so the top nav underlines the right tab.
