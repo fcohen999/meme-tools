@@ -51,7 +51,9 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 /* editor-only bits inside the panel */
 .panel .steps{padding-left:20px;margin:12px 0 10px;line-height:1.7;font-size:14px}.panel .steps li{margin:6px 0}.panel .steps button{padding:4px 10px}
 .panel .pastebox{width:100%;min-height:150px;font:13px ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff}
-.panel #menuModes.menuseg{display:grid;grid-template-columns:repeat(4,1fr);width:100%}
+.panel #menuModes.menuseg{display:grid;grid-template-columns:repeat(2,1fr);width:100%}
+.panel .mimport{margin:6px 0 0;font-size:13px}
+.panel .mtips{margin:6px 0 0}.panel .mtips summary{cursor:pointer}.panel .mtips p{margin:6px 0 0;line-height:1.5}
 .panel .menuseg button{padding:8px 4px;font-size:12.5px;line-height:1.25}
 .panel .mcard{border:1px solid var(--line);background:#fff;border-radius:var(--radius);padding:12px;margin:12px 0}
 .panel .mcard .mk{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
@@ -85,7 +87,7 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .mform{display:flex;gap:6px;margin:-2px 0 12px}.panel .mform input{flex:1;min-width:0}
 .panel .mcard .dots,.panel .mdish .dots{flex:none;width:30px;height:30px;padding:0;font-size:17px;line-height:1;color:var(--muted)}
 .panel .mcard .mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.panel .mcard .mhead .mk{margin:0}
-.panel .mdish .mrow{display:grid;grid-template-columns:1fr 76px auto 30px;gap:8px;align-items:center}
+.panel .mdish .mrow{display:grid;grid-template-columns:1fr 76px 30px;gap:8px;align-items:center}
 .panel .madd{margin-top:10px}
 .panel .madds{display:flex;flex-wrap:wrap;gap:8px}
 .panel .marrows{display:inline-flex;gap:2px}
@@ -118,11 +120,11 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .mfoldall{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--muted);margin:14px 0 -12px}
 .panel .mfoldall button.link{font-size:12px;padding:0}
 /* a dish takes only the room it needs: the What’s-in-it box is one line until you type more */
-.panel .mdish .mrow.nopr{grid-template-columns:1fr auto 30px}
+.panel .mdish .mrow.nopr{grid-template-columns:1fr 30px}
 .panel .mcard.msec .mdish textarea{resize:none;overflow:hidden;min-height:0;padding:5px 8px}
 /* drag to reorder: the ⠿ handle on the left of each dish and subheading */
-.panel .mdish .mrow.mdrag{grid-template-columns:16px 1fr 76px auto 30px}
-.panel .mdish .mrow.mdrag.nopr,.panel .mdish .mrow.mdrag.sub{grid-template-columns:16px 1fr auto 30px}
+.panel .mdish .mrow.mdrag{grid-template-columns:16px 1fr 76px 30px}
+.panel .mdish .mrow.mdrag.nopr,.panel .mdish .mrow.mdrag.sub{grid-template-columns:16px 1fr 30px}
 .panel .mdish .mrow.mdrag~textarea{margin-left:24px;width:calc(100% - 24px)}
 .panel .mdish .mrow.mdrag~.mrow.mopt{padding-left:40px}
 .panel .mdish .mrow.mdrag~.mcols,.panel .mdish .mrow.mdrag~button.madd-opt{margin-left:24px}
@@ -134,8 +136,8 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .mcard.msec.mdropin{outline:3px solid #1f6fd1;outline-offset:-1px}
 body.mdragnow,body.mdragnow *{cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important}   /* or the section bars could not stay in view while scrolling */
 .panel .mcols{display:flex;align-items:center;gap:10px;margin-top:8px}.panel .mcols .fl{margin:0}
-.panel .mdish .mrow.sub{grid-template-columns:1fr auto 30px}
-.panel .mdish .mrow.mopt{margin-top:6px;padding-left:16px;grid-template-columns:1fr 76px auto 30px}
+.panel .mdish .mrow.sub{grid-template-columns:1fr 30px}
+.panel .mdish .mrow.mopt{margin-top:6px;padding-left:16px;grid-template-columns:1fr 76px 30px}
 .panel .mdish .mopt input{font-size:13px!important}
 .panel .mdish button.madd-opt{margin-top:2px;padding:4px 0 0 16px;font-size:12px;color:var(--muted);text-decoration:none}.panel .mdish button.madd-opt:hover{color:var(--sel);text-decoration:underline}
 .panel .msub>.fl{margin-bottom:4px}
@@ -395,8 +397,9 @@ const FONTS = {"Bodoni Moda": ["400 700", "d09GMgABAAAAALSoABMAAAABZAQAALQ0AAEAA
 const faceCSS=fams=>fams.filter(n=>FONTS[n]).map(n=>`@font-face{font-family:"${n}";font-weight:${FONTS[n][0]};font-style:normal;src:url(data:font/woff2;base64,${FONTS[n][1]}) format("woff2")}`).join('');
 (function(){ const s=document.createElement('style'); s.textContent=faceCSS(Object.keys(FONTS)); document.head.appendChild(s); })();
 const NS='http://www.w3.org/2000/svg';
-const VERSION='v26', VERSION_DATE='2026-11-07', UPDATE=32;   // UPDATE goes up every time a new copy is published
+const VERSION='v26', VERSION_DATE='2026-11-07', UPDATE=33;   // UPDATE goes up every time a new copy is published
 const CHANGELOG=[
+ ['v26 · 33','A tidier Menu words panel. There are two ways to change the words now: Boxes (where a first visit starts) and Text. Pasting from Google Docs or Word goes in Text and is added to the menu, as before. Google Sheets and opening or saving a spreadsheet file are under “Import / export”. Move up and Move down are in each dish’s ⋯ menu, so dish names have more room; drag the ⠿ handle to move a dish too. The “menu is too long” warning shows at the top, Tagline order moved to Page header, and the Simple switch and Reset everything button are gone from the Menu page (Simple showed the same settings there). To start the look over, use “Put the look back to how it started” in the menu’s ⋯ list.'],
  ['v26 · 32','Menu: two half pages now print on a letter sheet turned sideways (landscape), so each half is a normal 5½ × 8½ menu. The choice moved out of Look → Layout into its own section, Paper, right under the menu words: “One menu, upright” or “Two menus, sideways”.'],
  ['v26 · 31','Edit in boxes: drag a dish or subheading by the ⠿ handle on its left to put it anywhere: higher or lower in its section, or into another section. A blue line shows where it will go. Drop it on a closed section to put it at the end of that section. The panel scrolls when you drag near its top or bottom. The ↑ ↓ arrows still work for small moves, and Undo puts a drag back.'],
  ['v26 · 30','Edit in boxes: each section is now easy to tell apart and quicker to edit. Its name sits in a dark bar that stays in view while you scroll its dishes; click the bar to fold the section closed (it then shows its dishes in one line) or open it again, or use Open all / Close all. Each dish is its own white card. The “What’s in it” box is one line until you type more. In a section with a “Price for all”, dishes have no price box unless they have their own price (⋯ → Give this dish its own price). “Add a choice” is in each dish’s ⋯ menu.'],
@@ -986,9 +989,7 @@ const LAYOUTS = {
       ['hint','Or drag a price left or right on the page. All the prices move together. A section’s price at the right edge lines up with the dish prices.'],
       ['sub','Layout'],
       ['pick','columns','Columns',[2,1]],
-      ['hint','For every section that hasn’t got its own. To give a section its own, use its 1 column / 2 columns buttons in Boxes, or write (1 column) or (2 columns) after its name.'],
-      ['pick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],
-      ['hint','Also changes the tagline on the logos.'],
+      ['hint','For every section that hasn’t got its own. A section can have its own in Menu words: open it in Boxes, or write (1 column) or (2 columns) after its name in Text.'],
       ['h','Margins and spacing','spacing'],
       ['hint','Like the ruler in Google Docs. You can also drag the menu text or the header up and down on the page.'],
       ['sub','Margins'],
@@ -1016,6 +1017,9 @@ const LAYOUTS = {
         ['pick','headAlign','Pieces sit',['spread across','together on the left','together in the center']],
         ['range','menuLogo','Logo size',60,160,1],['fitnote'],
       ]),
+      ['sub','Tagline'],
+      ['pick','order','Tagline order',['Kitchen & Cocktails','Cocktails & Kitchen']],
+      ['hint','Also changes the tagline on the logos.'],
       ['h','Colors','colors'],
       ['color','menuBrand','Logo, headings, prices'],['color','menuInk','Dish names and tagline'],['color','menuBg','Page'],
     ]; },
@@ -1109,6 +1113,8 @@ const LAYOUTS = {
 
 /* ============ STATE ============ */
 let cur='1b', sel=null, mode='simple';
+// the Menu page has no Simple switch (Simple and All settings showed the same there): it always uses the Simple look
+const viewMode=()=>cur==='mn'?'simple':mode;
 /* Link locks: a locked setting changes on every layout at once.
    same  = every layout gets the same value (they are all relative %)
    ratio = every layout changes by the same proportion (keeps each layout's own size)
@@ -1156,7 +1162,7 @@ const get=k=>k==='hdH'?G.hd.H:isGeo(k)?G[cur][k]:S[k];
 const put=(k,v)=>{ if(k==='hdH') G.hd.H=v; else if(isGeo(k)) G[cur][k]=v; else S[k]=v; };
 
 /* ============ MENU TEXT AS A DOCUMENT ============ */
-let menuMode='text';
+let menuMode='boxes', menuBack='boxes';   // 'sheet' is the Import / export view; menuBack is the mode it goes back to
 /* What a menu is made of:
    section    {title, price, cols?, items}   cols: 1 or 2 for this section only (none: the page's Columns setting)
    dish       {name, desc, price, opts?, optsInline?}  opts: choices under the dish, each {name, price}; optsInline: drawn side by side on one line
@@ -1296,7 +1302,7 @@ function renderSheetMode(box){
     if(!n) return;
     e.preventDefault();
     docsNote={msg:'That looked like a Google Doc, not the Sheet, so it was read as a document. '+addDocToMenu(m),pasted:m};
-    menuMode='docs'; buildPanel(); render();
+    menuMode=menuBack='text'; buildPanel(); render();
   });
   const alt=document.createElement('div'); alt.className='hint'; alt.style.marginTop='10px';
   alt.innerHTML='Copy not working? <a href="#" id="mCsv">Download the menu as a spreadsheet file</a> and open it in Google Sheets with File → Import. To bring a spreadsheet file back, <a href="#" id="mOpen">open it here</a> (in Sheets: File → Download → .csv).<input type="file" id="mFile" accept=".csv,.tsv,.txt" hidden>';
@@ -1497,60 +1503,33 @@ function addDocToMenu(m){
   return `${said.join(' ')} ${n} dish${n===1?'':'es'} in all. Everything else on the menu is the same. Undo puts it back the way it was.`;
 }
 let docsNote=null;   // {msg, pasted}: set when the Sheets box got a Google Doc
-function renderDocsMode(box){
-  const ol=document.createElement('ol'); ol.className='steps';
-  ol.innerHTML='<li>In <b>Google Docs</b> (Word works too), select the part of the menu you want (or <b>Ctrl+A</b> / <b>⌘A</b> for all of it) and copy.</li>'
-    +'<li>Click in the box below and paste. What you paste is <b>added</b> to the menu: a section with the same name as one already here is updated, and a new section goes into the empty section you just made (or at the end). Nothing else changes.</li>';
-  const tips=document.createElement('div'); tips.className='hint'; tips.style.margin='0 0 8px';
-  tips.innerHTML='<b>How it reads your Doc:</b> section names in a <b>Heading</b> style (or bigger text) become sections. Dish names in <b>bold</b> or CAPITALS become dishes, and the normal text under a dish is what’s in it. A number at the end of a section or dish line is its price. Bullet points under a dish become its choices, and a second, smaller heading style becomes subheadings. The box shows the whole menu; you can fix anything in it.';
-  const ta=document.createElement('textarea'); ta.className='pastebox'; ta.placeholder='Paste from Google Docs here'; ta.rows=10; ta.spellcheck=false;
-  ta.style.fontFamily='inherit'; ta.style.fontSize='14px'; ta.value=menuToText();
+// Text: the whole menu as words. Pasting a Google Doc (or Word) adds it to the menu: a section with the same
+// name is updated, a new one fills the empty section you just made (or goes at the end). Plain text pastes as usual.
+function renderTextMode(box){
+  const how=document.createElement('div'); how.className='hint';
+  how.innerHTML='One dish per line: <b>Name: what’s in it</b>. Sections start with <b>#</b>, price at the end: <b># Cocktails 19</b>. A dish with its own price: <b>Name (26): what’s in it</b>.'
+    +'<br>Choices under a dish, each with its price: <b>- Lamb (22)</b>. A subheading: <b>## Lunch</b> (add <b>(center)</b> or <b>(right)</b> to line it up). A section in its own columns: <b># Tapas (2 columns)</b>.';
+  const tips=document.createElement('details'); tips.className='hint mtips';
+  tips.innerHTML='<summary>Pasting from Google Docs or Word</summary><p>Copy the menu (or part of it) in your Doc and paste it in the box. It is <b>added</b> to the menu: a section with the same name as one already here is updated, and a new section goes into the empty section you just made (or at the end). Nothing else changes.</p>'
+    +'<p>Section names in a <b>Heading</b> style (or bigger text) become sections. Dish names in <b>bold</b> or CAPITALS become dishes, and the normal text under a dish is what’s in it. A number at the end of a section or dish line is its price. Bullet points under a dish become its choices, and a second, smaller heading style becomes subheadings.</p>';
+  const ta=document.createElement('textarea'); ta.value=menuToText(); ta.rows=24; ta.spellcheck=true; ta.setAttribute('aria-label','The menu as text');
+  ta.style.cssText='width:100%;font:inherit;font-size:15px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-top:8px;resize:vertical';
   const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
   const say=(good,msg,pasted)=>{ st.style.color=good?'#3f6b35':'#b35a3e'; st.textContent=msg;
     if(pasted){ const b=document.createElement('button'); b.type='button'; b.className='link'; b.textContent='Replace the whole menu with what I pasted';
       b.onclick=()=>{ histAct('replaced the whole menu with the Doc',()=>{ M=clone(pasted); }); ta.value=menuToText(); render(); say(true,'The whole menu is now what you pasted. Undo brings back the menu from before.'); };
       st.append(' ',b); } };
+  ta.oninput=()=>{ M=parseMenuText(ta.value); render(); st.textContent=''; };
   ta.addEventListener('paste',e=>{
-    const cd=e.clipboardData; if(!cd) return;
-    const m=readDocPaste(cd.getData('text/html'),cd.getData('text/plain'));
+    const cd=e.clipboardData, html=cd&&cd.getData('text/html'); if(!html) return;   // plain text pastes as usual
+    const m=readDocPaste(html,cd.getData('text/plain')), n=m.reduce((a,s_)=>a+s_.items.length,0);
+    if(!n) return;
     e.preventDefault();
-    const n=m.reduce((a,s_)=>a+s_.items.length,0);
-    if(!n){ say(false,'Nothing to read there. Copy the menu from your Google Doc first, then paste here.'); return; }
     const msg=addDocToMenu(m); render(); ta.value=menuToText(); ta.scrollTop=ta.scrollHeight;
     say(true,msg,m);
   });
-  ta.oninput=()=>{ M=parseMenuText(ta.value); render(); };
-  box.append(ol,tips,ta,st);
+  box.append(how,tips,ta,st);
   if(docsNote){ say(true,docsNote.msg,docsNote.pasted); docsNote=null; }
-}
-function renderTextMode(box){
-  const how=document.createElement('div'); how.className='hint';
-  how.innerHTML='One dish per line: <b>Name: what’s in it</b>. Sections start with <b>#</b>, price at the end: <b># Cocktails 19</b>. A dish with its own price: <b>Name (26): what’s in it</b>.'
-    +'<br>Choices under a dish, each with its price: <b>- Lamb (22)</b>. A subheading: <b>## Lunch</b> (add <b>(center)</b> or <b>(right)</b> to line it up). A section in its own columns: <b># Tapas (2 columns)</b>.';
-  const ta=document.createElement('textarea'); ta.value=menuToText(); ta.rows=24; ta.spellcheck=true;
-  ta.style.cssText='width:100%;font:inherit;font-size:15px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-top:8px;resize:vertical';
-  const st=document.createElement('div'); st.className='hint'; st.style.marginTop='6px'; st.setAttribute('aria-live','polite');
-  ta.oninput=()=>{ M=parseMenuText(ta.value); render(); st.textContent=''; };
-  ta.addEventListener('paste',e=>{
-    const html=e.clipboardData&&e.clipboardData.getData('text/html'); if(!html) return;   // plain text pastes as usual
-    const m=blocksToMenu(docBlocks(html)), n=m.reduce((a,s)=>a+s.items.length,0);
-    if(!n) return;
-    e.preventDefault();
-    const a=ta.selectionStart, z=ta.selectionEnd, v=ta.value;   // keep what's pasted on its own lines
-    const txt=(a>0&&v[a-1]!=='\n'?'\n':'')+menuToText(m,true)+(z<v.length&&v[z]!=='\n'?'\n':'');
-    ta.setRangeText(txt,a,z,'end');
-    M=parseMenuText(ta.value); render();
-    st.style.color='#3f6b35'; st.textContent=`Pasted from your document: ${m.filter(s=>s.title).length} section${m.filter(s=>s.title).length===1?'':'s'}, ${n} dish${n===1?'':'es'}. Check the menu page; if something landed in the wrong place, fix it in the box.`;
-  });
-  const files=document.createElement('div'); files.className='hint'; files.style.marginTop='10px';
-  files.className='hint only-full';
-  files.innerHTML='<a href="#" data-a="dl">Download just the words</a> · <a href="#" data-a="open">Put the words from a text file in this menu</a><input type="file" accept=".txt,text/plain" hidden>';
-  const fi=files.querySelector('input');
-  files.querySelector('[data-a="dl"]').onclick=e=>{ e.preventDefault(); download(new Blob([menuToText()+'\n'],{type:'text/plain;charset=utf-8'}),`meme-on-10-menu_${new Date().toISOString().slice(0,10)}.txt`); };
-  files.querySelector('[data-a="open"]').onclick=e=>{ e.preventDefault(); fi.click(); };
-  fi.onchange=()=>{ const fl=fi.files[0]; if(!fl) return; fl.text().then(t=>{ ta.value=t.replace(/^﻿/,'').replace(/\r\n?/g,'\n'); histAct('put in the words from “'+fl.name+'”',()=>{ M=parseMenuText(ta.value); }); render();
-    const n=M.reduce((a,s)=>a+s.items.length,0); st.style.color=n?'#3f6b35':'#b35a3e'; st.textContent=n?`Opened “${fl.name}”: ${n} dish${n===1?'':'es'}.`:'That file has no dishes in it.'; }); fi.value=''; };
-  box.append(how,ta,st,files);
 }
 
 /* click once: the button asks "Click again to …"; click again within 5 seconds to do it */
@@ -1573,7 +1552,6 @@ const fitBox=t=>{ t.style.height='auto'; if(t.scrollHeight) t.style.height=(t.sc
 function renderMenuEditor(){
   const box=document.getElementById('menuEditor'); if(!box) return; box.innerHTML='';
   if(menuMode==='sheet'){ renderSheetMode(box); return; }
-  if(menuMode==='docs'){ renderDocsMode(box); return; }
   if(menuMode==='text'){ renderTextMode(box); return; }
   const inp=(ph,val,on,aria)=>{ const i=document.createElement('input'); i.type='text'; i.placeholder=ph; i.value=val||''; i.style.fontSize='14px'; i.setAttribute('aria-label',aria||ph); i.oninput=()=>{on(i.value);render();}; return i; };
   const btn=(label,fn,title)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=label; b.onclick=fn; if(title){ b.title=title; b.setAttribute('aria-label',title); } return b; };
@@ -1587,6 +1565,8 @@ function renderMenuEditor(){
     opts.forEach(([v,label])=>{ const b=btn(label,()=>{ if(v!==now) pick(v); }); b.setAttribute('aria-pressed',v===now); g.appendChild(b); }); return g; };
   const nameOf=t=>((t||'').trim()||'with no name');
   // ↑ ↓ buttons, always in view (as before update 19); the ⋯ menu keeps the rest
+  // Move up / Move down at the top of a dish's, subheading's or choice's ⋯ list (the ⠿ handle drags it)
+  const moves=(canUp,canDown,up,down)=>[['Move up',up,{disabled:!canUp}],['Move down',down,{disabled:!canDown}],'-'];
   const arrows=(what,canUp,canDown,up,down)=>{ const w=document.createElement('span'); w.className='marrows';
     const u=btn('↑',up,'Move '+what+' up'), d=btn('↓',down,'Move '+what+' down'); u.disabled=!canUp; d.disabled=!canDown; w.append(u,d); return w; };
   // the menu title under the logo (“Lunch”) is the first box. On the menu it is a subheading before the first section.
@@ -1603,7 +1583,7 @@ function renderMenuEditor(){
     card.appendChild(mk);
     // one box for each line under the logo (usually just one); clearing a box and clicking away removes it
     (top?top.items:[null]).forEach((sub,k)=>{
-      const t=inp('Like Lunch, Dinner or Brunch (leave empty for none)',sub?sub.sub:'',v=>{
+      const t=inp('Like Lunch or Dinner (optional)',sub?sub.sub:'',v=>{
         if(!sub){ if(v.trim()){ redoLater(); M.unshift({title:'',price:'',items:[{sub:v,align:'center'}]}); } return; }
         sub.sub=v;
       },'Menu title under the logo');
@@ -1634,7 +1614,7 @@ function renderMenuEditor(){
   if(secs>1){ const fa=document.createElement('p'); fa.className='mfoldall';
     const all=on=>{ for(let k=0;k<secs;k++) on?OPEN.add(k):OPEN.delete(k); boxOpenSet(OPEN); renderMenuEditor(); };
     const o=btn('Open all',()=>all(true)), c=btn('Close all',()=>all(false)); o.className=c.className='link';
-    fa.append('Click a section’s bar to open or close it.',o,c); box.appendChild(fa); }
+    fa.append(o,c); box.appendChild(fa); }
   // drag a dish or subheading by its ⠿ handle to any place in any section (a closed section takes it at its end)
   const startDrag=(e,si,ii,row,label)=>{
     if(e.button>0) return;
@@ -1695,8 +1675,9 @@ function renderMenuEditor(){
     const top_=document.createElement('div'); top_.className='mhead';
     const fold=document.createElement('button'); fold.type='button'; fold.className='mfold'; fold.setAttribute('aria-expanded',isOpen(k));
     const chev=document.createElement('span'); chev.className='mchev'; chev.textContent='▶'; chev.setAttribute('aria-hidden','true');
-    const mk=document.createElement('span'); mk.className='mk'; mk.textContent=secs>1?`Section ${k+1} of ${secs}`:'Section';
+    const mk=document.createElement('span'); mk.className='mk'; mk.textContent='Section'; mk.hidden=!!(sec.title||'').trim();   // the name says enough; “Section” only marks one with no name yet
     const mname=document.createElement('span'); mname.className='mname'; mname.textContent=(sec.title||'').trim();
+    mname.setAttribute('aria-label',`Section ${k+1} of ${secs}`+((sec.title||'').trim()?': '+sec.title.trim():''));
     const toggle=on=>{ if(secs===1) return; setOpen(k,on); card.classList.toggle('shut',!on); fold.setAttribute('aria-expanded',on); fold.title=on?'Close this section':'Open this section';
       if(on) card.querySelectorAll('textarea').forEach(fitBox); };
     fold.title=isOpen(k)?'Close this section':'Open this section'; if(secs===1) fold.style.cursor='default';
@@ -1720,7 +1701,7 @@ function renderMenuEditor(){
     const body=document.createElement('div'); body.className='mbody'; card.appendChild(body);
     const hd=document.createElement('div'); hd.className='mgrid';
     hd.style.gridTemplateColumns='1fr 76px';
-    hd.append(fl('Section name'),fl('Price for all'),inp('Like Cocktails',sec.title,v=>{sec.title=v; mname.textContent=v.trim();},'Section name'), inp('—',sec.price,v=>{sec.price=v;},'Price for the whole section'));
+    hd.append(fl('Section name'),fl('Price for all'),inp('Like Cocktails',sec.title,v=>{sec.title=v; mname.textContent=v.trim(); mk.hidden=!!v.trim();},'Section name'), inp('—',sec.price,v=>{sec.price=v;},'Price for the whole section'));
     body.appendChild(hd);
     // this section's own columns (until it has its own, it follows the page's Columns setting)
     const colRow=document.createElement('div'); colRow.className='mcols';
@@ -1735,7 +1716,7 @@ function renderMenuEditor(){
         const row=document.createElement('div'); row.className='mdish msub'; row.dataset.ii=ii;
         const t=inp('Subheading, like From the grill',it.sub,v=>{it.sub=v;},'Subheading'); t.style.fontWeight='600';
         const r1=document.createElement('div'); r1.className='mrow sub mdrag';
-        r1.append(grip('this subheading',si,ii,row,()=>it.sub||'Subheading'),t,arrows('this subheading',canUp,canDown,()=>moveItem(si,ii,-1),()=>moveItem(si,ii,1)),dotsButton('Options for this subheading',[
+        r1.append(grip('this subheading',si,ii,row,()=>it.sub||'Subheading'),t,dotsButton('Options for this subheading',[...moves(canUp,canDown,()=>moveItem(si,ii,-1),()=>moveItem(si,ii,1)),
           ['Delete this subheading',()=>{ histAct('deleted the subheading “'+nameOf(it.sub)+'”',()=>{ sec.items.splice(ii,1); redo(); }); menuSay('Subheading deleted. Undo brings it back.'); },{danger:true}]]));
         const al=document.createElement('div'); al.className='mcols';
         al.append(fl('Line it up'),seg('Line up the subheading',[['left','Left'],['center','Center'],['right','Right']],it.align||'left',v=>{ it.align=v; redo(); }));
@@ -1754,7 +1735,7 @@ function renderMenuEditor(){
       if(!(it.opts||[]).length) dishMenu.push(['Add a choice, like Chicken or Lamb',addChoice]);
       if(dishMenu.length) dishMenu.push('-');
       r1.append(grip('this dish',si,ii,row,()=>it.name||'Dish')); if(showPr) r1.append(nm,pr); else r1.append(nm);
-      r1.append(arrows('this dish',canUp,canDown,()=>moveItem(si,ii,-1),()=>moveItem(si,ii,1)),dotsButton(`Options for dish ${n}`,[...dishMenu,
+      r1.append(dotsButton(`Options for dish ${n}`,[...moves(canUp,canDown,()=>moveItem(si,ii,-1),()=>moveItem(si,ii,1)),...dishMenu,
         ['Delete this dish',()=>{ histAct('deleted the dish “'+nameOf(it.name)+'”',()=>{ sec.items.splice(ii,1); redo(); }); menuSay('Dish deleted. Undo brings it back.'); },{danger:true}]]));
       const ds=document.createElement('textarea'); ds.rows=1; ds.placeholder='What’s in it (optional)'; ds.value=it.desc||''; ds.setAttribute('aria-label',`Dish ${n}: what’s in it`);
       ds.oninput=()=>{it.desc=ds.value;fitBox(ds);render();};
@@ -1764,8 +1745,7 @@ function renderMenuEditor(){
       opts.forEach((o,oi)=>{
         const r=document.createElement('div'); r.className='mrow mopt';
         r.append(inp('Choice, like Lamb',o.name,v=>{o.name=v;},`Dish ${n}, choice ${oi+1}`),inp('Price',o.price,v=>{o.price=v;},`Dish ${n}, choice ${oi+1} price`),
-          arrows('this choice',oi>0,oi<opts.length-1,()=>mv(opts,oi,-1),()=>mv(opts,oi,1)),
-          dotsButton(`Options for choice ${oi+1}`,[
+          dotsButton(`Options for choice ${oi+1}`,[...moves(oi>0,oi<opts.length-1,()=>mv(opts,oi,-1),()=>mv(opts,oi,1)),
             ['Delete this choice',()=>{ histAct('deleted the choice “'+nameOf(o.name)+'”',()=>{ opts.splice(oi,1); if(!opts.length) delete it.opts; redo(); }); menuSay('Choice deleted. Undo brings it back.'); },{danger:true}]]));
         row.appendChild(r);
       });
@@ -1789,12 +1769,18 @@ function renderMenuEditor(){
 }
 function menuEditorBlock(){
   const d=document.createElement('div');
-  d.innerHTML='<div class="sl" style="font-size:13px;margin:4px 0 6px">Change the words by</div><div id="menuModes" class="seg menuseg" role="group" aria-label="Change the words by"></div><div id="menuEditor" style="margin-top:10px"></div><div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div>';
-  const modes=d.querySelector('#menuModes');
-  const defs=[['text','Typing','Type like a document'],['docs','Google Docs','Paste from Google Docs'],['sheet','Google Sheets','Copy to and from Google Sheets'],['boxes','Boxes','Edit each dish in its own box']], bs=[];
-  const paint=()=>bs.forEach(([m,b])=>{ b.classList.toggle('on',menuMode===m); b.setAttribute('aria-pressed',menuMode===m); });
+  // the warning sits at the top, so it is seen even with a long list of boxes open
+  d.innerHTML='<div class="sl" style="font-size:13px;margin:4px 0 6px">Change the words in</div><div id="menuModes" class="seg menuseg" role="group" aria-label="Change the words in"></div>'
+    +'<p class="mimport"><button type="button" class="link"></button></p>'
+    +'<div id="menuWarn" class="hint" style="color:#b35a3e;font-weight:600;margin-top:8px"></div><div id="menuEditor" style="margin-top:10px"></div>';
+  const modes=d.querySelector('#menuModes'), imp=d.querySelector('.mimport button');
+  const defs=[['boxes','Boxes','Edit each dish in its own box'],['text','Text','Type the menu like a document, or paste from Google Docs']], bs=[];
+  const paint=()=>{ bs.forEach(([m,b])=>{ b.classList.toggle('on',menuMode===m); b.setAttribute('aria-pressed',menuMode===m); });
+    imp.textContent=menuMode==='sheet'?'← Back to '+(menuBack==='text'?'Text':'Boxes'):'Import / export: Google Sheets or a file…'; };
+  const go=m=>{ if(m!=='sheet') menuBack=m; menuMode=m; renderMenuEditor(); paint(); autosave(); };
   defs.forEach(([m,label,tip])=>{ const b=document.createElement('button'); b.textContent=label; b.title=tip; b.type='button';
-    b.onclick=()=>{ menuMode=m; renderMenuEditor(); paint(); autosave(); }; bs.push([m,b]); modes.appendChild(b); });
+    b.onclick=()=>go(m); bs.push([m,b]); modes.appendChild(b); });
+  imp.onclick=()=>go(menuMode==='sheet'?menuBack:'sheet');
   paint();
   return d;
 }
@@ -2053,7 +2039,8 @@ function menusBlock(){
     ['Open a menu from my computer…',()=>fi.click()],
     '-',
     ['Clear all the words',()=>{ histAct('cleared all the words',()=>{ M=BLANK_MENU(); renderMenuEditor(); render(); }); say('All the words are cleared. Undo brings them back.'); },{danger:true,ask:'Click again to clear the words of this menu'}],
-    ...(mode==='simple'?[]:[['Put back the sample menu',()=>{ histAct('put back the sample menu',()=>{ M=clone(MENU_DEFAULT); renderMenuEditor(); render(); }); say('The sample menu is back. Undo brings back your words.'); },{danger:true,ask:'Click again to replace the words with the sample'}]]),
+    ['Put back the sample menu',()=>{ histAct('put back the sample menu',()=>{ M=clone(MENU_DEFAULT); renderMenuEditor(); render(); }); say('The sample menu is back. Undo brings back your words.'); },{danger:true,ask:'Click again to replace the words with the sample'}],
+    ['Put the look back to how it started',()=>{ histAct('put the look back to how it started',()=>{ G.mn=Object.assign({},LAYOUTS.mn.geo); buildPanel(); render(); }); say('Text sizes, spacing, header and colors are back to how they started. The words are the same. Undo brings back your look.'); },{danger:true,ask:'Click again to put back the starting look of this menu'}],
     ['Delete this menu',()=>{ const gone=MENUS.current; histAct('deleted the menu “'+gone+'”',()=>{ delete MENUS.list[MENUS.current]; MENUS.current=''; useMenu(Object.keys(MENUS.list)[0]); }); menuSay(`Deleted “${gone}”. Undo brings it back.`); },{danger:true,disabled:!many,ask:`Click again to delete “${MENUS.current}”`}]]));
   // any file can be picked; files that aren't a saved menu get a plain explanation instead of being greyed out
   fi.onchange=()=>{ const fl=fi.files[0]; fi.value=''; if(!fl) return;
@@ -2072,10 +2059,11 @@ function menusBlock(){
 const panel=document.getElementById('panel');
 let refs=[];
 function applyMode(){
-  document.body.classList.toggle('simple',mode==='simple');
-  document.getElementById('btnPdf').textContent=mode==='simple'?'Save as PDF':'Export PDF';
-  document.getElementById('btnPng').textContent=mode==='simple'?'Download picture (PNG)':'Download PNG';
-  document.getElementById('pdfHint').textContent=mode==='simple'
+  const simple=viewMode()==='simple';
+  document.body.classList.toggle('simple',simple);
+  document.getElementById('btnPdf').textContent=simple?'Save as PDF':'Export PDF';
+  document.getElementById('btnPng').textContent=simple?'Download picture (PNG)':'Download PNG';
+  document.getElementById('pdfHint').textContent=simple
     ? 'A window opens. Where it says “Destination”, choose “Save as PDF”, then press Save.'
     : 'PDF: in the window that opens, choose “Save as PDF” as the destination, then Save.';
 }
@@ -2203,13 +2191,15 @@ function accSummary(id,el){
 function buildPanel(){
   applyMode();
   refs=[]; panel.innerHTML=''; panel.className='panel';
-  const simple=mode==='simple', B=basics(cur);
+  const simple=viewMode()==='simple', B=basics(cur);
   const top=document.createElement('div');
   // (The row of links to Home, Brand guidelines, Print and Social that used to sit here repeated the top nav, so it is gone.)
-  top.innerHTML=`<div class="titlerow"><h1>${cur==='mn'?'Menu':'Logo'} editor<small>${simple?'Simple: the everyday settings':'All settings'}</small></h1><label class="switch" title="Simple shows only the everyday settings. Your work stays the same either way."><input type="checkbox" id="simpleSw"><span class="track"><span class="knob"></span></span>Simple</label></div>`;
+  // the Menu page has no Simple switch: Simple and All settings showed the same settings there
+  top.innerHTML=cur==='mn'?'<div class="titlerow"><h1>Menu editor</h1></div>'
+    :`<div class="titlerow"><h1>Logo editor<small>${simple?'Simple: the everyday settings':'All settings'}</small></h1><label class="switch" title="Simple shows only the everyday settings. Your work stays the same either way."><input type="checkbox" id="simpleSw"><span class="track"><span class="knob"></span></span>Simple</label></div>`;
   panel.appendChild(top);
-  const sw=top.querySelector('#simpleSw'); sw.checked=simple;
-  sw.onchange=()=>{ mode=sw.checked?'simple':'full'; buildPanel(); render(); };
+  const sw=top.querySelector('#simpleSw');
+  if(sw){ sw.checked=simple; sw.onchange=()=>{ mode=sw.checked?'simple':'full'; buildPanel(); render(); }; }
   if(cur==='hd'){
     // say plainly whether the menu page uses this header, with a way back to it
     const uses=G.mn.headSrc==='mine', b=document.createElement('div'); b.className='helpbox'; b.style.marginTop='14px';
@@ -2311,10 +2301,11 @@ function buildPanel(){
   finish();
   const foot=document.createElement('div'); foot.className='foot';
   // one version line (it used to be shown twice: once plain, once on the "what changed" list)
-  foot.innerHTML='<button id="btnReset">Reset everything</button>'
+  // on the Menu page, resetting is in the menu's ⋯ list, next to Clear all the words
+  foot.innerHTML=(cur==='mn'?'':'<button id="btnReset">Reset everything</button>')
     +`<details class="hint"><summary>Editor ${VERSION} · update ${UPDATE} · ${VERSION_DATE}</summary><ul>${CHANGELOG.map(c=>`<li><b>${c[0]}</b> ${c[1]}</li>`).join('')}</ul></details>`;
   panel.appendChild(foot);
-  twoStep(document.getElementById('btnReset'),'Click again to reset every layout and the menu (saved versions are kept)',()=>{ S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT));Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo));sync();render();});
+  if(document.getElementById('btnReset')) twoStep(document.getElementById('btnReset'),'Click again to reset every layout and the menu (saved versions are kept)',resetAll);
   if(document.getElementById('verSave')){
   document.getElementById('verSave').onclick=saveVersion;
   document.getElementById('verName').onkeydown=e=>{ if(e.key==='Enter') saveVersion(); };
@@ -2325,6 +2316,8 @@ function buildPanel(){
   renderVersions(); sync();
 }
 function sync(){ refs.forEach(f=>f()); }
+// every layout's settings and the menu's words back to how they started (saved versions are kept)
+function resetAll(){ S=Object.assign({},SHARED_DEFAULTS); M=JSON.parse(JSON.stringify(MENU_DEFAULT)); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo)); sync(); render(); }
 
 /* ============ SAVED VERSIONS (kept in this browser) ============ */
 let mem={};
@@ -2608,7 +2601,7 @@ function resizeSel(m){
 
 function autosave(){ try{ localStorage.setItem('meme10_last',JSON.stringify({cur,S,G,M,mode,menuMode,links:[...LINKS]})); }catch(e){} storeMenu(); if(HIST.cur==null) histCheck(); else histLater(); }
 function restore(){ try{ const v=JSON.parse(localStorage.getItem('meme10_last')||'null'); if(!v) return;
-  S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(['text','docs','sheet','boxes'].includes(v.menuMode)) menuMode=v.menuMode; }catch(e){} }
+  S=Object.assign({},SHARED_DEFAULTS,v.S); Object.keys(LAYOUTS).forEach(k=>G[k]=Object.assign({},LAYOUTS[k].geo,(v.G||{})[k])); if(LAYOUTS[v.cur]) cur=v.cur; LINKS=new Set(v.links||[]); if(v.mode) mode=v.mode; if(v.M) M=v.M; if(v.menuMode) menuMode=menuBack=v.menuMode==='docs'||v.menuMode==='text'?'text':'boxes'; /* Typing and Google Docs are one mode now; Google Sheets is under Import / export */ }catch(e){} }
 restore(); loadVersions(); loadMenus(); HIST.cur=null;
 { const h=decodeURIComponent(location.hash.slice(1)); if(h==='menu') cur='mn'; else if(LAYOUTS[h]) cur=h; else if(cur==='mn' && h!=='mn') cur='1b';
   // Keep the address in step with what is shown, so the top nav underlines the right tab.

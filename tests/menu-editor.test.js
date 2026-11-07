@@ -24,7 +24,15 @@ const click = (page, sel, text) => page.evaluate(([sel, text]) => {
   const b = [...document.querySelectorAll(sel)].find(x => !text || x.textContent.trim() === text);
   if (!b) throw new Error('no ' + sel + ' ' + (text || '')); b.click();
 }, [sel, text]);
-const mode = (page, label) => click(page, '#menuModes button', label);
+// Boxes or Text; 'Import' opens the Import / export view (Google Sheets and files)
+const mode = (page, label) => label === 'Import'
+  ? page.evaluate(() => { if (menuMode !== 'sheet') document.querySelector('.mimport button').click(); })
+  : click(page, '#menuModes button', label);
+// Move up / Move down from a ⋯ menu: the n-th (from 0; -1 = last) ⋯ button matching sel
+const moveVia = async (page, sel, n, label) => {
+  await page.evaluate(([sel, n]) => { const d = document.querySelectorAll(sel); (n < 0 ? d[d.length + n] : d[n]).click(); }, [sel, n]);
+  await click(page, '.popmenu button', label);
+};
 const type = (page, sel, value, append) => page.$eval(sel, (el, [v, a]) => { el.value = a ? el.value + v : v; el.dispatchEvent(new Event('input', { bubbles: true })); }, [value, append]);
 // a paste event with the clipboard holding a Google Doc (HTML) and its plain text
 const paste = (page, sel, html, plain) => page.$eval(sel, (el, [html, plain]) => {
@@ -37,14 +45,14 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
 (async () => {
   const browser = await chromium.launch();
 
-  // ---- Bug 1: Boxes → finish a section → + Add a section → Google Docs → paste
+  // ---- Bug 1: Boxes → finish a section → + Add a section → Text → paste a Google Doc
   {
     const page = await fresh(browser);
     await mode(page, 'Boxes');
     await type(page, '#menuEditor input[aria-label="Section name"]', 'Tapas');
     const before = await menu(page);
     await click(page, '#menuEditor button', '+ Add a section');
-    await mode(page, 'Google Docs');
+    await mode(page, 'Text');
     await paste(page, '#menuEditor textarea', DOC, DOC_TXT);
     const after = await menu(page);
     ok(after.length >= before.length, `bug 1: no section lost (${before.length} before, ${after.length} after)`);
@@ -53,10 +61,10 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ok(!after.some(s => s.title === 'New section'), 'bug 1: paste filled the empty “New section”');
     // typing in the Docs box keeps the whole menu
     await type(page, '#menuEditor textarea', '\nExtra dish', true);
-    ok((await menu(page)).length === after.length, 'bug 1: typing in the Docs box keeps every section');
+    ok((await menu(page)).length === after.length, 'bug 1: typing in the Text box keeps every section');
     // switching modes keeps everything
     const typed = await menu(page);
-    for (const m of ['Boxes', 'Typing', 'Google Docs', 'Boxes']) await mode(page, m);
+    for (const m of ['Boxes', 'Text', 'Import', 'Text', 'Boxes']) await mode(page, m);
     ok(JSON.stringify(await menu(page)) === JSON.stringify(typed), 'bug 1: switching modes keeps every section');
     await page.close();
   }
@@ -64,7 +72,7 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
   // ---- pasting a whole Doc again updates matching sections instead of doubling them; Replace is offered
   {
     const page = await fresh(browser);
-    await mode(page, 'Google Docs');
+    await mode(page, 'Text');
     const doc = '<h2>Cocktails</h2><p><b>Negroni</b></p><p>Gin, Campari, vermouth</p>' + DOC;
     await paste(page, '#menuEditor textarea', doc, 'x');
     let m = await menu(page);
@@ -161,13 +169,13 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ];
     await page.evaluate(m => { M = JSON.parse(JSON.stringify(m)); buildPanel(); render(); }, RICH);
     ok(same(await menu(page), RICH), 'structure: menu set');
-    for (const m of ['Typing', 'Google Docs', 'Google Sheets', 'Boxes', 'Typing', 'Boxes']) {
+    for (const m of ['Text', 'Import', 'Boxes', 'Text', 'Boxes']) {
       await mode(page, m);
-      if (m === 'Typing' || m === 'Google Docs') await type(page, '#menuEditor textarea', '', true);   // re-read the box
+      if (m === 'Text') await type(page, '#menuEditor textarea', '', true);   // re-read the box
       ok(same(await menu(page), RICH), `structure: kept after ${m}`);
     }
     // Google Sheets: copy the rows and paste them back
-    await mode(page, 'Google Sheets');
+    await mode(page, 'Import');
     const tsv = await page.evaluate(() => toTSV(menuRows()));
     await type(page, '#menuEditor textarea', tsv);
     ok(same(await menu(page), RICH), 'structure: kept through a Google Sheet (rows copied and pasted back)');
@@ -236,7 +244,7 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     await type(page, '#menuEditor input[aria-label="Dish 1, choice 1"]', 'Draft');
     await type(page, '#menuEditor input[aria-label="Dish 1, choice 2"]', 'Bottle');
     await type(page, '#menuEditor input[aria-label="Dish 1, choice 2 price"]', '8');
-    await page.evaluate(() => document.querySelectorAll('.mopt button[aria-label="Move this choice up"]')[1].click());
+    await moveVia(page, '.dots[aria-label="Options for choice 2"]', 0, 'Move up');
     m = await menu(page);
     ok(same(m[1].items[0].opts, [{ name: 'Bottle', price: '8' }, { name: 'Draft', price: '' }]), 'boxes: choices added, priced and moved');
     await click(page, '.dots[aria-label="Options for choice 1"]');
@@ -280,7 +288,7 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
   {
     const page = await fresh(browser);
     await page.evaluate(() => { M = BLANK_MENU(); buildPanel(); render(); });
-    await mode(page, 'Google Docs');
+    await mode(page, 'Text');
     const doc = '<h1 style="text-align:center">Lunch</h1><h2>Grill</h2><p><b>Shipudim</b></p><p>Grilled skewers with pita</p><ul><li><p>Chicken 24</p></li><li><p>Lamb 28</p></li></ul><p><b>Kebab</b></p><p>Spiced beef, onion</p><h2>Salads</h2><p><b>Fattoush</b></p><p>Pita, sumac</p>';
     await paste(page, '#menuEditor textarea', doc, 'x');
     const m = await menu(page);
@@ -342,12 +350,13 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ok(same(m[0], { title: '', price: '', items: [{ sub: 'Lunch', align: 'center' }] }) && m[1].title === 'Cocktails', 'title box: typing “Lunch” puts it under the logo, centered, above the sections');
     ok((await page.$eval('#canvas svg', e => e.outerHTML)).includes('>LUNCH<'), 'title box: drawn on the page');
     ok(await page.$eval('#menuEditor input[aria-label="Menu title under the logo"]', i => document.activeElement === i), 'title box: cursor stays in the box');
-    await click(page, '.mcard:nth-of-type(2) button[aria-label="Move this dish down"]');
+    ok(!(await page.$('.mdish .marrows')), 'rows: no ↑ ↓ buttons on dish rows (they are in the ⋯ menu)');
+    await moveVia(page, '.mcard:nth-of-type(2) .mdish .dots', 0, 'Move down');
     m = await menu(page);
-    ok(m[1].items[0].name === 'Spicy Margarita' && m[1].items[1].name === 'Mémé’s Manhattan', 'arrows: ↓ moves a dish down');
-    await page.evaluate(() => { const d = document.querySelectorAll('.mcard:nth-of-type(2) button[aria-label="Move this dish down"]'); d[d.length - 1].click(); });
+    ok(m[1].items[0].name === 'Spicy Margarita' && m[1].items[1].name === 'Mémé’s Manhattan', '⋯ Move down moves a dish down');
+    await moveVia(page, '.mcard:nth-of-type(2) .mdish:not(.msub) .dots', -1, 'Move down');
     m = await menu(page);
-    ok(m[1].items.length === 11 && m[2].items[0].name === 'Amaro Carajillo', 'arrows: ↓ on the last dish moves it into the next section');
+    ok(m[1].items.length === 11 && m[2].items[0].name === 'Amaro Carajillo', '⋯ Move down on the last dish moves it into the next section');
     await click(page, '.mcard:nth-of-type(3) .mhead button[aria-label="Move this section up"]');
     m = await menu(page);
     ok(m[0].items[0].sub === 'Lunch' && m[1].title === 'Beers' && m[2].title === 'Cocktails', 'arrows: ↑ moves a section up, the title stays on top');
@@ -359,8 +368,8 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     const page = await fresh(browser);
     await page.evaluate(() => { M = [{ title: 'woo', price: '', items: [{ name: '', desc: '' }, { sub: 'Lunch', align: 'center' }] }, { title: 'New section', price: '', items: [{ name: '', desc: '' }] }]; buildPanel(); render(); });
     await mode(page, 'Boxes');
-    await click(page, 'button[aria-label="Move this subheading up"]');
-    await click(page, 'button[aria-label="Move this subheading up"]');
+    await moveVia(page, '.dots[aria-label="Options for this subheading"]', 0, 'Move up');
+    await moveVia(page, '.dots[aria-label="Options for this subheading"]', 0, 'Move up');
     const m = await menu(page);
     ok(same(m[0], { title: '', price: '', items: [{ sub: 'Lunch', align: 'center' }] }) && m[1].title === 'woo' && m[1].items.length === 1, 'subheading ↑ out of the first section becomes the menu title');
     ok(await page.$eval('#menuEditor input[aria-label="Menu title under the logo"]', i => i.value) === 'Lunch', 'and it shows in the first box');
@@ -405,6 +414,45 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     ok(!(await page.$('.mghost')) && !(await page.$('.mdropline')), 'drag: nothing left floating after the drop');
     await click(page, '.mundo');
     ok((await names())[0] === 'IPA,B,C,A', 'drag: Undo puts it back');
+    await page.close();
+  }
+
+  // ---- Panel cleanup (update 32): two ways to edit, Import / export, no Simple switch or Reset on the Menu page
+  {
+    const page = await fresh(browser);
+    ok(await page.evaluate(() => menuMode) === 'boxes', 'cleanup: a first visit starts in Boxes');
+    ok(await page.$$eval('#menuModes button', bs => bs.map(b => b.textContent).join()) === 'Boxes,Text', 'cleanup: the modes are Boxes and Text');
+    ok(!(await page.$('#simpleSw')), 'cleanup: no Simple switch on the Menu page');
+    ok(!(await page.$('#btnReset')), 'cleanup: no Reset everything button on the Menu page');
+    ok(await page.$eval('#menuWarn', w => !!(w.compareDocumentPosition(document.getElementById('menuEditor')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'cleanup: the “too long” warning sits above the boxes');
+    const where = await page.evaluate(() => [...document.querySelectorAll('#panel .acc')].find(a => a.textContent.includes('Tagline order')).dataset.sec);
+    ok(where === 'order', 'cleanup: Tagline order is under Page header');
+    // Import / export opens the Sheets view and goes back to the mode you came from
+    await mode(page, 'Text');
+    await mode(page, 'Import');
+    ok(!!(await page.$('#menuEditor #mCopy')) && await page.$$eval('#menuModes button.on', b => b.length) === 0, 'import: the Sheets view opens');
+    await click(page, '.mimport button');
+    ok(await page.evaluate(() => menuMode) === 'text', 'import: Back returns to Text');
+    // a saved Google Docs mode comes back as Text, a saved Sheets mode as Boxes
+    await page.evaluate(() => { const v = JSON.parse(localStorage.getItem('meme10_last')); v.menuMode = 'docs'; localStorage.setItem('meme10_last', JSON.stringify(v)); });
+    await page.reload();
+    ok(await page.evaluate(() => menuMode) === 'text', 'restore: a saved Google Docs mode opens as Text');
+    await page.evaluate(() => { const v = JSON.parse(localStorage.getItem('meme10_last')); v.menuMode = 'sheet'; localStorage.setItem('meme10_last', JSON.stringify(v)); });
+    await page.reload();
+    ok(await page.evaluate(() => menuMode) === 'boxes', 'restore: a saved Google Sheets mode opens as Boxes');
+    // ⋯ Put the look back: only the look changes, and Undo brings it back
+    await page.evaluate(() => { G.mn.side = 120; G.mn.columns = 1; buildPanel(); render(); });
+    const words = await menu(page);
+    await click(page, '.mbar .dots');
+    await click(page, '.popmenu button', 'Put the look back to how it started');
+    await click(page, '.popmenu button', 'Click again to put back the starting look of this menu');
+    ok(await page.evaluate(() => G.mn.side === LAYOUTS.mn.geo.side && G.mn.columns === LAYOUTS.mn.geo.columns), 'look reset: the look is back to how it started');
+    ok(same(await menu(page), words), 'look reset: the words stay the same');
+    await click(page, '.mundo');
+    ok(await page.evaluate(() => G.mn.side === 120 && +G.mn.columns === 1), 'look reset: Undo brings the look back');
+    // the logo pages keep the Simple switch and Reset everything
+    await page.evaluate(() => { cur = '1b'; buildPanel(); render(); });
+    ok(!!(await page.$('#simpleSw')) && !!(await page.$('#btnReset')), 'cleanup: logo pages keep the Simple switch and Reset everything');
     await page.close();
   }
 
