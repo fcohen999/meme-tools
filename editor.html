@@ -102,12 +102,29 @@ body.simple .panel .stepper .unit{right:46px;line-height:34px}
 .panel .mcard.msec .mdish{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px;margin-top:8px}
 .panel .mcard.msec .mdish.msub{background:var(--soft);border-left:3px solid var(--accent);margin-top:16px}
 .panel .mcard.msec>.madds{margin-top:4px}
-.panel .acc:has(#menuEditor){overflow:visible}   /* or the section bars could not stay in view while scrolling */
+.panel .acc:has(#menuEditor){overflow:visible}
+/* folding: the bar opens and closes its section; a closed one shows a one-line list of its dishes */
+.panel .mcard.msec>.mhead .mfold{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:none;border:none;color:inherit;padding:4px 0;text-align:left;cursor:pointer;font:inherit}
+.panel .mcard.msec>.mhead .mfold:hover{background:none}
+.panel .mcard.msec>.mhead .mchev{flex:none;display:inline-block;width:12px;font-size:11px;color:#cfc5b8;transition:transform .15s}
+.panel .mcard.msec:not(.shut)>.mhead .mchev{transform:rotate(90deg)}
+.panel .mcard.msec.shut{padding-bottom:0}
+.panel .mcard.msec.shut>.mhead{position:static;border-radius:calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;margin-bottom:0}
+.panel .mcard.msec.shut>.mbody{display:none}
+.panel .mcard.msec>.msum{display:none;width:calc(100% + 16px);margin:0 -8px;padding:9px 12px 10px;background:none;border:none;text-align:left;font:inherit;font-size:12.5px;line-height:1.45;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel .mcard.msec>.msum:hover{background:none;color:var(--ink)}
+.panel .mcard.msec>.msum b{color:var(--ink);font-weight:600}
+.panel .mcard.msec.shut>.msum{display:block}
+.panel .mfoldall{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--muted);margin:14px 0 -12px}
+.panel .mfoldall button.link{font-size:12px;padding:0}
+/* a dish takes only the room it needs: the What’s-in-it box is one line until you type more */
+.panel .mdish .mrow.nopr{grid-template-columns:1fr auto 30px}
+.panel .mcard.msec .mdish textarea{resize:none;overflow:hidden;min-height:0;padding:5px 8px}   /* or the section bars could not stay in view while scrolling */
 .panel .mcols{display:flex;align-items:center;gap:10px;margin-top:8px}.panel .mcols .fl{margin:0}
 .panel .mdish .mrow.sub{grid-template-columns:1fr auto 30px}
 .panel .mdish .mrow.mopt{margin-top:6px;padding-left:16px;grid-template-columns:1fr 76px auto 30px}
 .panel .mdish .mopt input{font-size:13px!important}
-.panel .mdish button.madd-opt{margin-top:4px;padding:4px 0 0 16px;font-size:12px;color:var(--muted);text-decoration:none}.panel .mdish button.madd-opt:hover{color:var(--sel);text-decoration:underline}
+.panel .mdish button.madd-opt{margin-top:2px;padding:4px 0 0 16px;font-size:12px;color:var(--muted);text-decoration:none}.panel .mdish button.madd-opt:hover{color:var(--sel);text-decoration:underline}
 .panel .msub>.fl{margin-bottom:4px}
 .panel .mcols .fl,.panel .msub>.fl{font-size:11px;color:var(--muted)}
 /* the row a selected line on the menu page belongs to lights up for a moment */
@@ -1528,6 +1545,13 @@ function twoStep(b,ask,fn){
   return b;
 }
 /* ============ MENU TEXT EDITOR ============ */
+// which sections are open in Boxes, by section number, kept per menu in this browser (not part of the menu itself)
+let BOXOPEN=null;
+function boxOpenGet(){ if(!BOXOPEN){ try{ BOXOPEN=JSON.parse(localStorage.getItem('meme10_boxopen')||'{}')||{}; }catch(e){ BOXOPEN={}; } }
+  const v=BOXOPEN[MENUS.current||'']; return new Set(Array.isArray(v)?v:[]); }
+function boxOpenSet(set){ boxOpenGet(); BOXOPEN[MENUS.current||'']=[...set].sort((a,b)=>a-b); try{ localStorage.setItem('meme10_boxopen',JSON.stringify(BOXOPEN)); }catch(e){} }
+const OWNPRICE=new WeakSet();   // dishes given a price box in a section that has one price for all
+const fitBox=t=>{ t.style.height='auto'; if(t.scrollHeight) t.style.height=(t.scrollHeight+2)+'px'; };
 function renderMenuEditor(){
   const box=document.getElementById('menuEditor'); if(!box) return; box.innerHTML='';
   if(menuMode==='sheet'){ renderSheetMode(box); return; }
@@ -1550,6 +1574,11 @@ function renderMenuEditor(){
   // the menu title under the logo (“Lunch”) is the first box. On the menu it is a subheading before the first section.
   const isTop=s_=>!!s_&&!(s_.title||'').trim()&&!(s_.price||'').trim()&&(s_.items||[]).length>0&&s_.items.every(isSub);
   const top=isTop(M[0])?M[0]:null, first=top?1:0, secs=M.length-first;
+  // open/closed sections, numbered from 0 for the first real section (the menu title box doesn’t count)
+  const OPEN=boxOpenGet(), isOpen=k=>secs===1||OPEN.has(k);
+  const setOpen=(k,on)=>{ if(on) OPEN.add(k); else OPEN.delete(k); boxOpenSet(OPEN); };
+  const shiftOpen=(from,by)=>{ const a=[...OPEN]; OPEN.clear(); a.forEach(k=>OPEN.add(k>=from?k+by:k)); boxOpenSet(OPEN); };
+  const swapOpen=(a,b)=>{ const x=OPEN.has(a), y=OPEN.has(b); setOpen(a,y); setOpen(b,x); };
   {
     const card=document.createElement('div'); card.className='mcard mtop';
     const mk=document.createElement('div'); mk.className='mk'; mk.textContent='Menu title, under the logo';
@@ -1581,32 +1610,51 @@ function renderMenuEditor(){
     if(ti>=M.length) return;
     const [it]=items.splice(ii,1), to=M[ti].items=M[ti].items||[];
     if(d<0) to.push(it); else to.unshift(it);
+    setOpen(ti-first,true);
     redo(); menuSay(`Moved into “${nameOf(M[ti].title)}”.`);
   };
+  if(secs>1){ const fa=document.createElement('p'); fa.className='mfoldall';
+    const all=on=>{ for(let k=0;k<secs;k++) on?OPEN.add(k):OPEN.delete(k); boxOpenSet(OPEN); renderMenuEditor(); };
+    const o=btn('Open all',()=>all(true)), c=btn('Close all',()=>all(false)); o.className=c.className='link';
+    fa.append('Click a section’s bar to open or close it.',o,c); box.appendChild(fa); }
   M.forEach((sec,si)=>{
     if(si<first) return;
-    const card=document.createElement('div'); card.className='mcard msec';
+    const k=si-first, card=document.createElement('div'); card.className='mcard msec'+(isOpen(k)?'':' shut');
     const top_=document.createElement('div'); top_.className='mhead';
-    const mk=document.createElement('div'); mk.className='mk'; mk.textContent=secs>1?`Section ${si-first+1} of ${secs}`:'Section';
-    const mname=document.createElement('div'); mname.className='mname'; mname.textContent=(sec.title||'').trim();
+    const fold=document.createElement('button'); fold.type='button'; fold.className='mfold'; fold.setAttribute('aria-expanded',isOpen(k));
+    const chev=document.createElement('span'); chev.className='mchev'; chev.textContent='▶'; chev.setAttribute('aria-hidden','true');
+    const mk=document.createElement('span'); mk.className='mk'; mk.textContent=secs>1?`Section ${k+1} of ${secs}`:'Section';
+    const mname=document.createElement('span'); mname.className='mname'; mname.textContent=(sec.title||'').trim();
+    const toggle=on=>{ if(secs===1) return; setOpen(k,on); card.classList.toggle('shut',!on); fold.setAttribute('aria-expanded',on); fold.title=on?'Close this section':'Open this section';
+      if(on) card.querySelectorAll('textarea').forEach(fitBox); };
+    fold.title=isOpen(k)?'Close this section':'Open this section'; if(secs===1) fold.style.cursor='default';
+    fold.onclick=()=>toggle(card.classList.contains('shut'));
+    if(secs>1) fold.append(chev); fold.append(mk,mname);
     const tools=document.createElement('span'); tools.className='mtools';
-    tools.append(arrows('this section',si>first,si<M.length-1,()=>mv(M,si,-1),()=>mv(M,si,1)),dotsButton('Section options',[
-      ['Duplicate this section',()=>{ histAct('duplicated the section “'+nameOf(sec.title)+'”',()=>{ const c=clone(sec); c.title=((sec.title||'').trim()?sec.title.trim()+' ':'')+'copy'; M.splice(si+1,0,c); redo(); });
+    tools.append(arrows('this section',si>first,si<M.length-1,()=>{ swapOpen(k,k-1); mv(M,si,-1); },()=>{ swapOpen(k,k+1); mv(M,si,1); }),dotsButton('Section options',[
+      ['Duplicate this section',()=>{ histAct('duplicated the section “'+nameOf(sec.title)+'”',()=>{ const c=clone(sec); c.title=((sec.title||'').trim()?sec.title.trim()+' ':'')+'copy'; M.splice(si+1,0,c); if(secs===1) setOpen(0,true); shiftOpen(k+1,1); setOpen(k+1,true); redo(); });
         menuSay('The copy is right under the original. Rename it and change it as you like; the original stays as it is.',false,true);
         const nameBox=document.querySelectorAll('#menuEditor input[aria-label="Section name"]')[si-first+1]; if(nameBox){ nameBox.focus(); nameBox.select(); } }],
       '-',
-      ['Delete this section',()=>{ histAct('deleted the section “'+nameOf(sec.title)+'”',()=>{ M.splice(si,1); redo(); }); menuSay('Section deleted. Undo brings it back.'); },{danger:true,ask:'Click again to delete the whole section'}]]));
-    top_.append(mk,mname,tools);
+      ['Delete this section',()=>{ histAct('deleted the section “'+nameOf(sec.title)+'”',()=>{ M.splice(si,1); setOpen(k,false); shiftOpen(k+1,-1); redo(); }); menuSay('Section deleted. Undo brings it back.'); },{danger:true,ask:'Click again to delete the whole section'}]]));
+    top_.append(fold,tools);
     card.appendChild(top_);
+    // closed: one line with how many dishes and their names; click it to open
+    const dishes=(sec.items||[]).filter(it=>!isSub(it)), names=(sec.items||[]).map(it=>isSub(it)?it.sub:it.name).map(t=>(t||'').trim()).filter(Boolean);
+    const sum=document.createElement('button'); sum.type='button'; sum.className='msum'; sum.title='Open this section';
+    const cnt=document.createElement('b'); cnt.textContent=dishes.length?`${dishes.length} dish${dishes.length===1?'':'es'}`:'No dishes yet';
+    sum.append(cnt,names.length?' · '+names.join(', '):''); sum.onclick=()=>toggle(true);
+    card.appendChild(sum);
+    const body=document.createElement('div'); body.className='mbody'; card.appendChild(body);
     const hd=document.createElement('div'); hd.className='mgrid';
     hd.style.gridTemplateColumns='1fr 76px';
     hd.append(fl('Section name'),fl('Price for all'),inp('Like Cocktails',sec.title,v=>{sec.title=v; mname.textContent=v.trim();},'Section name'), inp('—',sec.price,v=>{sec.price=v;},'Price for the whole section'));
-    card.appendChild(hd);
+    body.appendChild(hd);
     // this section's own columns (until it has its own, it follows the page's Columns setting)
     const colRow=document.createElement('div'); colRow.className='mcols';
     const pageCols=+G.mn.columns===2?2:1, nowCols=sec.cols===1||sec.cols===2?sec.cols:pageCols;
     colRow.append(fl('This section in'),seg('Columns for this section',[[1,'1 column'],[2,'2 columns']],nowCols,v=>histAct(`put “${nameOf(sec.title)}” in ${v} column${v===1?'':'s'}`,()=>{ sec.cols=v; redo(); })));
-    card.appendChild(colRow);
+    body.appendChild(colRow);
     sec.items=sec.items||[];
     let dishNo=0;
     sec.items.forEach((it,ii)=>{
@@ -1619,17 +1667,25 @@ function renderMenuEditor(){
           ['Delete this subheading',()=>{ histAct('deleted the subheading “'+nameOf(it.sub)+'”',()=>{ sec.items.splice(ii,1); redo(); }); menuSay('Subheading deleted. Undo brings it back.'); },{danger:true}]]));
         const al=document.createElement('div'); al.className='mcols';
         al.append(fl('Line it up'),seg('Line up the subheading',[['left','Left'],['center','Center'],['right','Right']],it.align||'left',v=>{ it.align=v; redo(); }));
-        row.append(fl('Subheading'),r1,al); card.appendChild(row); return;
+        row.append(fl('Subheading'),r1,al); body.appendChild(row); return;
       }
       const n=++dishNo;
       const row=document.createElement('div'); row.className='mdish';
       const nm=inp('Dish or drink name',it.name,v=>{it.name=v;},`Dish ${n} name`); nm.style.fontWeight='600';
       const pr=inp(sec.price?'—':'Price',it.price,v=>{it.price=v;},`Dish ${n} price (only if it differs from the section)`);
-      const r1=document.createElement('div'); r1.className='mrow';
-      r1.append(nm,pr,arrows('this dish',canUp,canDown,()=>moveItem(si,ii,-1),()=>moveItem(si,ii,1)),dotsButton(`Options for dish ${n}`,[
+      // with one price for the whole section, a dish shows a price box only if it has its own price (or you ask for one)
+      const showPr=!(sec.price||'').trim()||(it.price||'').trim()||OWNPRICE.has(it);
+      const addChoice=()=>{ (it.opts=it.opts||[]).push({name:'',price:''}); redo(); const all=document.querySelectorAll(`#menuEditor input[aria-label^="Dish ${n}, choice"]:not([aria-label$="price"])`); if(all.length) all[all.length-1].focus(); };
+      const r1=document.createElement('div'); r1.className='mrow'+(showPr?'':' nopr');
+      const dishMenu=[];
+      if(!showPr) dishMenu.push(['Give this dish its own price',()=>{ OWNPRICE.add(it); redo(); const b=document.querySelector(`#menuEditor input[aria-label^="Dish ${n} price"]`); if(b) b.focus(); }]);
+      if(!(it.opts||[]).length) dishMenu.push(['Add a choice, like Chicken or Lamb',addChoice]);
+      if(dishMenu.length) dishMenu.push('-');
+      if(showPr) r1.append(nm,pr); else r1.append(nm);
+      r1.append(arrows('this dish',canUp,canDown,()=>moveItem(si,ii,-1),()=>moveItem(si,ii,1)),dotsButton(`Options for dish ${n}`,[...dishMenu,
         ['Delete this dish',()=>{ histAct('deleted the dish “'+nameOf(it.name)+'”',()=>{ sec.items.splice(ii,1); redo(); }); menuSay('Dish deleted. Undo brings it back.'); },{danger:true}]]));
-      const ds=document.createElement('textarea'); ds.rows=2; ds.placeholder='What’s in it (leave empty for a simple list)'; ds.value=it.desc||''; ds.setAttribute('aria-label',`Dish ${n}: what’s in it`);
-      ds.oninput=()=>{it.desc=ds.value;render();};
+      const ds=document.createElement('textarea'); ds.rows=1; ds.placeholder='What’s in it (optional)'; ds.value=it.desc||''; ds.setAttribute('aria-label',`Dish ${n}: what’s in it`);
+      ds.oninput=()=>{it.desc=ds.value;fitBox(ds);render();};
       row.append(r1,ds);
       // choices under the dish (like meats for shipudim), each with its own price
       const opts=it.opts||[];
@@ -1646,17 +1702,18 @@ function renderMenuEditor(){
         lay.append(fl('Choices'),seg(`Choices for dish ${n}`,[['list','One per line'],['inline','Side by side']],it.optsInline?'inline':'list',
           v=>histAct(`put the choices for “${nameOf(it.name)}” ${v==='inline'?'side by side':'one per line'}`,()=>{ if(v==='inline') it.optsInline=true; else delete it.optsInline; redo(); })));
         row.appendChild(lay); }
-      const addO=btn('+ Add a choice',()=>{ (it.opts=it.opts||[]).push({name:'',price:''}); redo(); const all=document.querySelectorAll(`#menuEditor input[aria-label^="Dish ${n}, choice"]:not([aria-label$="price"])`); if(all.length) all[all.length-1].focus(); },
-        'Add a choice under this dish, like a meat or a topping, each with its own price'); addO.className='link madd-opt'; addO.textContent='+ Add a choice';
-      row.appendChild(addO);
-      card.appendChild(row);
+      // “+ Add a choice” shows under a dish that already has choices; otherwise it is in the dish’s ⋯ menu
+      if(opts.length){ const addO=btn('+ Add a choice',addChoice,'Add another choice under this dish, with its own price'); addO.className='link madd-opt'; addO.textContent='+ Add a choice';
+        row.appendChild(addO); }
+      body.appendChild(row);
     });
     const adds=document.createElement('div'); adds.className='madds';
     const add=btn('+ Add a dish',()=>{ sec.items.push({name:'',desc:''}); redo(); }); add.className='madd';
     const addS=btn('+ Add a subheading',()=>{ sec.items.push({sub:'',align:'left'}); redo(); const all=document.querySelectorAll('#menuEditor input[aria-label="Subheading"]'); if(all.length) all[all.length-1].focus(); }); addS.className='madd';
-    adds.append(add,addS); card.appendChild(adds); box.appendChild(card);
+    adds.append(add,addS); body.appendChild(adds); box.appendChild(card);
   });
-  box.appendChild(btn('+ Add a section',()=>histAct('added a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); redo(); })));
+  box.appendChild(btn('+ Add a section',()=>histAct('added a section',()=>{ M.push({title:'New section',price:'',items:[{name:'',desc:''}]}); if(secs===1) setOpen(0,true); setOpen(M.length-1-first,true); redo(); })));
+  requestAnimationFrame(()=>box.querySelectorAll('.msec:not(.shut) textarea').forEach(fitBox));
 }
 function menuEditorBlock(){
   const d=document.createElement('div');

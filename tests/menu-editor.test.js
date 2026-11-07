@@ -228,7 +228,10 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     await click(page, '.msub .mcols button', 'Center');
     m = await menu(page);
     ok(same(m[0].items[m[0].items.length - 1], { sub: 'Classics', align: 'center' }), 'boxes: subheading added, typed and centered');
-    await click(page, '.mcard:nth-of-type(3) .mdish button', '+ Add a choice');
+    // the first choice comes from the dish’s ⋯ menu; then “+ Add a choice” shows under it
+    ok(!(await page.$('.mcard:nth-of-type(3) .mdish .madd-opt')), 'boxes: no “+ Add a choice” link under a dish without choices');
+    await click(page, '.mcard:nth-of-type(3) .dots[aria-label="Options for dish 1"]');
+    await click(page, '.popmenu button', 'Add a choice, like Chicken or Lamb');
     await click(page, '.mcard:nth-of-type(3) .mdish button', '+ Add a choice');
     await type(page, '#menuEditor input[aria-label="Dish 1, choice 1"]', 'Draft');
     await type(page, '#menuEditor input[aria-label="Dish 1, choice 2"]', 'Bottle');
@@ -240,6 +243,24 @@ const DOC_TXT = 'Salads\nGreek Salad\nTomato, cucumber, feta\nFattoush\nPita, su
     await click(page, '.popmenu button', 'Delete this choice');
     await click(page, '.popmenu button', 'Click again to delete this choice');
     ok((await menu(page))[1].items[0].opts.length === 1, 'boxes: choice deleted');
+    // folding: sections start closed, the bar opens one, and that is remembered
+    await page.evaluate(() => { localStorage.removeItem('meme10_boxopen'); BOXOPEN = null; renderMenuEditor(); });
+    let shut = await page.$$eval('.mcard.msec', cs => cs.map(c => c.classList.contains('shut')));
+    ok(shut.length > 1 && shut.every(Boolean), 'fold: sections start closed');
+    ok(/dish/.test(await page.$eval('.mcard.msec .msum', e => e.textContent)), 'fold: a closed section lists its dishes');
+    await click(page, '.mcard.msec:nth-of-type(3) .mfold');
+    shut = await page.$$eval('.mcard.msec', cs => cs.map(c => c.classList.contains('shut')));
+    ok(shut[0] && !shut[1], 'fold: clicking a bar opens just that section');
+    await page.evaluate(() => { BOXOPEN = null; renderMenuEditor(); });
+    ok(!(await page.$eval('.mcard.msec:nth-of-type(3)', c => c.classList.contains('shut'))), 'fold: an open section stays open after redrawing');
+    await click(page, '.mfoldall button', 'Open all');
+    ok(await page.$$eval('.mcard.msec.shut', cs => cs.length) === 0, 'fold: Open all');
+    // a section with one price for all: no price box on its dishes until you ask for one
+    await page.evaluate(() => { M[1].price = '10'; M[1].items[0].price = ''; renderMenuEditor(); });
+    ok(!(await page.$('.mcard:nth-of-type(3) input[aria-label^="Dish 1 price"]')), 'price: hidden when the section has a price for all');
+    await click(page, '.mcard:nth-of-type(3) .dots[aria-label="Options for dish 1"]');
+    await click(page, '.popmenu button', 'Give this dish its own price');
+    ok(!!(await page.$('.mcard:nth-of-type(3) input[aria-label^="Dish 1 price"]')), 'price: shown after “Give this dish its own price”');
     // duplicate Cocktails
     const before = await menu(page);
     await click(page, '.mcard:nth-of-type(2) .dots[aria-label="Section options"]');
